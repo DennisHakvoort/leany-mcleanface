@@ -9,473 +9,473 @@ USE LeanDb
 
 /*==============================================================*/
 /* DBMS name:      Microsoft SQL Server 2008                    */
-/* Created on:     8-5-2018 15:25:17                            */
+/* Created on:     8-5-2018 15:47:16                            */
 /*==============================================================*/
 
 
 if exists (select 1
    from sys.sysreferences r join sys.sysobjects o on (o.id = r.constid and o.type = 'F')
-   where r.fkeyid = object_id('MEDEWERKER_BESCHIKBAARHEID') and o.name = 'FK_BESCHIKBAARHEID_MEDEWERKER')
-alter table MEDEWERKER_BESCHIKBAARHEID
+   where r.fkeyid = object_id('medewerker_beschikbaarheid') and o.name = 'FK_BESCHIKBAARHEID_MEDEWERKER')
+alter table medewerker_beschikbaarheid
    drop constraint FK_BESCHIKBAARHEID_MEDEWERKER
 go
 
 if exists (select 1
    from sys.sysreferences r join sys.sysobjects o on (o.id = r.constid and o.type = 'F')
-   where r.fkeyid = object_id('MEDEWERKER_INGEPLAND_PROJECT') and o.name = 'FK_MEDEWERKER_INGEPLAND_PROJECT')
-alter table MEDEWERKER_INGEPLAND_PROJECT
+   where r.fkeyid = object_id('medewerker_ingepland_project') and o.name = 'FK_MEDEWERKER_INGEPLAND_PROJECT')
+alter table medewerker_ingepland_project
    drop constraint FK_MEDEWERKER_INGEPLAND_PROJECT
 go
 
 if exists (select 1
    from sys.sysreferences r join sys.sysobjects o on (o.id = r.constid and o.type = 'F')
-   where r.fkeyid = object_id('MEDEWERKER_OP_PROJECT') and o.name = 'FK_PROJECT_MEDEWERKER')
-alter table MEDEWERKER_OP_PROJECT
+   where r.fkeyid = object_id('medewerker_op_project') and o.name = 'FK_PROJECT_MEDEWERKER')
+alter table medewerker_op_project
    drop constraint FK_PROJECT_MEDEWERKER
 go
 
 if exists (select 1
    from sys.sysreferences r join sys.sysobjects o on (o.id = r.constid and o.type = 'F')
-   where r.fkeyid = object_id('MEDEWERKER_OP_PROJECT') and o.name = 'FK_MEDEWERKER_PROJECT')
-alter table MEDEWERKER_OP_PROJECT
+   where r.fkeyid = object_id('medewerker_op_project') and o.name = 'FK_MEDEWERKER_PROJECT')
+alter table medewerker_op_project
    drop constraint FK_MEDEWERKER_PROJECT
 go
 
 if exists (select 1
    from sys.sysreferences r join sys.sysobjects o on (o.id = r.constid and o.type = 'F')
-   where r.fkeyid = object_id('MEDEWERKER_OP_PROJECT') and o.name = 'FK_MEDEWERKER_ROL_PROJECT')
-alter table MEDEWERKER_OP_PROJECT
+   where r.fkeyid = object_id('medewerker_op_project') and o.name = 'FK_MEDEWERKER_ROL_PROJECT')
+alter table medewerker_op_project
    drop constraint FK_MEDEWERKER_ROL_PROJECT
 go
 
 if exists (select 1
    from sys.sysreferences r join sys.sysobjects o on (o.id = r.constid and o.type = 'F')
-   where r.fkeyid = object_id('MEDEWERKER_ROL') and o.name = 'FK_MEDEWERKER_ROL')
-alter table MEDEWERKER_ROL
+   where r.fkeyid = object_id('medewerker_rol') and o.name = 'FK_MEDEWERKER_ROL')
+alter table medewerker_rol
    drop constraint FK_MEDEWERKER_ROL
 go
 
 if exists (select 1
    from sys.sysreferences r join sys.sysobjects o on (o.id = r.constid and o.type = 'F')
-   where r.fkeyid = object_id('MEDEWERKER_ROL') and o.name = 'FK_ROL_MEDEWERKER')
-alter table MEDEWERKER_ROL
+   where r.fkeyid = object_id('medewerker_rol') and o.name = 'FK_ROL_MEDEWERKER')
+alter table medewerker_rol
    drop constraint FK_ROL_MEDEWERKER
 go
 
 if exists (select 1
    from sys.sysreferences r join sys.sysobjects o on (o.id = r.constid and o.type = 'F')
-   where r.fkeyid = object_id('PROJECT') and o.name = 'FK_PROJECT_CATEGORIE')
-alter table PROJECT
+   where r.fkeyid = object_id('project') and o.name = 'FK_PROJECT_CATEGORIE')
+alter table project
    drop constraint FK_PROJECT_CATEGORIE
 go
 
 if exists (select 1
             from  sysobjects
-           where  id = object_id('MEDEWERKER')
+           where  id = object_id('medewerker')
             and   type = 'U')
-   drop table MEDEWERKER
+   drop table medewerker
 go
 
 if exists (select 1
             from  sysindexes
-           where  id    = object_id('MEDEWERKER_BESCHIKBAARHEID')
-            and   name  = 'BESCHIKBAAR_VOOR_FK'
+           where  id    = object_id('medewerker_beschikbaarheid')
+            and   name  = 'beschikbaar_voor_fk'
             and   indid > 0
             and   indid < 255)
-   drop index MEDEWERKER_BESCHIKBAARHEID.BESCHIKBAAR_VOOR_FK
+   drop index medewerker_beschikbaarheid.beschikbaar_voor_fk
 go
 
 if exists (select 1
             from  sysobjects
-           where  id = object_id('MEDEWERKER_BESCHIKBAARHEID')
+           where  id = object_id('medewerker_beschikbaarheid')
             and   type = 'U')
-   drop table MEDEWERKER_BESCHIKBAARHEID
+   drop table medewerker_beschikbaarheid
 go
 
 if exists (select 1
             from  sysobjects
-           where  id = object_id('MEDEWERKER_INGEPLAND_PROJECT')
+           where  id = object_id('medewerker_ingepland_project')
             and   type = 'U')
-   drop table MEDEWERKER_INGEPLAND_PROJECT
+   drop table medewerker_ingepland_project
 go
 
 if exists (select 1
             from  sysindexes
-           where  id    = object_id('MEDEWERKER_OP_PROJECT')
-            and   name  = 'NEEMT_DEEL_AAN_FK'
+           where  id    = object_id('medewerker_op_project')
+            and   name  = 'neemt_deel_aan_fk'
             and   indid > 0
             and   indid < 255)
-   drop index MEDEWERKER_OP_PROJECT.NEEMT_DEEL_AAN_FK
+   drop index medewerker_op_project.neemt_deel_aan_fk
 go
 
 if exists (select 1
             from  sysobjects
-           where  id = object_id('MEDEWERKER_OP_PROJECT')
+           where  id = object_id('medewerker_op_project')
             and   type = 'U')
-   drop table MEDEWERKER_OP_PROJECT
+   drop table medewerker_op_project
 go
 
 if exists (select 1
             from  sysindexes
-           where  id    = object_id('MEDEWERKER_ROL')
-            and   name  = 'HEEFT_ALS_ROL_FK'
+           where  id    = object_id('medewerker_rol')
+            and   name  = 'heeft_als_rol_fk'
             and   indid > 0
             and   indid < 255)
-   drop index MEDEWERKER_ROL.HEEFT_ALS_ROL_FK
+   drop index medewerker_rol.heeft_als_rol_fk
 go
 
 if exists (select 1
             from  sysobjects
-           where  id = object_id('MEDEWERKER_ROL')
+           where  id = object_id('medewerker_rol')
             and   type = 'U')
-   drop table MEDEWERKER_ROL
+   drop table medewerker_rol
 go
 
 if exists (select 1
             from  sysobjects
-           where  id = object_id('MEDEWERKER_ROL_TYPE')
+           where  id = object_id('medewerker_rol_type')
             and   type = 'U')
-   drop table MEDEWERKER_ROL_TYPE
+   drop table medewerker_rol_type
 go
 
 if exists (select 1
             from  sysindexes
-           where  id    = object_id('PROJECT')
-            and   name  = 'IS_VAN_TYPE_FK'
+           where  id    = object_id('project')
+            and   name  = 'is_van_type_fk'
             and   indid > 0
             and   indid < 255)
-   drop index PROJECT.IS_VAN_TYPE_FK
+   drop index project.is_van_type_fk
 go
 
 if exists (select 1
             from  sysobjects
-           where  id = object_id('PROJECT')
+           where  id = object_id('project')
             and   type = 'U')
-   drop table PROJECT
+   drop table project
 go
 
 if exists (select 1
             from  sysobjects
-           where  id = object_id('PROJECT_CATEGORIE')
+           where  id = object_id('project_categorie')
             and   type = 'U')
-   drop table PROJECT_CATEGORIE
+   drop table project_categorie
 go
 
 if exists (select 1
             from  sysobjects
-           where  id = object_id('PROJECT_ROL_TYPE')
+           where  id = object_id('project_rol_type')
             and   type = 'U')
-   drop table PROJECT_ROL_TYPE
+   drop table project_rol_type
 go
 
-if exists(select 1 from systypes where name='ACHTERNAAM')
-   drop type ACHTERNAAM
+if exists(select 1 from systypes where name='achternaam')
+   drop type achternaam
 go
 
-if exists(select 1 from systypes where name='CATEGORIE_NAAM')
-   drop type CATEGORIE_NAAM
+if exists(select 1 from systypes where name='categorie_naam')
+   drop type categorie_naam
 go
 
-if exists(select 1 from systypes where name='DATUM')
-   drop type DATUM
+if exists(select 1 from systypes where name='datum')
+   drop type datum
 go
 
-if exists(select 1 from systypes where name='ID')
-   drop type ID
+if exists(select 1 from systypes where name='id')
+   drop type id
 go
 
-if exists(select 1 from systypes where name='JAAR')
-   drop type JAAR
+if exists(select 1 from systypes where name='jaar')
+   drop type jaar
 go
 
-if exists(select 1 from systypes where name='MAAND')
-   drop type MAAND
+if exists(select 1 from systypes where name='maand')
+   drop type maand
 go
 
-if exists(select 1 from systypes where name='MEDEWERKER_CODE')
-   drop type MEDEWERKER_CODE
+if exists(select 1 from systypes where name='medewerker_code')
+   drop type medewerker_code
 go
 
-if exists(select 1 from systypes where name='MEDEWERKER_ROL')
-   drop type MEDEWERKER_ROL
+if exists(select 1 from systypes where name='medewerker_rol')
+   drop type medewerker_rol
 go
 
-if exists(select 1 from systypes where name='PROJECT_CODE')
-   drop type PROJECT_CODE
+if exists(select 1 from systypes where name='project_code')
+   drop type project_code
 go
 
-if exists(select 1 from systypes where name='PROJECT_NAAM')
-   drop type PROJECT_NAAM
+if exists(select 1 from systypes where name='project_naam')
+   drop type project_naam
 go
 
-if exists(select 1 from systypes where name='PROJECT_ROL')
-   drop type PROJECT_ROL
+if exists(select 1 from systypes where name='project_rol')
+   drop type project_rol
 go
 
-if exists(select 1 from systypes where name='UREN')
-   drop type UREN
+if exists(select 1 from systypes where name='uren')
+   drop type uren
 go
 
-if exists(select 1 from systypes where name='VOORNAAM')
-   drop type VOORNAAM
+if exists(select 1 from systypes where name='voornaam')
+   drop type voornaam
 go
 
 /*==============================================================*/
-/* Domain: ACHTERNAAM                                           */
+/* Domain: achternaam                                           */
 /*==============================================================*/
-create type ACHTERNAAM
+create type achternaam
    from char(20)
 go
 
 /*==============================================================*/
-/* Domain: CATEGORIE_NAAM                                       */
+/* Domain: categorie_naam                                       */
 /*==============================================================*/
-create type CATEGORIE_NAAM
+create type categorie_naam
    from char(40)
 go
 
 /*==============================================================*/
-/* Domain: DATUM                                                */
+/* Domain: datum                                                */
 /*==============================================================*/
-create type DATUM
+create type datum
    from datetime
 go
 
 /*==============================================================*/
-/* Domain: ID                                                   */
+/* Domain: id                                                   */
 /*==============================================================*/
-create type ID
+create type id
    from int
 go
 
 /*==============================================================*/
-/* Domain: JAAR                                                 */
+/* Domain: jaar                                                 */
 /*==============================================================*/
-create type JAAR
+create type jaar
    from datetime
 go
 
 /*==============================================================*/
-/* Domain: MAAND                                                */
+/* Domain: maand                                                */
 /*==============================================================*/
-create type MAAND
+create type maand
    from datetime
 go
 
 /*==============================================================*/
-/* Domain: MEDEWERKER_CODE                                      */
+/* Domain: medewerker_code                                      */
 /*==============================================================*/
-create type MEDEWERKER_CODE
+create type medewerker_code
    from char(4)
 go
 
 /*==============================================================*/
-/* Domain: MEDEWERKER_ROL                                       */
+/* Domain: medewerker_rol                                       */
 /*==============================================================*/
-create type MEDEWERKER_ROL
+create type medewerker_rol
    from char(40)
 go
 
 /*==============================================================*/
-/* Domain: PROJECT_CODE                                         */
+/* Domain: project_code                                         */
 /*==============================================================*/
-create type PROJECT_CODE
+create type project_code
    from char(20)
 go
 
 /*==============================================================*/
-/* Domain: PROJECT_NAAM                                         */
+/* Domain: project_naam                                         */
 /*==============================================================*/
-create type PROJECT_NAAM
+create type project_naam
    from char(40)
 go
 
 /*==============================================================*/
-/* Domain: PROJECT_ROL                                          */
+/* Domain: project_rol                                          */
 /*==============================================================*/
-create type PROJECT_ROL
+create type project_rol
    from char(40)
 go
 
 /*==============================================================*/
-/* Domain: UREN                                                 */
+/* Domain: uren                                                 */
 /*==============================================================*/
-create type UREN
+create type uren
    from datetime
 go
 
 /*==============================================================*/
-/* Domain: VOORNAAM                                             */
+/* Domain: voornaam                                             */
 /*==============================================================*/
-create type VOORNAAM
+create type voornaam
    from char(20)
 go
 
 /*==============================================================*/
-/* Table: MEDEWERKER                                            */
+/* Table: medewerker                                            */
 /*==============================================================*/
-create table MEDEWERKER (
-   MEDEWERKER_CODE      MEDEWERKER_CODE      not null,
-   ACHTERNAAM           ACHTERNAAM           not null,
-   VOORNAAM             VOORNAAM             not null,
-   constraint PK_MEDEWERKER primary key nonclustered (MEDEWERKER_CODE)
+create table medewerker (
+   medewerker_code      medewerker_code      not null,
+   achternaam           achternaam           not null,
+   voornaam             voornaam             not null,
+   constraint PK_MEDEWERKER primary key nonclustered (medewerker_code)
 )
 go
 
 /*==============================================================*/
-/* Table: MEDEWERKER_BESCHIKBAARHEID                            */
+/* Table: medewerker_beschikbaarheid                            */
 /*==============================================================*/
-create table MEDEWERKER_BESCHIKBAARHEID (
-   MEDEWERKER_CODE      MEDEWERKER_CODE      not null,
-   MAAND                JAAR                 not null,
-   BESCHIKBAAR_UREN     UREN                 not null,
-   constraint PK_MEDEWERKER_BESCHIKBAARHEID primary key (MEDEWERKER_CODE, MAAND)
+create table medewerker_beschikbaarheid (
+   medewerker_code      medewerker_code      not null,
+   maand                jaar                 not null,
+   beschikbaar_uren     uren                 not null,
+   constraint PK_MEDEWERKER_BESCHIKBAARHEID primary key (medewerker_code, maand)
 )
 go
 
 /*==============================================================*/
-/* Index: BESCHIKBAAR_VOOR_FK                                   */
+/* Index: beschikbaar_voor_fk                                   */
 /*==============================================================*/
-create index BESCHIKBAAR_VOOR_FK on MEDEWERKER_BESCHIKBAARHEID (
-MEDEWERKER_CODE ASC
+create index beschikbaar_voor_fk on medewerker_beschikbaarheid (
+medewerker_code ASC
 )
 go
 
 /*==============================================================*/
-/* Table: MEDEWERKER_INGEPLAND_PROJECT                          */
+/* Table: medewerker_ingepland_project                          */
 /*==============================================================*/
-create table MEDEWERKER_INGEPLAND_PROJECT (
-   ID                   ID                   not null,
-   MEDEWERKER_UREN      UREN                 not null,
-   MAAND_DATUM          MAAND                not null,
-   constraint PK_MEDEWERKER_INGEPLAND_PROJEC primary key nonclustered (ID, MEDEWERKER_UREN, MAAND_DATUM)
+create table medewerker_ingepland_project (
+   id                   id                   not null,
+   medewerker_uren      uren                 not null,
+   maand_datum          maand                not null,
+   constraint PK_MEDEWERKER_INGEPLAND_PROJEC primary key nonclustered (id, medewerker_uren, maand_datum)
 )
 go
 
 /*==============================================================*/
-/* Table: MEDEWERKER_OP_PROJECT                                 */
+/* Table: medewerker_op_project                                 */
 /*==============================================================*/
-create table MEDEWERKER_OP_PROJECT (
-   ID                   ID                   not null,
-   PROJECT_CODE         PROJECT_CODE         not null,
-   MEDEWERKER_CODE      MEDEWERKER_CODE      not null,
-   PROJECT_ROL          PROJECT_ROL          null,
-   constraint PK_MEDEWERKER_OP_PROJECT primary key nonclustered (ID)
+create table medewerker_op_project (
+   id                   id                   not null,
+   project_code         project_code         not null,
+   medewerker_code      medewerker_code      not null,
+   project_rol          project_rol          null,
+   constraint PK_MEDEWERKER_OP_PROJECT primary key nonclustered (id)
 )
 go
 
 /*==============================================================*/
-/* Index: NEEMT_DEEL_AAN_FK                                     */
+/* Index: neemt_deel_aan_fk                                     */
 /*==============================================================*/
-create index NEEMT_DEEL_AAN_FK on MEDEWERKER_OP_PROJECT (
-MEDEWERKER_CODE ASC
+create index neemt_deel_aan_fk on medewerker_op_project (
+medewerker_code ASC
 )
 go
 
 /*==============================================================*/
-/* Table: MEDEWERKER_ROL                                        */
+/* Table: medewerker_rol                                        */
 /*==============================================================*/
-create table MEDEWERKER_ROL (
-   MEDEWERKER_CODE      MEDEWERKER_CODE      not null,
-   MEDEWERKER_ROL       MEDEWERKER_ROL       not null,
-   constraint PK_MEDEWERKER_ROL primary key nonclustered (MEDEWERKER_CODE, MEDEWERKER_ROL)
+create table medewerker_rol (
+   medewerker_code      medewerker_code      not null,
+   medewerker_rol       medewerker_rol       not null,
+   constraint PK_MEDEWERKER_ROL primary key nonclustered (medewerker_code, medewerker_rol)
 )
 go
 
 /*==============================================================*/
-/* Index: HEEFT_ALS_ROL_FK                                      */
+/* Index: heeft_als_rol_fk                                      */
 /*==============================================================*/
-create index HEEFT_ALS_ROL_FK on MEDEWERKER_ROL (
-MEDEWERKER_CODE ASC
+create index heeft_als_rol_fk on medewerker_rol (
+medewerker_code ASC
 )
 go
 
 /*==============================================================*/
-/* Table: MEDEWERKER_ROL_TYPE                                   */
+/* Table: medewerker_rol_type                                   */
 /*==============================================================*/
-create table MEDEWERKER_ROL_TYPE (
-   MEDEWERKER_ROL       MEDEWERKER_ROL       not null,
-   constraint PK_MEDEWERKER_ROL_TYPE primary key nonclustered (MEDEWERKER_ROL)
+create table medewerker_rol_type (
+   medewerker_rol       medewerker_rol       not null,
+   constraint PK_MEDEWERKER_ROL_TYPE primary key nonclustered (medewerker_rol)
 )
 go
 
 /*==============================================================*/
-/* Table: PROJECT                                               */
+/* Table: project                                               */
 /*==============================================================*/
-create table PROJECT (
-   PROJECT_CODE         PROJECT_CODE         not null,
-   NAAM                 CATEGORIE_NAAM       not null,
-   BEGIN_DATUM          DATUM                not null,
-   EIND_DATUM           DATUM                not null,
-   PROJECT_NAAM         char(40)             not null,
-   constraint PK_PROJECT primary key nonclustered (PROJECT_CODE)
+create table project (
+   project_code         project_code         not null,
+   categorie_naam       categorie_naam       not null,
+   begin_datum          datum                not null,
+   eind_datum           datum                not null,
+   project_naam         char(40)             not null,
+   constraint PK_PROJECT primary key nonclustered (project_code)
 )
 go
 
 /*==============================================================*/
-/* Index: IS_VAN_TYPE_FK                                        */
+/* Index: is_van_type_fk                                        */
 /*==============================================================*/
-create index IS_VAN_TYPE_FK on PROJECT (
-NAAM ASC
+create index is_van_type_fk on project (
+categorie_naam ASC
 )
 go
 
 /*==============================================================*/
-/* Table: PROJECT_CATEGORIE                                     */
+/* Table: project_categorie                                     */
 /*==============================================================*/
-create table PROJECT_CATEGORIE (
-   NAAM                 CATEGORIE_NAAM       not null,
-   PARENT               CATEGORIE_NAAM       null,
-   constraint PK_PROJECT_CATEGORIE primary key nonclustered (NAAM)
+create table project_categorie (
+   naam                 categorie_naam       not null,
+   parent               categorie_naam       null,
+   constraint PK_PROJECT_CATEGORIE primary key nonclustered (naam)
 )
 go
 
 /*==============================================================*/
-/* Table: PROJECT_ROL_TYPE                                      */
+/* Table: project_rol_type                                      */
 /*==============================================================*/
-create table PROJECT_ROL_TYPE (
-   PROJECT_ROL          PROJECT_ROL          not null,
-   constraint PK_PROJECT_ROL_TYPE primary key nonclustered (PROJECT_ROL)
+create table project_rol_type (
+   project_rol          project_rol          not null,
+   constraint PK_PROJECT_ROL_TYPE primary key nonclustered (project_rol)
 )
 go
 
-alter table MEDEWERKER_BESCHIKBAARHEID
-   add constraint FK_BESCHIKBAARHEID_MEDEWERKER foreign key (MEDEWERKER_CODE)
-      references MEDEWERKER (MEDEWERKER_CODE)
+alter table medewerker_beschikbaarheid
+   add constraint FK_BESCHIKBAARHEID_MEDEWERKER foreign key (medewerker_code)
+      references medewerker (medewerker_code)
 go
 
-alter table MEDEWERKER_INGEPLAND_PROJECT
-   add constraint FK_MEDEWERKER_INGEPLAND_PROJECT foreign key (ID)
-      references MEDEWERKER_OP_PROJECT (ID)
+alter table medewerker_ingepland_project
+   add constraint FK_MEDEWERKER_INGEPLAND_PROJECT foreign key (id)
+      references medewerker_op_project (id)
 go
 
-alter table MEDEWERKER_OP_PROJECT
-   add constraint FK_PROJECT_MEDEWERKER foreign key (PROJECT_CODE)
-      references PROJECT (PROJECT_CODE)
+alter table medewerker_op_project
+   add constraint FK_PROJECT_MEDEWERKER foreign key (project_code)
+      references project (project_code)
 go
 
-alter table MEDEWERKER_OP_PROJECT
-   add constraint FK_MEDEWERKER_PROJECT foreign key (MEDEWERKER_CODE)
-      references MEDEWERKER (MEDEWERKER_CODE)
+alter table medewerker_op_project
+   add constraint FK_MEDEWERKER_PROJECT foreign key (medewerker_code)
+      references medewerker (medewerker_code)
 go
 
-alter table MEDEWERKER_OP_PROJECT
-   add constraint FK_MEDEWERKER_ROL_PROJECT foreign key (PROJECT_ROL)
-      references PROJECT_ROL_TYPE (PROJECT_ROL)
+alter table medewerker_op_project
+   add constraint FK_MEDEWERKER_ROL_PROJECT foreign key (project_rol)
+      references project_rol_type (project_rol)
 go
 
-alter table MEDEWERKER_ROL
-   add constraint FK_MEDEWERKER_ROL foreign key (MEDEWERKER_CODE)
-      references MEDEWERKER (MEDEWERKER_CODE)
+alter table medewerker_rol
+   add constraint FK_MEDEWERKER_ROL foreign key (medewerker_code)
+      references medewerker (medewerker_code)
 go
 
-alter table MEDEWERKER_ROL
-   add constraint FK_ROL_MEDEWERKER foreign key (MEDEWERKER_ROL)
-      references MEDEWERKER_ROL_TYPE (MEDEWERKER_ROL)
+alter table medewerker_rol
+   add constraint FK_ROL_MEDEWERKER foreign key (medewerker_rol)
+      references medewerker_rol_type (medewerker_rol)
 go
 
-alter table PROJECT
-   add constraint FK_PROJECT_CATEGORIE foreign key (NAAM)
-      references PROJECT_CATEGORIE (NAAM)
+alter table project
+   add constraint FK_PROJECT_CATEGORIE foreign key (categorie_naam)
+      references project_categorie (naam)
 go
 
