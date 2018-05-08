@@ -1,9 +1,12 @@
 --COMPLETELY WIPES OUT THE DATABASE, BE CAREFUL--
+USE Master
 
 DROP DATABASE IF EXISTS LeanDb
 
 CREATE DATABASE LeanDb
-	
+
+USE LeanDb
+
 	/*==============================================================*/
 /* DBMS name:      Microsoft SQL Server 2008                    */
 /* Created on:     8-5-2018 11:59:13                            */
