@@ -7,9 +7,9 @@ CREATE DATABASE LeanDb
 
 USE LeanDb
 
-	/*==============================================================*/
+/*==============================================================*/
 /* DBMS name:      Microsoft SQL Server 2008                    */
-/* Created on:     8-5-2018 11:59:13                            */
+/* Created on:     8-5-2018 15:25:17                            */
 /*==============================================================*/
 
 
@@ -266,7 +266,7 @@ go
 /* Domain: MEDEWERKER_CODE                                      */
 /*==============================================================*/
 create type MEDEWERKER_CODE
-   from char(3)
+   from char(4)
 go
 
 /*==============================================================*/
@@ -316,7 +316,6 @@ go
 /*==============================================================*/
 create table MEDEWERKER (
    MEDEWERKER_CODE      MEDEWERKER_CODE      not null,
-   CATEGORIE_NAAM       CATEGORIE_NAAM       not null,
    ACHTERNAAM           ACHTERNAAM           not null,
    VOORNAAM             VOORNAAM             not null,
    constraint PK_MEDEWERKER primary key nonclustered (MEDEWERKER_CODE)
@@ -328,9 +327,9 @@ go
 /*==============================================================*/
 create table MEDEWERKER_BESCHIKBAARHEID (
    MEDEWERKER_CODE      MEDEWERKER_CODE      not null,
-   JAAR                 JAAR                 not null,
+   MAAND                JAAR                 not null,
    BESCHIKBAAR_UREN     UREN                 not null,
-   constraint PK_MEDEWERKER_BESCHIKBAARHEID primary key (MEDEWERKER_CODE, JAAR, BESCHIKBAAR_UREN)
+   constraint PK_MEDEWERKER_BESCHIKBAARHEID primary key (MEDEWERKER_CODE, MAAND)
 )
 go
 
