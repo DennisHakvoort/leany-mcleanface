@@ -1,15 +1,23 @@
 USE LeanDb
-IF EXISTS (SELECT 1 from sys.objects where name = 'CK_UREN_MIN_MAX')
-  ALTER TABLE medewerker_beschikbaarheid DROP CONSTRAINT CK_UREN_MIN_MAX
-GO
-
+--PROCEDURE OM CONSTRAINTS TE DROPPEN ALS DEZE BESTAAN
 CREATE PROCEDURE SP_DROP_CONSTRAINT
 	@Constraint_name VARCHAR(255) = NULL,
 	@tablename VARCHAR(255) = NULL
 	AS
-		IF EXISTS (SELECT 1 from sys.objects where name = @Constraint_name)
-    ALTER TABLE @tablename DROP CONSTRAINT @Constraint_name
+	BEGIN TRY
+		declare @sql NVARCHAR(255)
+    SELECT @sql = 'ALTER TABLE ' + @tablename + ' DROP CONSTRAINT ' + @Constraint_name;
+		EXEC sys.sp_executesql @stmt = @sql
+	END TRY
+	BEGIN CATCH
+		PRINT 'Het volgende constraint is niet gedropt, waarschijnlijk omdat deze niet bestond: ' + @Constraint_name
+	END CATCH
 	GO
+
+--DROP ALL BUSINESS RULES
+EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_UREN_MIN_MAX', @tablename = 'medewerker_beschikbaarheid'
+
+
 --BUSINESS RULES--
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 184
