@@ -1,3 +1,4 @@
+
 USE LeanDb
 --PROCEDURE OM CONSTRAINTS TE DROPPEN ALS DEZE BESTAAN
 CREATE PROCEDURE SP_DROP_CONSTRAINT
@@ -16,6 +17,7 @@ CREATE PROCEDURE SP_DROP_CONSTRAINT
 
 --DROP ALL BUSINESS RULES
 EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_UREN_MIN_MAX', @tablename = 'medewerker_beschikbaarheid'
+EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_EINDDATUM_NA_BEGINDATUM', @tablename = 'project'
 
 
 --BUSINESS RULES--
@@ -25,3 +27,7 @@ EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_UREN_MIN_MAX', @tablename = 'mede
 ALTER TABLE medewerker_beschikbaarheid
 		ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbaar_uren < 184 AND beschikbaar_uren > 0)
 
+
+--BR7 project(eind_datum) moet na project(begin_datum) vallen
+ALTER TABLE project WITH CHECK
+	ADD CONSTRAINT CK_EINDDATUM_NA_BEGINDATUM CHECK (eind_datum > begin_datum)
