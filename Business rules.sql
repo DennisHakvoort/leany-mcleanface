@@ -16,6 +16,8 @@ CREATE PROCEDURE SP_DROP_CONSTRAINT
 
 --DROP ALL BUSINESS RULES
 EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_UREN_MIN_MAX', @tablename = 'medewerker_beschikbaarheid'
+DROP TRIGGER IF EXISTS TG_PROJECT_VERSTREKEN_PROJECT
+DROP TRIGGER IF EXISTS TG_PROJECT_VERSTREKEN_MEDEWERKER_INGEPLAND
 
 
 --BUSINESS RULES--
@@ -28,20 +30,59 @@ ALTER TABLE medewerker_beschikbaarheid
 -- BR9 BR9 De waarden van project, medewerker op project en medewerker_ingepland_project
 -- kunnen niet meer worden aangepast als project(eind_datum) is verstreken,
 
-ALTER TRIGGER TG_PROJECT_VERSTREKEN_PROJECT
+CREATE TRIGGER TG_PROJECT_VERSTREKEN_PROJECT
 	ON project
 	AFTER INSERT, UPDATE, DELETE
 	AS
 	BEGIN
-		IF EXISTS(SELECT '!'
-							FROM (project P INNER JOIN inserted I ON P.project_code = I.project_code) LEFT OUTER JOIN deleted D on P.project_code = D.project_code
-							WHERE (I.eind_datum < CURRENT_TIMESTAMP OR D.eind_datum < CURRENT_TIMESTAMP))
-
-			THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
+		IF(@@ROWCOUNT > 0)
+			BEGIN
+				IF (EXISTS(SELECT '!'
+									FROM inserted
+									WHERE eind_datum < CURRENT_TIMESTAMP)
+				OR (EXISTS(	SELECT '!'
+										FROM deleted
+										WHERE eind_datum < CURRENT_TIMESTAMP)))
+				THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
+			END
 	END
 
-BEGIN TRANSACTION
-INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2018', '22 feb 2018', 'testerdetest')
-ROLLBACK TRANSACTION
+CREATE TRIGGER TG_PROJECT_VERSTREKEN_MEDEWERKER_INGEPLAND
+	ON medewerker_ingepland_project
+	AFTER INSERT, UPDATE, DELETE
+	AS
+	BEGIN
+		IF (@@ROWCOUNT > 0)
+			BEGIN
+				IF (EXISTS(	SELECT '!'
+										FROM (inserted I INNER JOIN medewerker_op_project MIP ON I.id = MIP.id) INNER JOIN project P on MIP.project_code = P.project_code
+										WHERE P.eind_datum < CURRENT_TIMESTAMP)
+					OR
+						EXISTS( SELECT '!'
+										FROM (deleted D INNER JOIN medewerker_op_project MIP ON D.id = MIP.id) INNER JOIN project P on MIP.project_code = P.project_code
+										WHERE P.eind_datum < CURRENT_TIMESTAMP))
+					BEGIN
+						THROW 50004, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
+					END
+			END
+	END
 
+CREATE TRIGGER TG_PROJECT_VERSTREKEN_MEDEWERKER_OP_PROJECT
+	ON medewerker_op_project
+	AFTER UPDATE, INSERT, DELETE
+	AS
+	BEGIN
+		IF(@@ROWCOUNT > 0)
+			BEGIN
+				IF (EXISTS(	SELECT '!'
+										FROM inserted I INNER JOIN PROJECT P ON I.project_code = P.project_code
+										WHERE P.eind_datum < CURRENT_TIMESTAMP)
+					OR
+						EXISTS(	SELECT  '!'
+										FROM deleted D INNER JOIN PROJECT P ON D.project_code = P.project_code
+										WHERE P.eind_datum < CURRENT_TIMESTAMP))
+					BEGIN
+						THROW 50005, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
+					END
+			END
+	END
