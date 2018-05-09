@@ -34,6 +34,16 @@ INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'jan 2018', -1);
 INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2018', -80);
 ROLLBACK TRANSACTION
 
+--BR3
+--Misschien evt. een while loop met honderd jan pieters?
+BEGIN TRANSACTION --werken allemaal
+EXEC sp_MedewerkerToevoegen 'Zwart', 'Jan Pieter' --code: JZ
+EXEC sp_MedewerkerToevoegen 'Zweers', 'Johan' --code: JZ1
+EXEC sp_MedewerkerToevoegen 'Zweers', 'Jan' --code: JZ2
+SELECT * FROM medewerker
+ROLLBACK TRANSACTION
+
+
 -- BR7 Faal Test
 BEGIN TRANSACTION
 	PRINT 'Moeten falen: '

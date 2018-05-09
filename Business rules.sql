@@ -1,6 +1,52 @@
-
 USE LeanDb
+GO
+
+--BR3
+--medewerker(medewerker_code) bestaat uit de eerste letter van de voornaam, 
+--de eerste letter van de achternaam en 
+--een volgnummer dat met ��n verhoogd wanneer de medewerker code al bestaat.
+GO
+CREATE PROCEDURE sp_MedewerkerToevoegen
+					@achternaam CHAR(20), @voornaam CHAR(20)
+AS
+BEGIN
+BEGIN TRY
+DECLARE @va CHAR(2), @volgnummer INT, @code CHAR(4)
+
+--@va zijn de initialen (voor- en achternaam)
+SET @va = (SELECT SUBSTRING(@voornaam, 1, 1)) + (SELECT SUBSTRING(@achternaam, 1, 1))
+SET @volgnummer = (SELECT		COUNT(medewerker_code)
+				   FROM			medewerker m
+				   WHERE		SUBSTRING(m.medewerker_code, 1, 2) = @va
+				   GROUP BY		SUBSTRING(m.medewerker_code, 1, 2))
+
+IF(@volgnummer > 0)
+BEGIN
+	SET @code = @va + (CAST(@volgnummer AS CHAR))
+END
+ELSE
+BEGIN
+	SET @code = @va
+END
+
+INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
+VALUES(@code, @achternaam, @voornaam)
+
+END TRY
+BEGIN CATCH
+DECLARE @ERROR_MESSAGE NVARCHAR(4000), @ERROR_SEVERITY INT, @ERROR_STATE INT
+
+SELECT @ERROR_MESSAGE = ERROR_MESSAGE(),
+	   @ERROR_SEVERITY = ERROR_SEVERITY(),
+	   @ERROR_STATE = ERROR_STATE()
+
+RAISERROR (@ERROR_MESSAGE, @ERROR_SEVERITY, @ERROR_STATE )
+END CATCH
+END
+GO
+
 --PROCEDURE OM CONSTRAINTS TE DROPPEN ALS DEZE BESTAAN
+GO
 CREATE PROCEDURE SP_DROP_CONSTRAINT
 	@Constraint_name VARCHAR(255) = NULL,
 	@tablename VARCHAR(255) = NULL
@@ -27,7 +73,7 @@ EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_EINDDATUM_NA_BEGINDATUM', @tablen
 ALTER TABLE medewerker_beschikbaarheid
 		ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbaar_uren < 184 AND beschikbaar_uren > 0)
 
-
 --BR7 project(eind_datum) moet na project(begin_datum) vallen
 ALTER TABLE project WITH CHECK
 	ADD CONSTRAINT CK_EINDDATUM_NA_BEGINDATUM CHECK (eind_datum > begin_datum)
+
