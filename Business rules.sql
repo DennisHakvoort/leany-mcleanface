@@ -33,13 +33,9 @@ ALTER TRIGGER TG_PROJECT_VERSTREKEN_PROJECT
 	AFTER INSERT, UPDATE, DELETE
 	AS
 	BEGIN
-		SELECT *
-		FROM (project P INNER JOIN inserted I ON P.project_code = I.project_code) LEFT OUTER JOIN deleted D on P.project_code = D.project_code
-		WHERE (I.eind_datum < CURRENT_TIMESTAMP OR D.eind_datum < CURRENT_TIMESTAMP)
-
 		IF EXISTS(SELECT '!'
 							FROM (project P INNER JOIN inserted I ON P.project_code = I.project_code) LEFT OUTER JOIN deleted D on P.project_code = D.project_code
-							WHERE (I.eind_datum < CURRENT_TIMESTAMP OR D.eind_datum < CURRENT_TIMESTAMP)
+							WHERE (I.eind_datum < CURRENT_TIMESTAMP OR D.eind_datum < CURRENT_TIMESTAMP))
 
 			THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 	END
