@@ -17,7 +17,7 @@ CREATE PROCEDURE SP_DROP_CONSTRAINT
 
 --DROP ALL BUSINESS RULES
 EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_UREN_MIN_MAX', @tablename = 'medewerker_beschikbaarheid'
-EXEC SP_DROP_CONSTRAINT @Constraintname = 'CK_EINDDATUM_NA_BEGINDATUM', @tablename = 'project'
+EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_EINDDATUM_NA_BEGINDATUM', @tablename = 'project'
 
 
 --BUSINESS RULES--
