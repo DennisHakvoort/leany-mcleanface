@@ -1,12 +1,10 @@
-<<<<<<< HEAD
---BUSINESS RULES--
 USE LeanDb
 GO
 
 --BR3
 --medewerker(medewerker_code) bestaat uit de eerste letter van de voornaam, 
 --de eerste letter van de achternaam en 
---een volgnummer dat met één verhoogd wanneer de medewerker code al bestaat.
+--een volgnummer dat met ï¿½ï¿½n verhoogd wanneer de medewerker code al bestaat.
 GO
 CREATE PROCEDURE sp_MedewerkerToevoegen
 					@achternaam CHAR(20), @voornaam CHAR(20)
@@ -65,6 +63,7 @@ CREATE PROCEDURE SP_DROP_CONSTRAINT
 
 --DROP ALL BUSINESS RULES
 EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_UREN_MIN_MAX', @tablename = 'medewerker_beschikbaarheid'
+EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_EINDDATUM_NA_BEGINDATUM', @tablename = 'project'
 
 
 --BUSINESS RULES--
@@ -73,3 +72,8 @@ EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_UREN_MIN_MAX', @tablename = 'mede
 --BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
 ALTER TABLE medewerker_beschikbaarheid
 		ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbaar_uren < 184 AND beschikbaar_uren > 0)
+
+--BR7 project(eind_datum) moet na project(begin_datum) vallen
+ALTER TABLE project WITH CHECK
+	ADD CONSTRAINT CK_EINDDATUM_NA_BEGINDATUM CHECK (eind_datum > begin_datum)
+
