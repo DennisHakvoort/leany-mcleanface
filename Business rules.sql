@@ -6,6 +6,8 @@ GO
 --medewerker(medewerker_code) bestaat uit de eerste letter van de voornaam, 
 --de eerste letter van de achternaam en 
 --een volgnummer dat met één verhoogd wanneer de medewerker code al bestaat.
+
+DROP PROCEDURE sp_MedewerkerToevoegen
 GO
 CREATE PROCEDURE sp_MedewerkerToevoegen
 					@achternaam CHAR(20), @voornaam CHAR(20)
@@ -20,12 +22,15 @@ SET @a = (SELECT SUBSTRING(@achternaam, 1, 1))
 SET @volgnummer = (SELECT		COUNT(medewerker_code)
 				   FROM			medewerker m
 				   WHERE		SUBSTRING(m.medewerker_code, 1, 2) = @v + @a
-				   GROUP BY		medewerker_code)
-SET @code = @v + @a
+				   GROUP BY		SUBSTRING(m.medewerker_code, 1, 2))
 
 IF(@volgnummer > 0)
 BEGIN
-	SET @code = @code + @volgnummer
+	SET @code = @v + @a + (CAST (@volgnummer AS CHAR))
+END
+ELSE
+BEGIN
+	SET @code = @v + @a
 END
 
 INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
@@ -44,3 +49,6 @@ END CATCH
 END
 GO
 
+EXEC sp_MedewerkerToevoegen 'Zwart', 'Jan Pieter'
+EXEC sp_MedewerkerToevoegen 'Zweers', 'Johan'
+EXEC sp_MedewerkerToevoegen 'Zweers', 'Jan'
