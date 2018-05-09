@@ -42,7 +42,7 @@ BEGIN TRY
 							   )
 							   OR parent IS NULL
 							   ))
-	THROW 500020, 'Deze subcategorie heeft geen geldige hoofdcategorie', 16
+	THROW 50003, 'Deze subcategorie heeft geen geldige hoofdcategorie', 16
   END TRY
   BEGIN CATCH
     THROW
@@ -61,7 +61,7 @@ BEGIN TRY
 			 WHERE parent IS NULL AND naam = (SELECT parent
 											  FROM project_categorie
 											  )))
-		THROW 5000021, 'Kan geen categorie met met subcategoriën verwijderen', 16
+		THROW 50002, 'Kan geen categorie met met subcategoriën verwijderen', 16
   END TRY
   BEGIN CATCH
     THROW
