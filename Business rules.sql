@@ -58,7 +58,7 @@ BEGIN
 BEGIN TRY
   IF EXISTS ((SELECT naam
 			 FROM deleted
-			 WHERE parent IS NULL AND naam = (SELECT parent
+			 WHERE parent IS NULL AND naam IN (SELECT parent
 											  FROM project_categorie
 											  )))
 		THROW 50002, 'Kan geen categorie met met subcategoriën verwijderen', 16
