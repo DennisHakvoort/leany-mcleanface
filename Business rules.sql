@@ -5,13 +5,13 @@ GO
 
 --PROCEDURE OM CONSTRAINTS TE DROPPEN ALS DEZE BESTAAN
 GO
-CREATE PROCEDURE SP_DROP_CONSTRAINT
+CREATE PROCEDURE sp_DropConstriant
 	@Constraint_name VARCHAR(255) = NULL,
-	@tablename VARCHAR(255) = NULL
+	@table_name VARCHAR(255) = NULL
 	AS
 	BEGIN TRY
 		declare @sql NVARCHAR(255)
-    SELECT @sql = 'ALTER TABLE ' + @tablename + ' DROP CONSTRAINT ' + @Constraint_name;
+    SELECT @sql = 'ALTER TABLE ' + @table_name + ' DROP CONSTRAINT ' + @Constraint_name;
 		EXEC sys.sp_executesql @stmt = @sql
 	END TRY
 	BEGIN CATCH
@@ -20,8 +20,8 @@ CREATE PROCEDURE SP_DROP_CONSTRAINT
 	GO
 
 --DROP ALLE BUSINESS RULES
-EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_UREN_MIN_MAX', @tablename = 'medewerker_beschikbaarheid'
-EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_EINDDATUM_NA_BEGINDATUM', @tablename = 'project'
+EXEC sp_DropConstriant @Constraint_name = 'CK_UREN_MIN_MAX', @table_name = 'medewerker_beschikbaarheid'
+EXEC sp_DropConstriant @Constraint_name = 'CK_EINDDATUM_NA_BEGINDATUM', @table_name = 'project'
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenProject
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Ingepland
 DROP TRIGGER IF EXISTS trg_SubCategorieHeeftHoofdCategorie
