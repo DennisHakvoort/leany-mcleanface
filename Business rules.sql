@@ -28,6 +28,7 @@ DROP TRIGGER IF EXISTS trg_SubCategorieHeeftHoofdCategorie
 DROP TRIGGER IF EXISTS trg_GeenHoofdCategorieMetSubsVerwijderen
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Op_Project
 DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
+DROP PROCEDURE IF EXISTS spProjecturenInplannen
 
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 184
@@ -80,6 +81,70 @@ RAISERROR (@ERROR_MESSAGE, @ERROR_SEVERITY, @ERROR_STATE )
 END CATCH
 END
 GO
+
+-- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0
+-- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184
+
+DROP procedure spProjecturenInplannen
+CREATE PROCEDURE spProjecturenInplannen
+@medewerker_code CHAR(4),
+@project_code CHAR(20),
+@medewerker_uren INT,
+@maand_datum datetime
+AS BEGIN
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+
+	BEGIN TRY
+		IF (@medewerker_uren < 0)
+			BEGIN
+				RAISERROR('Invalide invoerwaarde - negatieve uren', 16, 1)
+			END
+	DECLARE @id int; -- id representeert de combinatie van een medewerker en project. Wordt uit de tabel medewerker_op_project
+		SET @id = (SELECT id
+					FROM	medewerker_op_project
+					where	medewerker_code = @medewerker_code
+						AND	project_code = @project_code)
+
+		IF EXISTS (	SELECT	1
+					FROM	medewerker_ingepland_project mip
+						INNER JOIN medewerker_op_project mop ON mip.id = mop.id
+						INNER JOIN project p on mop.project_code = p.project_code
+					WHERE	mop.medewerker_code = @medewerker_code
+						AND	FORMAT(mip.maand_datum, 'yyyy-MM') = FORMAT(GETDATE(), 'yyyy-MM') --format naar yyyy-MM zodat het vergeleken kan worden
+					GROUP BY medewerker_code
+					HAVING	SUM(mip.medewerker_uren) + @medewerker_uren <= 184) -- 184 is het maximum aantal uren per maand voor een medewerker
+			BEGIN
+				INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+					VALUES	(@id, @medewerker_uren, @maand_datum);
+			END
+		ELSE
+			RAISERROR('Totaal geplande uren van de medewerker is meer dan 184 uur', 16, 1)
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
 
 
 
