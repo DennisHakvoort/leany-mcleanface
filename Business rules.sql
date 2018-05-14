@@ -29,6 +29,7 @@ DROP TRIGGER IF EXISTS trg_GeenHoofdCategorieMetSubsVerwijderen
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Op_Project
 DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
 DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
+DROP PROC  IF EXISTS  sp_MedewerkerNietInplannenAlsNietBeschikbaar
 
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 184
@@ -81,6 +82,45 @@ RAISERROR (@ERROR_MESSAGE, @ERROR_SEVERITY, @ERROR_STATE )
 END CATCH
 END
 GO
+
+/*BR4 er kan geen record worden opgenomen in medewerker_ingepland_project voor een user die die
+maand niet beschikbaar is voor werk (waar medewerker_beschikbaarheid niet bestaat voor die user)*/
+
+GO
+CREATE PROC sp_MedewerkerNietInplannenAlsNietBeschikbaar
+@ID INT,
+@medewerker_Uren INT,
+@maand_datum DATETIME
+AS
+BEGIN
+	SET NOCOUNT ON
+	DECLARE @entryTrancount INT
+	SET @entryTrancount = @@TRANCOUNT
+	IF @entryTrancount > 0
+		SAVE TRANSACTION procTranTest
+	ELSE
+		BEGIN TRANSACTION
+	BEGIN TRY
+		BEGIN
+		 IF EXISTS (SELECT *
+FROM MEDEWERKER_OP_PROJECT m LEFT OUTER JOIN MEDEWERKER_INGEPLAND_PROJECT i ON m.ID = i.ID
+							 LEFT OUTER JOIN MEDEWERKER_BESCHIKBAARHEID b ON m.MEDEWERKER_CODE = b.MEDEWERKER_CODE
+WHERE @id = m.ID AND (b.BESCHIKBAAR_UREN = 0 OR b.BESCHIKBAAR_UREN IS NULL))
+BEGIN
+;THROW 50006, 'Medewerker heeft geen beschikbare uren en kan dus niet ingepland worden', 16
+END
+INSERT INTO MEDEWERKER_INGEPLAND_PROJECT (id, MEDEWERKER_UREN, MAAND_DATUM)
+VALUES (@id, @medewerker_Uren, @maand_datum)
+		END
+		IF @entryTrancount = 0
+			COMMIT TRANSACTION
+	END TRY
+	BEGIN CATCH
+	THROW
+	END CATCH
+END
+
+
 
 -- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0
 -- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184
