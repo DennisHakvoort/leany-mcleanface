@@ -37,35 +37,35 @@ ROLLBACK TRANSACTION
 -- BR5 Faal Test - negatieve waarden
 BEGIN TRANSACTION
 	BEGIN TRY
-		declare @date DATETIME = GETDATE();
+		DECLARE @date DATETIME = GETDATE();
 
-		insert into medewerker (medewerker_code, voornaam, achternaam)
-			values ('aa', 'arend', 'aas');
+		INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+			VALUES ('aa', 'arend', 'aas');
 
-		insert into project_categorie (naam, parent)
-			values	('onderwijs', null);
+		INSERT INTO project_categorie (naam, parent)
+			VALUES	('onderwijs', null);
 
-		insert into project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			values	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
 
-		insert into project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			values	('PROJC0101C2', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'niet zo generieke proj naam');
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES	('PROJC0101C2', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'niet zo generieke proj naam');
 	
-		insert into project_rol_type (project_rol)
-			values	('lector');
+		INSERT INTO project_rol_type (project_rol)
+			VALUES	('lector');
 
-		insert into medewerker_op_project (id, project_code, medewerker_code, project_rol)
-			values	(912012, 'PROJC0101C1', 'aa', 'lector');
+		INSERT INTO medewerker_op_project (id, project_code, medewerker_code, project_rol)
+			VALUES	(912012, 'PROJC0101C1', 'aa', 'lector');
 
-		insert into medewerker_op_project (id, project_code, medewerker_code, project_rol)
-			values	(912013, 'PROJC0101C2', 'aa', 'lector');
+		INSERT INTO medewerker_op_project (id, project_code, medewerker_code, project_rol)
+			VALUES	(912013, 'PROJC0101C2', 'aa', 'lector');
 
-		insert into medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-			values	(912013, 10, CONVERT(date, @date));
+		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+			VALUES	(912013, 10, CONVERT(date, @date));
 
-		insert into medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-			values	(912012, 10, CONVERT(date, @date));
-		exec spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = -10, @maand_datum = @date
+		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+			VALUES	(912012, 10, CONVERT(date, @date));
+		EXEC spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = -10, @maand_datum = @date
 		PRINT 'test mislukt'
 	END TRY
 	BEGIN CATCH
@@ -76,35 +76,35 @@ ROLLBACK TRANSACTION
 -- BR5 Faal Test - over de limit
 BEGIN TRANSACTION
 	BEGIN TRY
-		declare @date DATETIME = GETDATE();
+		DECLARE @date DATETIME = GETDATE();
 
-		insert into medewerker (medewerker_code, voornaam, achternaam)
-			values ('aa', 'arend', 'aas');
+		INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+			VALUES ('aa', 'arend', 'aas');
 
-		insert into project_categorie (naam, parent)
-			values	('onderwijs', null);
+		INSERT INTO project_categorie (naam, parent)
+			VALUES	('onderwijs', null);
 
-		insert into project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			values	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
 
-		insert into project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			values	('PROJC0101C2', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'niet zo generieke proj naam');
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES	('PROJC0101C2', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'niet zo generieke proj naam');
 	
-		insert into project_rol_type (project_rol)
-			values	('lector');
+		INSERT INTO project_rol_type (project_rol)
+			VALUES	('lector');
 
-		insert into medewerker_op_project (id, project_code, medewerker_code, project_rol)
-			values	(912012, 'PROJC0101C1', 'aa', 'lector');
+		INSERT INTO medewerker_op_project (id, project_code, medewerker_code, project_rol)
+			VALUES	(912012, 'PROJC0101C1', 'aa', 'lector');
 
-		insert into medewerker_op_project (id, project_code, medewerker_code, project_rol)
-			values	(912013, 'PROJC0101C2', 'aa', 'lector');
+		INSERT INTO medewerker_op_project (id, project_code, medewerker_code, project_rol)
+			VALUES	(912013, 'PROJC0101C2', 'aa', 'lector');
 
-		insert into medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-			values	(912013, 10, CONVERT(date, @date));
+		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+			VALUES	(912013, 10, CONVERT(date, @date));
 
-		insert into medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-			values	(912012, 10, CONVERT(date, @date));
-		exec spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 1000, @maand_datum = @date
+		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+			VALUES	(912012, 10, CONVERT(date, @date));
+		EXEC spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 1000, @maand_datum = @date
 		PRINT 'test mislukt'
 	END TRY
 	BEGIN CATCH
@@ -115,36 +115,35 @@ ROLLBACK TRANSACTION
 -- BR5 Succes Test
 BEGIN TRANSACTION
 	BEGIN TRY
-		declare @date DATETIME = GETDATE();
+		DECLARE @date DATETIME = GETDATE();
 
-		insert into medewerker (medewerker_code, voornaam, achternaam)
-			values ('aa', 'arend', 'aas');
+		INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+			VALUES ('aa', 'arend', 'aas');
 
-		insert into project_categorie (naam, parent)
-			values	('onderwijs', null);
+		INSERT INTO project_categorie (naam, parent)
+			VALUES	('onderwijs', null);
 
-		insert into project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			values	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
 
-		insert into project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			values	('PROJC0101C2', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'niet zo generieke proj naam');
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES	('PROJC0101C2', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'niet zo generieke proj naam');
 	
-		insert into project_rol_type (project_rol)
-			values	('lector');
+		INSERT INTO project_rol_type (project_rol)
+			VALUES	('lector');
 
-		insert into medewerker_op_project (id, project_code, medewerker_code, project_rol)
-			values	(912012, 'PROJC0101C1', 'aa', 'lector');
+		INSERT INTO medewerker_op_project (id, project_code, medewerker_code, project_rol)
+			VALUES	(912012, 'PROJC0101C1', 'aa', 'lector');
 
-		insert into medewerker_op_project (id, project_code, medewerker_code, project_rol)
-			values	(912013, 'PROJC0101C2', 'aa', 'lector');
+		INSERT INTO medewerker_op_project (id, project_code, medewerker_code, project_rol)
+			VALUES	(912013, 'PROJC0101C2', 'aa', 'lector');
 
-		insert into medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-			values	(912013, 10, CONVERT(date, @date));
+		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+			VALUES	(912013, 10, CONVERT(date, @date));
 
-		insert into medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-			values	(912012, 10, CONVERT(date, @date));
-	
-		exec spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 10, @maand_datum = @date
+		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+			VALUES	(912012, 10, CONVERT(date, @date));
+		EXEC spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 10, @maand_datum = @date
 		PRINT 'test succesvol verlopen' 
 	END TRY
 	BEGIN CATCH

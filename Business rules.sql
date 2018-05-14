@@ -23,7 +23,12 @@ CREATE PROCEDURE SP_DROP_CONSTRAINT
 EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_UREN_MIN_MAX', @tablename = 'medewerker_beschikbaarheid'
 EXEC SP_DROP_CONSTRAINT @Constraintname = 'CK_EINDDATUM_NA_BEGINDATUM', @tablename = 'project'
 EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_EINDDATUM_NA_BEGINDATUM', @tablename = 'project'
-DROP PROC spProjecturenInplannen
+
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'spProjecturenInplannen')
+BEGIN
+	DROP PROC spProjecturenInplannen
+END
+
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 184
 --BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
