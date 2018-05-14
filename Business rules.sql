@@ -28,7 +28,7 @@ DROP TRIGGER IF EXISTS trg_SubCategorieHeeftHoofdCategorie
 DROP TRIGGER IF EXISTS trg_GeenHoofdCategorieMetSubsVerwijderen
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Op_Project
 DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
-DROP PROCEDURE IF EXISTS spProjecturenInplannen
+DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
 
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 184
@@ -85,8 +85,8 @@ GO
 -- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0
 -- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184
 
-DROP procedure spProjecturenInplannen
-CREATE PROCEDURE spProjecturenInplannen
+DROP procedure sp_ProjecturenInplannen
+CREATE PROCEDURE sp_ProjecturenInplannen
 @medewerker_code CHAR(4),
 @project_code CHAR(20),
 @medewerker_uren INT,
