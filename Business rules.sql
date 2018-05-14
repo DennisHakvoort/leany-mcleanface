@@ -17,7 +17,7 @@ CREATE PROCEDURE SP_DROP_CONSTRAINT
 --DROP ALL BUSINESS RULES
 EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_UREN_MIN_MAX', @tablename = 'medewerker_beschikbaarheid'
 EXEC SP_DROP_CONSTRAINT @Constraintname = 'CK_EINDDATUM_NA_BEGINDATUM', @tablename = 'project'
-
+DROP PROC spProjecturenInplannen
 
 --BUSINESS RULES--
 
@@ -28,8 +28,10 @@ ALTER TABLE medewerker_beschikbaarheid
 
 -- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0
 -- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184
+
+DROP procedure spProjecturenInplannen
 CREATE PROCEDURE spProjecturenInplannen
-@medewerker_code INT,
+@medewerker_code CHAR(4),
 @project_code CHAR(20),
 @medewerker_uren INT,
 @maand_datum datetime
@@ -60,15 +62,16 @@ AS BEGIN
 					FROM	medewerker_ingepland_project mip
 						INNER JOIN medewerker_op_project mop ON mip.id = mop.id 
 						INNER JOIN project p on mop.project_code = p.project_code 
-					WHERE	mop.medewerker_code = 'a' --@medewerker_code
-						AND	FORMAT(mip.maand_datum, 'yyyy-MM') = FORMAT(GETDATE(), 'yyyy-MM') --format zodat het vergeleken kan worden
+					WHERE	mop.medewerker_code = @medewerker_code
+						AND	FORMAT(mip.maand_datum, 'yyyy-MM') = FORMAT(GETDATE(), 'yyyy-MM') --format naar yyyy-MM zodat het vergeleken kan worden
 					GROUP BY medewerker_code
-					HAVING	SUM(mip.medewerker_uren) /*+ @medewerker_uren*/ <= 184) -- 184 is het maximum aantal uren per maand voor een medewerker
-
-			INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-				VALUES	(@id, @medewerker_uren, @maand_datum);
+					HAVING	SUM(mip.medewerker_uren) + @medewerker_uren <= 184) -- 184 is het maximum aantal uren per maand voor een medewerker
+			BEGIN
+				INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+					VALUES	(@id, @medewerker_uren, @maand_datum);
+			END
 		ELSE
-			RAISERROR('Het totale geplande uren van de medewerker is meer dan 184 uur', 16, 1)
+			RAISERROR('Totaal geplande uren van de medewerker is meer dan 184 uur', 16, 1)
 
 		IF @TranCounter = 0 AND XACT_STATE() = 1
 			COMMIT TRANSACTION;
@@ -119,13 +122,4 @@ BEGIN TRANSACTION
 	insert into medewerker_ingepland_project (id, medewerker_uren, maand_datum)
 		values	(912012, 10, CONVERT(date, GETDATE()))
 
-
-	(	SELECT	sum(1)
-					FROM	medewerker_ingepland_project mip
-						INNER JOIN medewerker_op_project mop ON mip.id = mop.id 
-						INNER JOIN project p on mop.project_code = p.project_code 
-					WHERE	mop.medewerker_code = 'aa' --@medewerker_code
-						AND FORMAT(mip.maand_datum, 'yyyy-MM') = FORMAT(GETDATE(), 'yyyy-MM') --@maand_datum
-					GROUP BY medewerker_code
-					HAVING	SUM(mip.medewerker_uren) /*+ @medewerker_uren*/ <= 184) -- 184 is het maximum aantal uren per maand voor een medewerker
 ROLLBACK TRANSACTION
