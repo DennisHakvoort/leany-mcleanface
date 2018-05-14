@@ -34,6 +34,15 @@ INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'jan 2018', -1);
 INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2018', -80);
 ROLLBACK TRANSACTION
 
+--BR3
+--Misschien evt. een while loop met honderd jan pieters?
+BEGIN TRANSACTION --werken allemaal
+EXEC sp_MedewerkerToevoegen 'Zwart', 'Jan Pieter' --code: JZ
+EXEC sp_MedewerkerToevoegen 'Zweers', 'Johan' --code: JZ1
+EXEC sp_MedewerkerToevoegen 'Zweers', 'Jan' --code: JZ2
+SELECT * FROM medewerker
+ROLLBACK TRANSACTION
+
 -- BR5 Faal Test - negatieve waarden
 BEGIN TRANSACTION
 	BEGIN TRY
@@ -50,7 +59,7 @@ BEGIN TRANSACTION
 
 		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
 			VALUES	('PROJC0101C2', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'niet zo generieke proj naam');
-	
+
 		INSERT INTO project_rol_type (project_rol)
 			VALUES	('lector');
 
@@ -89,7 +98,7 @@ BEGIN TRANSACTION
 
 		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
 			VALUES	('PROJC0101C2', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'niet zo generieke proj naam');
-	
+
 		INSERT INTO project_rol_type (project_rol)
 			VALUES	('lector');
 
@@ -128,7 +137,7 @@ BEGIN TRANSACTION
 
 		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
 			VALUES	('PROJC0101C2', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'niet zo generieke proj naam');
-	
+
 		INSERT INTO project_rol_type (project_rol)
 			VALUES	('lector');
 
@@ -144,12 +153,74 @@ BEGIN TRANSACTION
 		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
 			VALUES	(912012, 10, CONVERT(date, @date));
 		EXEC spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 10, @maand_datum = @date
-		PRINT 'test succesvol verlopen' 
+		PRINT 'test succesvol verlopen'
 	END TRY
 	BEGIN CATCH
 		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message'
 	END CATCH
 ROLLBACK TRANSACTION
+
+
+-- BR7 Faal Test - single insert
+BEGIN TRANSACTION
+	BEGIN TRY
+		INSERT INTO project_categorie (naam, parent)
+			VALUES ('testCat', null);
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()-1)), 'generieke projectnaam');
+		PRINT 'Test mislsukt'
+	END TRY
+	BEGIN CATCH
+		SELECT 'test succesvol verlopen' as 'resultaat', ERROR_MESSAGE() as 'error message'
+	END CATCH
+ROLLBACK TRANSACTION
+GO
+-- BR7 Faal test multi insert - 1 geldig 1 ongeldig
+BEGIN TRANSACTION
+	BEGIN TRY
+		INSERT INTO project_categorie (naam, parent)
+			VALUES ('testCat', null);
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam'); -- geldig data
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()-1)), 'generieke projectnaam'); -- ongeldig data
+		PRINT 'Test mislsukt'
+	END TRY
+	BEGIN CATCH
+		SELECT 'test succesvol verlopen' as 'resultaat', ERROR_MESSAGE() as 'error message'
+	END CATCH
+ROLLBACK TRANSACTION
+GO
+
+-- BR7 Succes Test single insert
+BEGIN TRANSACTION
+	BEGIN TRY
+		INSERT INTO project_categorie (naam, parent)
+			VALUES ('testCat', null);
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam');
+		PRINT 'test succesvol verlopen'
+	END TRY
+	BEGIN CATCH
+		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message'
+	END CATCH
+ROLLBACK
+
+-- BR7 Succes Test multi inserts
+BEGIN TRANSACTION
+	BEGIN TRY
+		INSERT INTO project_categorie (naam, parent)
+			VALUES ('testCat', null);
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam');
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES ('PROJC99998P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam2');
+		PRINT 'test succesvol verlopen'
+	END TRY
+	BEGIN CATCH
+		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message'
+	END CATCH
+ROLLBACK
 
 /* tests voor BR8*/
 --Voeg een hoofdcategorie toe.
@@ -197,72 +268,146 @@ DELETE FROM PROJECT_CATEGORIE
 WHERE naam = 'bedrijf1'
 ROLLBACK TRANSACTION
 
---BR3
---Misschien evt. een while loop met honderd jan pieters?
-BEGIN TRANSACTION --werken allemaal
-EXEC sp_MedewerkerToevoegen 'Zwart', 'Jan Pieter' --code: JZ
-EXEC sp_MedewerkerToevoegen 'Zweers', 'Johan' --code: JZ1
-EXEC sp_MedewerkerToevoegen 'Zweers', 'Jan' --code: JZ2
-SELECT * FROM medewerker
+-- BR9 BR9 De waarden van project, medewerker op project en medewerker_ingepland_project
+-- kunnen niet meer worden aangepast als project(eind_datum) is verstreken,
+-- Project
+-- Success
+BEGIN TRANSACTION
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2019', '22 feb 2019', 'testerdetest')
+UPDATE project SET begin_datum = '23 sep 2018' WHERE project_code = 1
+DELETE FROM project WHERE project_code = 1
 ROLLBACK TRANSACTION
 
--- BR7 Faal Test - single insert
+-- Mislukking
+-- [S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
-	BEGIN TRY
-		INSERT INTO project_categorie (naam, parent)
-			VALUES ('testCat', null);
-		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()-1)), 'generieke projectnaam');
-		PRINT 'Test mislsukt' 
-	END TRY
-	BEGIN CATCH
-		SELECT 'test succesvol verlopen' as 'resultaat', ERROR_MESSAGE() as 'error message'
-	END CATCH
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2018', '22 feb 2018', 'testerdetest')
 ROLLBACK TRANSACTION
-GO
--- BR7 Faal test multi insert - 1 geldig 1 ongeldig
+
+-- Mislukking
+-- [S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
-	BEGIN TRY
-		INSERT INTO project_categorie (naam, parent)
-			VALUES ('testCat', null);
-		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam'); -- geldig data
-		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()-1)), 'generieke projectnaam'); -- ongeldig data
-		PRINT 'Test mislsukt' 
-	END TRY
-	BEGIN CATCH
-		SELECT 'test succesvol verlopen' as 'resultaat', ERROR_MESSAGE() as 'error message'
-	END CATCH
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2016', '22 feb 2019', 'testerdetest')
+UPDATE project SET eind_datum = '23 sep 2017' WHERE project_code = 1
 ROLLBACK TRANSACTION
-GO
 
--- BR7 Succes Test single insert
+-- Mislukking
+-- [S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
-	BEGIN TRY
-		INSERT INTO project_categorie (naam, parent)
-			VALUES ('testCat', null);
-		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam');
-		PRINT 'test succesvol verlopen' 
-	END TRY
-	BEGIN CATCH
-		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message'
-	END CATCH
-ROLLBACK
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2017', CURRENT_TIMESTAMP, 'testerdetest')
+WAITFOR DELAY '00:00:01'
+UPDATE project SET eind_datum = '27 feb 2020' WHERE project_code = 1
+ROLLBACK TRANSACTION
 
--- BR7 Succes Test multi inserts
+-- Mislukking
+-- [S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
-	BEGIN TRY
-		INSERT INTO project_categorie (naam, parent)
-			VALUES ('testCat', null);
-		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam');
-		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			VALUES ('PROJC99998P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam2');
-		PRINT 'test succesvol verlopen' 
-	END TRY
-	BEGIN CATCH
-		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message'
-	END CATCH
-ROLLBACK
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2016', '22 feb 2019', 'testerdetest')
+UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
+WAITFOR DELAY '00:00:01'
+DELETE FROM project WHERE project_code = 1
+ROLLBACK TRANSACTION
+
+-- Medewerker_ingepland_project
+-- Success
+BEGIN TRANSACTION
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2019', '22 feb 2019', 'testerdetest')
+INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
+INSERT INTO project_rol_type VALUES ('tester')
+INSERT INTO medewerker_op_project VALUES (1, 1, 'JP', 'tester')
+INSERT INTO medewerker_ingepland_project VALUES (1, 10, 'feb 2019')
+ROLLBACK TRANSACTION
+
+--Mislukking
+--[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+BEGIN TRANSACTION
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest')
+INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
+INSERT INTO project_rol_type VALUES ('tester')
+INSERT INTO medewerker_op_project VALUES (1, 1, 'JP', 'tester')
+WAITFOR DELAY '00:00:01'
+INSERT INTO medewerker_ingepland_project VALUES (1, 10, 'feb 2019')
+ROLLBACK TRANSACTION
+
+--Mislukking
+--[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+BEGIN TRANSACTION
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
+INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
+INSERT INTO project_rol_type VALUES ('tester')
+INSERT INTO medewerker_op_project VALUES (1, 1, 'JP', 'tester')
+INSERT INTO medewerker_ingepland_project VALUES (1, 10, 'feb 2019')
+UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
+WAITFOR DELAY '00:00:01'
+UPDATE medewerker_ingepland_project SET medewerker_uren = 10 WHERE id = 1
+ROLLBACK TRANSACTION
+
+--Mislukking
+--[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+BEGIN TRANSACTION
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
+INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
+INSERT INTO project_rol_type VALUES ('tester')
+INSERT INTO medewerker_op_project VALUES (1, 1, 'JP', 'tester')
+INSERT INTO medewerker_ingepland_project VALUES (1, 10, 'feb 2019')
+UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
+WAITFOR DELAY '00:00:01'
+DELETE FROM medewerker_ingepland_project WHERE id = 1
+ROLLBACK TRANSACTION
+
+-- medewerker_op_project
+-- Success
+BEGIN TRANSACTION
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2019', '22 feb 2019', 'testerdetest')
+INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
+INSERT INTO project_rol_type VALUES ('tester')
+INSERT INTO medewerker_op_project VALUES (1, 1, 'JP', 'tester')
+ROLLBACK TRANSACTION
+
+--Mislukking
+--[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+BEGIN TRANSACTION
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest')
+INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
+INSERT INTO project_rol_type VALUES ('tester')
+WAITFOR DELAY '00:00:01'
+INSERT INTO medewerker_op_project VALUES (1, 1, 'JP', 'tester')
+ROLLBACK TRANSACTION
+
+--Mislukking
+--[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+BEGIN TRANSACTION
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
+INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
+INSERT INTO medewerker VALUES ('JD', 'Jan', 'Dieter')
+INSERT INTO project_rol_type VALUES ('tester')
+INSERT INTO medewerker_op_project VALUES (1, 1, 'JP', 'tester')
+UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
+WAITFOR DELAY '00:00:01'
+UPDATE medewerker_op_project SET medewerker_code = 'JD' WHERE project_code = 1
+ROLLBACK TRANSACTION
+
+--Mislukking
+--[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+BEGIN TRANSACTION
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
+INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
+INSERT INTO project_rol_type VALUES ('tester')
+INSERT INTO medewerker_op_project VALUES (1, 1, 'JP', 'tester')
+UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
+WAITFOR DELAY '00:00:01'
+DELETE FROM medewerker_op_project WHERE project_code = 1
+ROLLBACK TRANSACTION

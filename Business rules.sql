@@ -5,13 +5,13 @@ GO
 
 --PROCEDURE OM CONSTRAINTS TE DROPPEN ALS DEZE BESTAAN
 GO
-CREATE PROCEDURE SP_DROP_CONSTRAINT
+CREATE PROCEDURE sp_DropConstraint
 	@Constraint_name VARCHAR(255) = NULL,
-	@tablename VARCHAR(255) = NULL
+	@table_name VARCHAR(255) = NULL
 	AS
 	BEGIN TRY
 		declare @sql NVARCHAR(255)
-    SELECT @sql = 'ALTER TABLE ' + @tablename + ' DROP CONSTRAINT ' + @Constraint_name;
+    SELECT @sql = 'ALTER TABLE ' + @table_name + ' DROP CONSTRAINT ' + @Constraint_name;
 		EXEC sys.sp_executesql @stmt = @sql
 	END TRY
 	BEGIN CATCH
@@ -19,15 +19,16 @@ CREATE PROCEDURE SP_DROP_CONSTRAINT
 	END CATCH
 	GO
 
---DROP ALL BUSINESS RULES
-EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_UREN_MIN_MAX', @tablename = 'medewerker_beschikbaarheid'
-EXEC SP_DROP_CONSTRAINT @Constraintname = 'CK_EINDDATUM_NA_BEGINDATUM', @tablename = 'project'
-EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_EINDDATUM_NA_BEGINDATUM', @tablename = 'project'
-
-IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'spProjecturenInplannen')
-BEGIN
-	DROP PROC spProjecturenInplannen
-END
+--DROP ALLE BUSINESS RULES
+EXEC sp_DropConstraint @Constraint_name = 'CK_UREN_MIN_MAX', @table_name = 'medewerker_beschikbaarheid'
+EXEC sp_DropConstraint @Constraint_name = 'CK_EINDDATUM_NA_BEGINDATUM', @table_name = 'project'
+DROP TRIGGER IF EXISTS trg_ProjectVerstrekenProject
+DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Ingepland
+DROP TRIGGER IF EXISTS trg_SubCategorieHeeftHoofdCategorie
+DROP TRIGGER IF EXISTS trg_GeenHoofdCategorieMetSubsVerwijderen
+DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Op_Project
+DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
+DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
 
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 184
@@ -35,10 +36,12 @@ END
 ALTER TABLE medewerker_beschikbaarheid
 		ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbaar_uren < 184 AND beschikbaar_uren > 0)
 
+
+
 --BR3
---medewerker(medewerker_code) bestaat uit de eerste letter van de voornaam, 
---de eerste letter van de achternaam en 
---een volgnummer dat met ��n verhoogd wanneer de medewerker code al bestaat.
+--medewerker(medewerker_code) bestaat uit de eerste letter van de voornaam,
+--de eerste letter van de achternaam en
+--een volgnummer dat met één verhoogd wanneer de medewerker code al bestaat.
 GO
 CREATE PROCEDURE sp_MedewerkerToevoegen
 					@achternaam CHAR(20), @voornaam CHAR(20)
@@ -82,14 +85,14 @@ GO
 -- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0
 -- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184
 
-DROP procedure spProjecturenInplannen
-CREATE PROCEDURE spProjecturenInplannen
+DROP procedure sp_ProjecturenInplannen
+CREATE PROCEDURE sp_ProjecturenInplannen
 @medewerker_code CHAR(4),
 @project_code CHAR(20),
 @medewerker_uren INT,
 @maand_datum datetime
 AS BEGIN
-	SET NOCOUNT ON 
+	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 
 	DECLARE @TranCounter INT;
@@ -113,8 +116,8 @@ AS BEGIN
 
 		IF EXISTS (	SELECT	1
 					FROM	medewerker_ingepland_project mip
-						INNER JOIN medewerker_op_project mop ON mip.id = mop.id 
-						INNER JOIN project p on mop.project_code = p.project_code 
+						INNER JOIN medewerker_op_project mop ON mip.id = mop.id
+						INNER JOIN project p on mop.project_code = p.project_code
 					WHERE	mop.medewerker_code = @medewerker_code
 						AND	FORMAT(mip.maand_datum, 'yyyy-MM') = FORMAT(GETDATE(), 'yyyy-MM') --format naar yyyy-MM zodat het vergeleken kan worden
 					GROUP BY medewerker_code
@@ -131,30 +134,29 @@ AS BEGIN
 	END TRY
 
 	BEGIN CATCH
-			IF @TranCounter = 0 
+			IF @TranCounter = 0
 			BEGIN
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
 				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
-			END;	
+			END;
 		THROW
 	END CATCH
 END
+
+
 
 --BR7 project(eind_datum) moet na project(begin_datum) vallen
 ALTER TABLE project WITH CHECK
 	ADD CONSTRAINT CK_EINDDATUM_NA_BEGINDATUM CHECK (eind_datum > begin_datum)
 
+
+
 /*BR8 project_categorie(parent) moet een waarde zijn
 uit de project_categorie(naam) of NULL. Het kan niet naar zichzelf verwijzen.*/
-USE LeanDb
-DROP TRIGGER IF EXISTS TG_subCategorieHeeftHoofdCategorie
-DROP TRIGGER IF EXISTS TG_geenHoofdCategorieMetSubsVerwijderen
-GO
-
-CREATE TRIGGER TG_subCategorieHeeftHoofdCategorie
+CREATE TRIGGER trg_SubCategorieHeeftHoofdCategorie
   ON project_categorie
   AFTER INSERT, UPDATE
 AS
@@ -176,7 +178,7 @@ BEGIN TRY
 END
 GO
 
-CREATE TRIGGER TG_geenHoofdCategorieMetSubsVerwijderen
+CREATE TRIGGER trg_GeenHoofdCategorieMetSubsVerwijderen
   ON project_categorie
   AFTER DELETE
 AS
@@ -194,3 +196,65 @@ BEGIN TRY
   END CATCH
 END
 GO
+
+
+
+-- BR9 De waarden van project, medewerker op project en medewerker_ingepland_project
+-- kunnen niet meer worden aangepast als project(eind_datum) is verstreken,
+
+CREATE TRIGGER trg_ProjectVerstrekenProject
+	ON project
+	AFTER INSERT, UPDATE, DELETE
+	AS
+	BEGIN
+		IF(@@ROWCOUNT > 0)
+			BEGIN
+				IF (EXISTS(SELECT '!'
+									FROM inserted
+									WHERE eind_datum < CURRENT_TIMESTAMP)
+				OR (EXISTS(	SELECT '!'
+										FROM deleted
+										WHERE eind_datum < CURRENT_TIMESTAMP)))
+				THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
+			END
+	END
+
+CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Ingepland
+	ON medewerker_ingepland_project
+	AFTER INSERT, UPDATE, DELETE
+	AS
+	BEGIN
+		IF (@@ROWCOUNT > 0)
+			BEGIN
+				IF (EXISTS(	SELECT '!'
+										FROM (inserted I INNER JOIN medewerker_op_project MIP ON I.id = MIP.id) INNER JOIN project P on MIP.project_code = P.project_code
+										WHERE P.eind_datum < CURRENT_TIMESTAMP)
+					OR
+						EXISTS( SELECT '!'
+										FROM (deleted D INNER JOIN medewerker_op_project MIP ON D.id = MIP.id) INNER JOIN project P on MIP.project_code = P.project_code
+										WHERE P.eind_datum < CURRENT_TIMESTAMP))
+					BEGIN
+						THROW 50004, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
+					END
+			END
+	END
+
+CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
+	ON medewerker_op_project
+	AFTER UPDATE, INSERT, DELETE
+	AS
+	BEGIN
+		IF(@@ROWCOUNT > 0)
+			BEGIN
+				IF (EXISTS(	SELECT '!'
+										FROM inserted I INNER JOIN PROJECT P ON I.project_code = P.project_code
+										WHERE P.eind_datum < CURRENT_TIMESTAMP)
+					OR
+						EXISTS(	SELECT  '!'
+										FROM deleted D INNER JOIN PROJECT P ON D.project_code = P.project_code
+										WHERE P.eind_datum < CURRENT_TIMESTAMP))
+					BEGIN
+						THROW 50005, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
+					END
+			END
+	END
