@@ -36,7 +36,6 @@ ROLLBACK TRANSACTION
 
 -- BR5 Faal Test - negatieve waarden
 BEGIN TRANSACTION
-	PRINT 'Moet falen:'
 	BEGIN TRY
 		insert into medewerker (medewerker_code, voornaam, achternaam)
 			values ('aa', 'arend', 'aas')
@@ -66,16 +65,15 @@ BEGIN TRANSACTION
 			values	(912012, 10, CONVERT(date, GETDATE()))
 
 		exec spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = -10, @maand_datum = '2018-6-14'
-		PRINT 'test gefaald'
+		PRINT 'test mislukt'
 	END TRY
 	BEGIN CATCH
-		PRINT 'test succesvol gefaald'
+		PRINT 'test succesvol verlopen'
 	END CATCH
 ROLLBACK TRANSACTION
 
 -- BR5 Faal Test - over de limit
 BEGIN TRANSACTION
-	PRINT 'Moet falen:'
 	BEGIN TRY
 		insert into medewerker (medewerker_code, voornaam, achternaam)
 			values ('aa', 'arend', 'aas')
@@ -104,16 +102,15 @@ BEGIN TRANSACTION
 		insert into medewerker_ingepland_project (id, medewerker_uren, maand_datum)
 			values	(912012, 10, CONVERT(date, GETDATE()))
 		exec spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 1000, @maand_datum = '2018-6-14'
-		PRINT 'test gefaald'
+		PRINT 'test mislukt'
 	END TRY
 	BEGIN CATCH
-		PRINT 'test succesvol gefaald'
+		PRINT 'test succesvol verlopen'
 	END CATCH
 ROLLBACK TRANSACTION
 
 -- BR5 Succes Test
 BEGIN TRANSACTION
-	PRINT 'Moet succesvol zijn: '
 	BEGIN TRY
 		insert into medewerker (medewerker_code, voornaam, achternaam)
 			values ('aa', 'arend', 'aas')
@@ -143,42 +140,93 @@ BEGIN TRANSACTION
 			values	(912012, 10, CONVERT(date, GETDATE()))
 	
 		exec spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 10, @maand_datum = '2018-6-14'
-		PRINT 'test succesvol' 
+		PRINT 'test succesvol verlopen' 
 	END TRY
 	BEGIN CATCH
-		PRINT 'test gefaald'
+		PRINT 'test mislukt'
 	END CATCH
 ROLLBACK TRANSACTION
 
+/* tests voor BR8*/
+--Voeg een hoofdcategorie toe.
+--gaat goed
+BEGIN TRANSACTION
+INSERT INTO PROJECT_CATEGORIE
+VALUES ('subsidie', NULL)
+ROLLBACK TRANSACTION
 
-select * from medewerker
+--voeg een subcategorie met een niet bestaande hoofdcategorie toe
+--Geeft error 50003 [2018-05-09 11:56:40] [S00016][50003] Deze subcategorie heeft geen geldige hoofdcategorie
+BEGIN TRANSACTION
+INSERT INTO PROJECT_CATEGORIE
+VALUES ('school', 'onderwijs')
+ROLLBACK TRANSACTION
+
+--voeg een subcategorie toe met een bestaande hoofdcategorie
+--gaat goed
+BEGIN TRANSACTION
+INSERT INTO PROJECT_CATEGORIE (naam, parent)
+VALUES ('subsidie', NULL)
+INSERT INTO PROJECT_CATEGORIE (naam, parent)
+VALUES ('bedrijf1', 'subsidie')
+ROLLBACK TRANSACTION
+
+--verwijder een hoofdcategorie die een subcategorie bevat.
+--Geeft error [50002] Kan geen categorie met met subcategoriën verwijderen
+BEGIN TRANSACTION
+INSERT INTO PROJECT_CATEGORIE
+VALUES ('subsidie', NULL)
+INSERT INTO PROJECT_CATEGORIE
+VALUES ('bedrijf1', 'subsidie')
+DELETE FROM PROJECT_CATEGORIE
+WHERE naam = 'subsidie'
+ROLLBACK TRANSACTION
+
+--Verwijdert een subcategorie met geldige hoofdcategorie.
+--gaat goed
+BEGIN TRANSACTION
+INSERT INTO PROJECT_CATEGORIE
+VALUES ('subsidie', NULL)
+INSERT INTO PROJECT_CATEGORIE
+VALUES ('bedrijf1', 'subsidie')
+DELETE FROM PROJECT_CATEGORIE
+WHERE naam = 'bedrijf1'
+ROLLBACK TRANSACTION
+
+--BR3
+--Misschien evt. een while loop met honderd jan pieters?
+BEGIN TRANSACTION --werken allemaal
+EXEC sp_MedewerkerToevoegen 'Zwart', 'Jan Pieter' --code: JZ
+EXEC sp_MedewerkerToevoegen 'Zweers', 'Johan' --code: JZ1
+EXEC sp_MedewerkerToevoegen 'Zweers', 'Jan' --code: JZ2
+SELECT * FROM medewerker
+ROLLBACK TRANSACTION
+
 -- BR7 Faal Test
 BEGIN TRANSACTION
-	PRINT 'Moet falen: '
 	BEGIN TRY
 		INSERT INTO project_categorie (naam, parent)
 			VALUES ('testCat', null);
 		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
 			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()-1)), 'generieke projectnaam');
-		PRINT 'test gefaald' 
+		PRINT 'Test mislsukt' 
 	END TRY
 	BEGIN CATCH
-		PRINT 'test succesvol gefaald'
+		PRINT 'test succesvol verlopen'
 	END CATCH
 ROLLBACK TRANSACTION
 GO
 
 -- BR7 Succes Test
 BEGIN TRANSACTION
-	PRINT 'Moet succesvol zijn: '
 	BEGIN TRY
 		INSERT INTO project_categorie (naam, parent)
 			VALUES ('testCat', null);
 		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
 			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam');
-		PRINT 'test succesvol' 
+		PRINT 'test succesvol verlopen' 
 	END TRY
 	BEGIN CATCH
-		PRINT 'test gefaald'
+		PRINT 'test mislukt'
 	END CATCH
 ROLLBACK
