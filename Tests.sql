@@ -60,7 +60,7 @@ INSERT INTO MEDEWERKER_OP_PROJECT (ID, PROJECT_CODE, MEDEWERKER_CODE, PROJECT_RO
 VALUES (1, 'PR', 'GB', 'baas')
 INSERT INTO MEDEWERKER_BESCHIKBAARHEID (MEDEWERKER_CODE, maand, BESCHIKBAAR_UREN)
 VALUES ('GB', '01-03-2002', 50)
-EXEC sp_MedewerkerNietInplannenAlsNietBeschikbaar 1, 50, '01-03-2001'
+EXEC sp_InsertMedewerkerIngepland 1, 50, '01-03-2001'
 ROLLBACK TRANSACTION
 
 
@@ -81,7 +81,7 @@ INSERT INTO MEDEWERKER_OP_PROJECT (ID, PROJECT_CODE, MEDEWERKER_CODE, PROJECT_RO
 VALUES (1, 'PR', 'GB', 'baas')
 INSERT INTO MEDEWERKER_BESCHIKBAARHEID (MEDEWERKER_CODE, maand, BESCHIKBAAR_UREN)
 VALUES ('GB', '01-03-2002', 0)
-EXEC sp_MedewerkerNietInplannenAlsNietBeschikbaar 1, 50, '01-03-2001'
+EXEC sp_InsertMedewerkerIngepland 1, 50, '01-03-2001'
 ROLLBACK TRANSACTION
 
 --Insert geplande uren voor iemand die beschikbaarheid nog niet doorgegeven heeft.
@@ -98,7 +98,7 @@ INSERT INTO PROJECT_ROL_TYPE (project_rol)
 VALUES ('baas')
 INSERT INTO MEDEWERKER_OP_PROJECT (ID, PROJECT_CODE, MEDEWERKER_CODE, PROJECT_ROL)
 VALUES (1, 'PR', 'GB', 'baas')
-EXEC sp_MedewerkerNietInplannenAlsNietBeschikbaar 1, 50, '01-03-2001'
+EXEC sp_InsertMedewerkerIngepland 1, 50, '01-03-2001'
 ROLLBACK TRANSACTION
 
 -- BR5 Faal Test - negatieve waarden

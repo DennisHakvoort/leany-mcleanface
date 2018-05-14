@@ -29,13 +29,13 @@ DROP TRIGGER IF EXISTS trg_GeenHoofdCategorieMetSubsVerwijderen
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Op_Project
 DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
 DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
-DROP PROC  IF EXISTS  sp_MedewerkerNietInplannenAlsNietBeschikbaar
+DROP PROC  IF EXISTS  sp_InsertMedewerkerIngepland
 
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 184
 --BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
 ALTER TABLE medewerker_beschikbaarheid
-		ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbaar_uren < 184 AND beschikbaar_uren > 0)
+		ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbaar_uren <= 184 AND beschikbaar_uren >= 0)
 
 
 
@@ -87,21 +87,22 @@ GO
 maand niet beschikbaar is voor werk (waar medewerker_beschikbaarheid niet bestaat voor die user)*/
 
 GO
-CREATE PROC sp_MedewerkerNietInplannenAlsNietBeschikbaar
+CREATE PROCEDURE sp_InsertMedewerkerIngepland
 @ID INT,
 @medewerker_Uren INT,
 @maand_datum DATETIME
 AS
-BEGIN
-	SET NOCOUNT ON
-	DECLARE @entryTrancount INT
-	SET @entryTrancount = @@TRANCOUNT
-	IF @entryTrancount > 0
-		SAVE TRANSACTION procTranTest
+	SET NOCOUNT ON 
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
 	ELSE
-		BEGIN TRANSACTION
+		BEGIN TRANSACTION;
+
 	BEGIN TRY
-		BEGIN
+	BEGIN
 		 IF EXISTS (SELECT *
 FROM MEDEWERKER_OP_PROJECT m LEFT OUTER JOIN MEDEWERKER_INGEPLAND_PROJECT i ON m.ID = i.ID
 							 LEFT OUTER JOIN MEDEWERKER_BESCHIKBAARHEID b ON m.MEDEWERKER_CODE = b.MEDEWERKER_CODE
@@ -112,14 +113,21 @@ END
 INSERT INTO MEDEWERKER_INGEPLAND_PROJECT (id, MEDEWERKER_UREN, MAAND_DATUM)
 VALUES (@id, @medewerker_Uren, @maand_datum)
 		END
-		IF @entryTrancount = 0
-			COMMIT TRANSACTION
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
-	THROW
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+                IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
 	END CATCH
-END
-
+GO
 
 
 -- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0
