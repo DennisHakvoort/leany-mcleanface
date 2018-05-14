@@ -129,3 +129,51 @@ UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
 WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_ingepland_project WHERE id = 1
 ROLLBACK TRANSACTION
+
+-- medewerker_op_project
+-- Success
+BEGIN TRANSACTION
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2019', '22 feb 2019', 'testerdetest')
+INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
+INSERT INTO project_rol_type VALUES ('tester')
+INSERT INTO medewerker_op_project VALUES (1, 1, 'JP', 'tester')
+ROLLBACK TRANSACTION
+
+--Mislukking
+--[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+BEGIN TRANSACTION
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest')
+INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
+INSERT INTO project_rol_type VALUES ('tester')
+WAITFOR DELAY '00:00:01'
+INSERT INTO medewerker_op_project VALUES (1, 1, 'JP', 'tester')
+ROLLBACK TRANSACTION
+
+--Mislukking
+--[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+BEGIN TRANSACTION
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
+INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
+INSERT INTO medewerker VALUES ('JD', 'Jan', 'Dieter')
+INSERT INTO project_rol_type VALUES ('tester')
+INSERT INTO medewerker_op_project VALUES (1, 1, 'JP', 'tester')
+UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
+WAITFOR DELAY '00:00:01'
+UPDATE medewerker_op_project SET medewerker_code = 'JD' WHERE project_code = 1
+ROLLBACK TRANSACTION
+
+--Mislukking
+--[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+BEGIN TRANSACTION
+INSERT INTO project_categorie VALUES ('d', NULL)
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
+INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
+INSERT INTO project_rol_type VALUES ('tester')
+INSERT INTO medewerker_op_project VALUES (1, 1, 'JP', 'tester')
+UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
+WAITFOR DELAY '00:00:01'
+DELETE FROM medewerker_op_project WHERE project_code = 1
+ROLLBACK TRANSACTION

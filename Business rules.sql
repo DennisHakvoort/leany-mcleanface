@@ -27,7 +27,7 @@ DROP TRIGGER IF EXISTS TG_PROJECT_VERSTREKEN_MEDEWERKER_INGEPLAND
 ALTER TABLE medewerker_beschikbaarheid
 		ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbaar_uren < 184 AND beschikbaar_uren > 0)
 
--- BR9 BR9 De waarden van project, medewerker op project en medewerker_ingepland_project
+-- BR9 De waarden van project, medewerker op project en medewerker_ingepland_project
 -- kunnen niet meer worden aangepast als project(eind_datum) is verstreken,
 
 CREATE TRIGGER TG_PROJECT_VERSTREKEN_PROJECT
