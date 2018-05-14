@@ -37,113 +37,118 @@ ROLLBACK TRANSACTION
 -- BR5 Faal Test - negatieve waarden
 BEGIN TRANSACTION
 	BEGIN TRY
+		declare @date DATETIME = GETDATE();
+
 		insert into medewerker (medewerker_code, voornaam, achternaam)
-			values ('aa', 'arend', 'aas')
+			values ('aa', 'arend', 'aas');
 
 		insert into project_categorie (naam, parent)
-			values	('onderwijs', null)
+			values	('onderwijs', null);
 
 		insert into project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			values	('PROJC0101C1', 'onderwijs', CONVERT(date, GETDATE() - 60), CONVERT(date, GETDATE() + 300), 'generieke proj naam')
+			values	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
 
 		insert into project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			values	('PROJC0101C2', 'onderwijs', CONVERT(date, GETDATE() - 60), CONVERT(date, GETDATE() + 300), 'niet zo generieke proj naam')
+			values	('PROJC0101C2', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'niet zo generieke proj naam');
 	
 		insert into project_rol_type (project_rol)
-			values	('lector')
+			values	('lector');
 
 		insert into medewerker_op_project (id, project_code, medewerker_code, project_rol)
-			values	(912012, 'PROJC0101C1', 'aa', 'lector')
+			values	(912012, 'PROJC0101C1', 'aa', 'lector');
 
 		insert into medewerker_op_project (id, project_code, medewerker_code, project_rol)
-			values	(912013, 'PROJC0101C2', 'aa', 'lector')
+			values	(912013, 'PROJC0101C2', 'aa', 'lector');
 
 		insert into medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-			values	(912013, 10, CONVERT(date, GETDATE()))
+			values	(912013, 10, CONVERT(date, @date));
 
 		insert into medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-			values	(912012, 10, CONVERT(date, GETDATE()))
-
-		exec spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = -10, @maand_datum = '2018-6-14'
+			values	(912012, 10, CONVERT(date, @date));
+		exec spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = -10, @maand_datum = @date
 		PRINT 'test mislukt'
 	END TRY
 	BEGIN CATCH
-		PRINT 'test succesvol verlopen'
+		SELECT 'test succesvol gefaald' as 'resultaat', ERROR_MESSAGE() as 'error message'
 	END CATCH
 ROLLBACK TRANSACTION
 
 -- BR5 Faal Test - over de limit
 BEGIN TRANSACTION
 	BEGIN TRY
+		declare @date DATETIME = GETDATE();
+
 		insert into medewerker (medewerker_code, voornaam, achternaam)
-			values ('aa', 'arend', 'aas')
+			values ('aa', 'arend', 'aas');
 
 		insert into project_categorie (naam, parent)
-			values	('onderwijs', null)
+			values	('onderwijs', null);
 
 		insert into project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			values	('PROJC0101C1', 'onderwijs', CONVERT(date, GETDATE() - 60), CONVERT(date, GETDATE() + 300), 'generieke proj naam')
+			values	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
 
 		insert into project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			values	('PROJC0101C2', 'onderwijs', CONVERT(date, GETDATE() - 60), CONVERT(date, GETDATE() + 300), 'niet zo generieke proj naam')
+			values	('PROJC0101C2', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'niet zo generieke proj naam');
 	
 		insert into project_rol_type (project_rol)
-			values	('lector')
+			values	('lector');
 
 		insert into medewerker_op_project (id, project_code, medewerker_code, project_rol)
-			values	(912012, 'PROJC0101C1', 'aa', 'lector')
+			values	(912012, 'PROJC0101C1', 'aa', 'lector');
 
 		insert into medewerker_op_project (id, project_code, medewerker_code, project_rol)
-			values	(912013, 'PROJC0101C2', 'aa', 'lector')
+			values	(912013, 'PROJC0101C2', 'aa', 'lector');
 
 		insert into medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-			values	(912013, 10, CONVERT(date, GETDATE()))
+			values	(912013, 10, CONVERT(date, @date));
 
 		insert into medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-			values	(912012, 10, CONVERT(date, GETDATE()))
-		exec spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 1000, @maand_datum = '2018-6-14'
+			values	(912012, 10, CONVERT(date, @date));
+		exec spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 1000, @maand_datum = @date
 		PRINT 'test mislukt'
 	END TRY
 	BEGIN CATCH
-		PRINT 'test succesvol verlopen'
+		SELECT 'test succesvol gefaald' as 'resultaat', ERROR_MESSAGE() as 'error message'
 	END CATCH
 ROLLBACK TRANSACTION
 
 -- BR5 Succes Test
 BEGIN TRANSACTION
 	BEGIN TRY
+		declare @date DATETIME = GETDATE();
+
 		insert into medewerker (medewerker_code, voornaam, achternaam)
-			values ('aa', 'arend', 'aas')
+			values ('aa', 'arend', 'aas');
 
 		insert into project_categorie (naam, parent)
-			values	('onderwijs', null)
+			values	('onderwijs', null);
 
 		insert into project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			values	('PROJC0101C1', 'onderwijs', CONVERT(date, GETDATE() - 60), CONVERT(date, GETDATE() + 300), 'generieke proj naam')
+			values	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
 
 		insert into project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-			values	('PROJC0101C2', 'onderwijs', CONVERT(date, GETDATE() - 60), CONVERT(date, GETDATE() + 300), 'niet zo generieke proj naam')
+			values	('PROJC0101C2', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'niet zo generieke proj naam');
 	
 		insert into project_rol_type (project_rol)
-			values	('lector')
+			values	('lector');
 
 		insert into medewerker_op_project (id, project_code, medewerker_code, project_rol)
-			values	(912012, 'PROJC0101C1', 'aa', 'lector')
+			values	(912012, 'PROJC0101C1', 'aa', 'lector');
 
 		insert into medewerker_op_project (id, project_code, medewerker_code, project_rol)
-			values	(912013, 'PROJC0101C2', 'aa', 'lector')
+			values	(912013, 'PROJC0101C2', 'aa', 'lector');
 
 		insert into medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-			values	(912013, 10, CONVERT(date, GETDATE()))
+			values	(912013, 10, CONVERT(date, @date));
 
 		insert into medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-			values	(912012, 10, CONVERT(date, GETDATE()))
+			values	(912012, 10, CONVERT(date, @date));
 	
-		exec spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 10, @maand_datum = '2018-6-14'
+		exec spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 10, @maand_datum = @date
 		PRINT 'test succesvol verlopen' 
 	END TRY
 	BEGIN CATCH
-		PRINT 'test mislukt'
+		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message'
 	END CATCH
 ROLLBACK TRANSACTION
 
@@ -202,7 +207,7 @@ EXEC sp_MedewerkerToevoegen 'Zweers', 'Jan' --code: JZ2
 SELECT * FROM medewerker
 ROLLBACK TRANSACTION
 
--- BR7 Faal Test
+-- BR7 Faal Test - single insert
 BEGIN TRANSACTION
 	BEGIN TRY
 		INSERT INTO project_categorie (naam, parent)
@@ -212,12 +217,28 @@ BEGIN TRANSACTION
 		PRINT 'Test mislsukt' 
 	END TRY
 	BEGIN CATCH
-		PRINT 'test succesvol verlopen'
+		SELECT 'test succesvol verlopen' as 'resultaat', ERROR_MESSAGE() as 'error message'
+	END CATCH
+ROLLBACK TRANSACTION
+GO
+-- BR7 Faal test multi insert - 1 geldig 1 ongeldig
+BEGIN TRANSACTION
+	BEGIN TRY
+		INSERT INTO project_categorie (naam, parent)
+			VALUES ('testCat', null);
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam'); -- geldig data
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()-1)), 'generieke projectnaam'); -- ongeldig data
+		PRINT 'Test mislsukt' 
+	END TRY
+	BEGIN CATCH
+		SELECT 'test succesvol verlopen' as 'resultaat', ERROR_MESSAGE() as 'error message'
 	END CATCH
 ROLLBACK TRANSACTION
 GO
 
--- BR7 Succes Test
+-- BR7 Succes Test single insert
 BEGIN TRANSACTION
 	BEGIN TRY
 		INSERT INTO project_categorie (naam, parent)
@@ -227,6 +248,22 @@ BEGIN TRANSACTION
 		PRINT 'test succesvol verlopen' 
 	END TRY
 	BEGIN CATCH
-		PRINT 'test mislukt'
+		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message'
+	END CATCH
+ROLLBACK
+
+-- BR7 Succes Test multi inserts
+BEGIN TRANSACTION
+	BEGIN TRY
+		INSERT INTO project_categorie (naam, parent)
+			VALUES ('testCat', null);
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam');
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES ('PROJC99998P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam2');
+		PRINT 'test succesvol verlopen' 
+	END TRY
+	BEGIN CATCH
+		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message'
 	END CATCH
 ROLLBACK
