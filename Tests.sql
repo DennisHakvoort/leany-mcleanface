@@ -34,6 +34,123 @@ INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'jan 2018', -1);
 INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2018', -80);
 ROLLBACK TRANSACTION
 
+-- BR5 Faal Test - negatieve waarden
+BEGIN TRANSACTION
+	BEGIN TRY
+		DECLARE @date DATETIME = GETDATE();
+
+		INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+			VALUES ('aa', 'arend', 'aas');
+
+		INSERT INTO project_categorie (naam, parent)
+			VALUES	('onderwijs', null);
+
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
+
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES	('PROJC0101C2', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'niet zo generieke proj naam');
+	
+		INSERT INTO project_rol_type (project_rol)
+			VALUES	('lector');
+
+		INSERT INTO medewerker_op_project (id, project_code, medewerker_code, project_rol)
+			VALUES	(912012, 'PROJC0101C1', 'aa', 'lector');
+
+		INSERT INTO medewerker_op_project (id, project_code, medewerker_code, project_rol)
+			VALUES	(912013, 'PROJC0101C2', 'aa', 'lector');
+
+		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+			VALUES	(912013, 10, CONVERT(date, @date));
+
+		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+			VALUES	(912012, 10, CONVERT(date, @date));
+		EXEC spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = -10, @maand_datum = @date
+		PRINT 'test mislukt'
+	END TRY
+	BEGIN CATCH
+		SELECT 'test succesvol gefaald' as 'resultaat', ERROR_MESSAGE() as 'error message'
+	END CATCH
+ROLLBACK TRANSACTION
+
+-- BR5 Faal Test - over de limit
+BEGIN TRANSACTION
+	BEGIN TRY
+		DECLARE @date DATETIME = GETDATE();
+
+		INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+			VALUES ('aa', 'arend', 'aas');
+
+		INSERT INTO project_categorie (naam, parent)
+			VALUES	('onderwijs', null);
+
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
+
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES	('PROJC0101C2', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'niet zo generieke proj naam');
+	
+		INSERT INTO project_rol_type (project_rol)
+			VALUES	('lector');
+
+		INSERT INTO medewerker_op_project (id, project_code, medewerker_code, project_rol)
+			VALUES	(912012, 'PROJC0101C1', 'aa', 'lector');
+
+		INSERT INTO medewerker_op_project (id, project_code, medewerker_code, project_rol)
+			VALUES	(912013, 'PROJC0101C2', 'aa', 'lector');
+
+		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+			VALUES	(912013, 10, CONVERT(date, @date));
+
+		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+			VALUES	(912012, 10, CONVERT(date, @date));
+		EXEC spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 1000, @maand_datum = @date
+		PRINT 'test mislukt'
+	END TRY
+	BEGIN CATCH
+		SELECT 'test succesvol gefaald' as 'resultaat', ERROR_MESSAGE() as 'error message'
+	END CATCH
+ROLLBACK TRANSACTION
+
+-- BR5 Succes Test
+BEGIN TRANSACTION
+	BEGIN TRY
+		DECLARE @date DATETIME = GETDATE();
+
+		INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+			VALUES ('aa', 'arend', 'aas');
+
+		INSERT INTO project_categorie (naam, parent)
+			VALUES	('onderwijs', null);
+
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
+
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES	('PROJC0101C2', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'niet zo generieke proj naam');
+	
+		INSERT INTO project_rol_type (project_rol)
+			VALUES	('lector');
+
+		INSERT INTO medewerker_op_project (id, project_code, medewerker_code, project_rol)
+			VALUES	(912012, 'PROJC0101C1', 'aa', 'lector');
+
+		INSERT INTO medewerker_op_project (id, project_code, medewerker_code, project_rol)
+			VALUES	(912013, 'PROJC0101C2', 'aa', 'lector');
+
+		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+			VALUES	(912013, 10, CONVERT(date, @date));
+
+		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+			VALUES	(912012, 10, CONVERT(date, @date));
+		EXEC spProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 10, @maand_datum = @date
+		PRINT 'test succesvol verlopen' 
+	END TRY
+	BEGIN CATCH
+		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message'
+	END CATCH
+ROLLBACK TRANSACTION
+
 /* tests voor BR8*/
 --Voeg een hoofdcategorie toe.
 --gaat goed
@@ -79,7 +196,7 @@ VALUES ('bedrijf1', 'subsidie')
 DELETE FROM PROJECT_CATEGORIE
 WHERE naam = 'bedrijf1'
 ROLLBACK TRANSACTION
-=======
+
 --BR3
 --Misschien evt. een while loop met honderd jan pieters?
 BEGIN TRANSACTION --werken allemaal
@@ -89,34 +206,63 @@ EXEC sp_MedewerkerToevoegen 'Zweers', 'Jan' --code: JZ2
 SELECT * FROM medewerker
 ROLLBACK TRANSACTION
 
-
--- BR7 Faal Test
+-- BR7 Faal Test - single insert
 BEGIN TRANSACTION
-	PRINT 'Moeten falen: '
 	BEGIN TRY
 		INSERT INTO project_categorie (naam, parent)
 			VALUES ('testCat', null);
 		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
 			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()-1)), 'generieke projectnaam');
-		PRINT 'test gefaald' 
+		PRINT 'Test mislsukt' 
 	END TRY
 	BEGIN CATCH
-		PRINT 'test succesvol'
+		SELECT 'test succesvol verlopen' as 'resultaat', ERROR_MESSAGE() as 'error message'
+	END CATCH
+ROLLBACK TRANSACTION
+GO
+-- BR7 Faal test multi insert - 1 geldig 1 ongeldig
+BEGIN TRANSACTION
+	BEGIN TRY
+		INSERT INTO project_categorie (naam, parent)
+			VALUES ('testCat', null);
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam'); -- geldig data
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()-1)), 'generieke projectnaam'); -- ongeldig data
+		PRINT 'Test mislsukt' 
+	END TRY
+	BEGIN CATCH
+		SELECT 'test succesvol verlopen' as 'resultaat', ERROR_MESSAGE() as 'error message'
 	END CATCH
 ROLLBACK TRANSACTION
 GO
 
--- BR7 Succes Test
+-- BR7 Succes Test single insert
 BEGIN TRANSACTION
-	PRINT 'Moet succesvol zijn: '
 	BEGIN TRY
 		INSERT INTO project_categorie (naam, parent)
 			VALUES ('testCat', null);
 		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
 			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam');
-		PRINT 'test succesvol' 
+		PRINT 'test succesvol verlopen' 
 	END TRY
 	BEGIN CATCH
-		PRINT 'test gefaald'
+		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message'
+	END CATCH
+ROLLBACK
+
+-- BR7 Succes Test multi inserts
+BEGIN TRANSACTION
+	BEGIN TRY
+		INSERT INTO project_categorie (naam, parent)
+			VALUES ('testCat', null);
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam');
+		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+			VALUES ('PROJC99998P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam2');
+		PRINT 'test succesvol verlopen' 
+	END TRY
+	BEGIN CATCH
+		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message'
 	END CATCH
 ROLLBACK
