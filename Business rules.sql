@@ -4,6 +4,7 @@ USE LeanDb
 GO
 
 --PROCEDURE OM CONSTRAINTS TE DROPPEN ALS DEZE BESTAAN
+DROP PROCEDURE IF EXISTS sp_DropConstraint
 GO
 CREATE PROCEDURE sp_DropConstraint
 	@Constraint_name VARCHAR(255) = NULL,
@@ -85,8 +86,8 @@ GO
 
 /*BR4 er kan geen record worden opgenomen in medewerker_ingepland_project voor een user die die
 maand niet beschikbaar is voor werk (waar medewerker_beschikbaarheid niet bestaat voor die user)*/
-
 GO
+
 CREATE PROCEDURE sp_InsertMedewerkerIngepland
 @ID INT,
 @medewerker_Uren INT,
@@ -96,44 +97,52 @@ AS
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
+	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
 		BEGIN TRANSACTION;
 
 	BEGIN TRY
-	BEGIN
 		 IF EXISTS (SELECT *
-FROM MEDEWERKER_OP_PROJECT m LEFT OUTER JOIN MEDEWERKER_INGEPLAND_PROJECT i ON m.ID = i.ID
-							 LEFT OUTER JOIN MEDEWERKER_BESCHIKBAARHEID b ON m.MEDEWERKER_CODE = b.MEDEWERKER_CODE
-WHERE @id = m.ID AND (b.BESCHIKBAAR_UREN = 0 OR b.BESCHIKBAAR_UREN IS NULL))
-BEGIN
-;THROW 50006, 'Medewerker heeft geen beschikbare uren en kan dus niet ingepland worden', 16
-END
-INSERT INTO MEDEWERKER_INGEPLAND_PROJECT (id, MEDEWERKER_UREN, MAAND_DATUM)
-VALUES (@id, @medewerker_Uren, @maand_datum)
+								FROM MEDEWERKER_OP_PROJECT m LEFT OUTER JOIN MEDEWERKER_INGEPLAND_PROJECT i ON m.ID = i.ID
+															 LEFT OUTER JOIN MEDEWERKER_BESCHIKBAARHEID b ON m.MEDEWERKER_CODE = b.MEDEWERKER_CODE
+								WHERE @id = m.ID AND (b.BESCHIKBAAR_UREN = 0 OR b.BESCHIKBAAR_UREN IS NULL))
+			BEGIN
+				;THROW 50006, 'Medewerker heeft geen beschikbare uren en kan dus niet ingepland worden', 16
+			END
+		ELSE
+			BEGIN
+				INSERT INTO MEDEWERKER_INGEPLAND_PROJECT (id, MEDEWERKER_UREN, MAAND_DATUM)
+				VALUES (@id, @medewerker_Uren, @maand_datum)
+						IF @TranCounter = 0 AND XACT_STATE() = 10
+							BEGIN
+								PRINT'COMMITTING'
+								COMMIT TRANSACTION;
+							END
 		END
-		IF @TranCounter = 0 AND XACT_STATE() = 1
-			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
 			BEGIN
+				PRINT'ROLLBACK TRANSACTION'
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
-                IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
+				PRINT XACT_STATE()
+        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
 		THROW
 	END CATCH
+
 GO
 
 
 -- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0
 -- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184
 
-DROP procedure sp_ProjecturenInplannen
 CREATE PROCEDURE sp_ProjecturenInplannen
 @medewerker_code CHAR(4),
 @project_code CHAR(20),
@@ -199,7 +208,7 @@ END
 --BR7 project(eind_datum) moet na project(begin_datum) vallen
 ALTER TABLE project WITH CHECK
 	ADD CONSTRAINT CK_EINDDATUM_NA_BEGINDATUM CHECK (eind_datum > begin_datum)
-
+GO
 
 
 /*BR8 project_categorie(parent) moet een waarde zijn
@@ -266,6 +275,7 @@ CREATE TRIGGER trg_ProjectVerstrekenProject
 				THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 			END
 	END
+GO
 
 CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Ingepland
 	ON medewerker_ingepland_project
@@ -286,6 +296,7 @@ CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Ingepland
 					END
 			END
 	END
+GO
 
 CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
 	ON medewerker_op_project
@@ -306,3 +317,4 @@ CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
 					END
 			END
 	END
+GO
