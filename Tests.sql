@@ -43,6 +43,75 @@ EXEC sp_MedewerkerToevoegen 'Zweers', 'Jan' --code: JZ2
 SELECT * FROM medewerker
 ROLLBACK TRANSACTION
 
+
+--Test BR4
+--Insert een een tijd schatting van een persoon die uren beschikbaar heeft in de desbetreffende maand
+--succesvol
+BEGIN TRANSACTION
+INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
+VALUES ('GB', 'Gertruude', 'van Barneveld')
+INSERT INTO PROJECT_CATEGORIE (naam, parent)
+VALUES ('subsidie', NULL)
+INSERT INTO PROJECT (PROJECT_CODE, categorie_naam, BEGIN_DATUM, EIND_DATUM, PROJECT_NAAM)
+VALUES ('PR', 'subsidie', '01-01-1990', '01-01-2100', 'test project')
+INSERT INTO PROJECT_ROL_TYPE (project_rol)
+VALUES ('baas')
+INSERT INTO MEDEWERKER_OP_PROJECT (ID, PROJECT_CODE, MEDEWERKER_CODE, PROJECT_ROL)
+VALUES (1, 'PR', 'GB', 'baas')
+INSERT INTO MEDEWERKER_BESCHIKBAARHEID (MEDEWERKER_CODE, maand, BESCHIKBAAR_UREN)
+VALUES ('GB', '01-03-2002', 50)
+EXEC sp_InsertMedewerkerIngepland 1, 50, '01-03-2001'
+ROLLBACK TRANSACTION
+
+
+--insert geplande uren voor iemand die geen uren beschikbaar heeft in een maand.
+-- error: Msg 50006, Level 16, State 16, Procedure medewerkerNietInplannenAlsNietBeschikbaar, Line 21 [Batch Start Line 60]
+--Medewerker heeft geen beschikbare uren en kan dus niet ingepland worden
+
+BEGIN TRANSACTION
+BEGIN TRY
+INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
+VALUES ('GB', 'Gertruude', 'van Barneveld')
+INSERT INTO PROJECT_CATEGORIE (naam, parent)
+VALUES ('subsidie', NULL)
+INSERT INTO PROJECT (PROJECT_CODE, categorie_naam, BEGIN_DATUM, EIND_DATUM, PROJECT_NAAM)
+VALUES ('PR', 'subsidie', '01-01-1990', '01-01-2100', 'test project')
+INSERT INTO PROJECT_ROL_TYPE (project_rol)
+VALUES ('baas')
+INSERT INTO MEDEWERKER_OP_PROJECT (ID, PROJECT_CODE, MEDEWERKER_CODE, PROJECT_ROL)
+VALUES (1, 'PR', 'GB', 'baas')
+INSERT INTO MEDEWERKER_BESCHIKBAARHEID (MEDEWERKER_CODE, maand, BESCHIKBAAR_UREN)
+VALUES ('GB', '01-03-2002', 0)
+EXEC sp_InsertMedewerkerIngepland 1, 50, '01-03-2001'
+END TRY
+	BEGIN CATCH
+				SELECT 'test succesvol gefaald' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
+	END CATCH
+ROLLBACK TRANSACTION
+
+
+--Insert geplande uren voor iemand die beschikbaarheid nog niet doorgegeven heeft.
+--error: Msg 50006, Level 16, State 16, Procedure medewerkerNietInplannenAlsNietBeschikbaar, Line 21 [Batch Start Line 60]
+--Medewerker heeft geen beschikbare uren en kan dus niet ingepland worden
+BEGIN TRANSACTION
+BEGIN TRY
+INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
+VALUES ('GB', 'Gertruude', 'van Barneveld')
+INSERT INTO PROJECT_CATEGORIE (naam, parent)
+VALUES ('subsidie', NULL)
+INSERT INTO PROJECT (PROJECT_CODE, categorie_naam, BEGIN_DATUM, EIND_DATUM, PROJECT_NAAM)
+VALUES ('PR', 'subsidie', '01-01-1990', '01-01-2100', 'test project')
+INSERT INTO PROJECT_ROL_TYPE (project_rol)
+VALUES ('baas')
+INSERT INTO MEDEWERKER_OP_PROJECT (ID, PROJECT_CODE, MEDEWERKER_CODE, PROJECT_ROL)
+VALUES (1, 'PR', 'GB', 'baas')
+EXEC sp_InsertMedewerkerIngepland 1, 50, '01-03-2001'
+END TRY
+	BEGIN CATCH
+		SELECT 'test succesvol gefaald' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
+	END CATCH
+ROLLBACK TRANSACTION
+
 -- BR5 Faal Test - negatieve waarden
 BEGIN TRANSACTION
 	BEGIN TRY
