@@ -419,7 +419,7 @@ SELECT * FROM project
 -- BR10 medewerker_beschikbaarheid kan niet worden aangepast als medewerker_beschikbaarheid(maand) is verstreken
 -- Success
 BEGIN TRANSACTION
-INSERT INTO medewerker VALUES (1, 'Khabat', 'Samir')
+INSERT INTO medewerker VALUES (1, 'SurnameTest', 'FirstnameTest')
 INSERT INTO medewerker_beschikbaarheid VALUES (1, '01 jan 2015', '30')
 UPDATE medewerker_beschikbaarheid SET maand = '23 sep 2014' WHERE medewerker_code = 1
 DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 1
@@ -436,26 +436,61 @@ DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 1
 ROLLBACK TRANSACTION
 
 --BR11 medewerker_ingepland_project kan niet meer worden aangepast als medewerker_ingepland_project(maand_datum) is verstreken
---Success
+--BR 11 Success 
+--Medewerker uren kunnen aangepast worden voor huidige datum en toekomstige tijdstip.
 BEGIN TRANSACTION
 INSERT INTO project_categorie VALUES ('training', NULL)
-INSERT INTO project VALUES (1, 'training', '15 jan 2015', '12 feb 2019', 'testproject')
+INSERT INTO project VALUES (1, 'training', '15 jan 2018', '12 dec 2018', 'testproject')
 INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker VALUES (1, 'Khabar', 'Samir')
 INSERT INTO medewerker_op_project VALUES (1, 1, 1, 'tester')
-INSERT INTO medewerker_ingepland_project VALUES (1, 30, 'feb 2015')
+INSERT INTO medewerker_ingepland_project VALUES (1, 30, 'jun 2018')
+UPDATE medewerker_ingepland_project SET medewerker_uren = '20' WHERE id = 1
+WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_ingepland_project WHERE id = 1
 ROLLBACK TRANSACTION
 
---Mislukte poging
---[500016][50001] Verstreken maand kan niet meer aangepast worden.
+--BR 11 Success 
+--Medewerker beschikbare maanden kunnen aangepast worden voor huidige datum en toekomstige tijdstip.
 BEGIN TRANSACTION
 INSERT INTO project_categorie VALUES ('training', NULL)
-INSERT INTO project VALUES (1, 'training', '15 jan 2015', '12 feb 2019', 'testproject')
+INSERT INTO project VALUES (1, 'training', '15 jan 2018', '12 dec 2018', 'testproject')
 INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker VALUES (1, 'Khabar', 'Samir')
 INSERT INTO medewerker_op_project VALUES (1, 1, 1, 'tester')
-INSERT INTO medewerker_ingepland_project VALUES (1, 30, 'feb 2015')
-UPDATE medewerker_ingepland_project SET maand_datum = 'jan 2020' WHERE id = 1
+INSERT INTO medewerker_ingepland_project VALUES (1, 30, 'jun 2018')
+UPDATE medewerker_ingepland_project SET maand_datum = 'jul 2018' WHERE id = 1
+WAITFOR DELAY '00:00:01'
+DELETE FROM medewerker_ingepland_project WHERE id = 1
+ROLLBACK TRANSACTION
+
+--BR 11 Mislukte poging
+--[500016][50001] medewerker verstreken maand(en) kunnen niet meer aangepast worden.
+BEGIN TRANSACTION
+INSERT INTO project_categorie VALUES ('training', NULL)
+INSERT INTO project VALUES (1, 'training', '15 jan 2018', '12 dec 2018', 'testproject')
+INSERT INTO project_rol_type VALUES ('tester')
+INSERT INTO medewerker VALUES (1, 'Khabar', 'Samir')
+INSERT INTO medewerker_op_project VALUES (1, 1, 1, 'tester')
+INSERT INTO medewerker_ingepland_project VALUES (1, 30, 'jun 2018')
+UPDATE medewerker_ingepland_project SET maand_datum = 'feb 2018' WHERE id = 1
+WAITFOR DELAY '00:00:01'
+DELETE FROM medewerker_ingepland_project WHERE id = 1
+ROLLBACK TRANSACTION
+
+
+--BR 11 Mislukte poging
+--[500016][50001] medewerker uren van een verstreken maand kunnen niet meer aangepast worden.
+BEGIN TRANSACTION
+INSERT INTO project_categorie VALUES ('training', NULL)
+INSERT INTO project VALUES (1, 'training', '15 jan 2018', '12 dec 2018', 'testproject')
+INSERT INTO project_rol_type VALUES ('tester')
+INSERT INTO medewerker VALUES (1, 'Khabar', 'Samir')
+INSERT INTO medewerker_op_project VALUES (1, 1, 1, 'tester')
+INSERT INTO medewerker_ingepland_project VALUES (1, 30, 'jun 2018')
+UPDATE medewerker_ingepland_project SET maand_datum = 'feb 2018' WHERE id = 1
+WAITFOR DELAY '00:00:01'
+UPDATE medewerker_ingepland_project SET medewerker_uren = '20' WHERE id = 1
+WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_ingepland_project WHERE id = 1
 ROLLBACK TRANSACTION
