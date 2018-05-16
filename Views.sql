@@ -2,7 +2,6 @@ USE LeanDb
 GO
 
 --VIEW1 Bezettingspercentages per maand per medewerker
-
 CREATE VIEW vw_Bezetting AS
 SELECT p.medewerker_code, year(i.maand_datum) AS jaar,
 isnull(case when month(i.maand_datum) = 1 then (CAST(i.medewerker_uren AS FLOAT) / b.beschikbaar_uren) * 100 end, 0) Jan,
