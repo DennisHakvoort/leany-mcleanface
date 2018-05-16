@@ -203,11 +203,11 @@ CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 		IF(@@ROWCOUNT > 0)
 			BEGIN
 				IF	(EXISTS(SELECT '!'
-										FROM inserted I INNER JOIN medewerker_beschikbaarheid mb ON i.maand = mb.maand
+										FROM (inserted I INNER JOIN medewerker_beschikbaarheid mb ON i.maand = mb.maand) INNER JOIN medewerker m ON mb.medewerker_code = m.medewerker_code
 										WHERE i.maand < CURRENT_TIMESTAMP)
 					OR
 						EXISTS(SELECT	'!'
-										FROM deleted D INNER JOIN medewerker_beschikbaarheid mb ON d.maand = mb.maand
+										FROM (deleted D INNER JOIN medewerker_beschikbaarheid mb ON d.maand = mb.maand) INNER JOIN medewerker m ON mb.medewerker_code = m.medewerker_code
 										WHERE d.maand < CURRENT_TIMESTAMP))
 					BEGIN
 						THROW 50010, 'Verstreken maand kan niet meer aangepast worden.', 16
@@ -226,13 +226,13 @@ CREATE TRIGGER trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
 			BEGIN
 				IF	(EXISTS(SELECT '!'
 										FROM (inserted I INNER JOIN medewerker_ingepland_project mip ON i.maand_datum = mip.maand_datum) INNER JOIN project p ON p.project_code = mip.id
-										WHERE i.maand_datum > p.eind_datum)
+										WHERE MONTH(i.maand_datum) < MONTH(CURRENT_TIMESTAMP))
 					OR
 						EXISTS(SELECT	'!'
 										FROM (deleted D INNER JOIN medewerker_ingepland_project mip ON d.maand_datum = mip.maand_datum) INNER JOIN project p ON p.project_code = mip.id
-										WHERE d.maand_datum > p.eind_datum))
+										WHERE MONTH(d.maand_datum) < MONTH(CURRENT_TIMESTAMP)))
 					BEGIN
-						THROW 50011, 'Verstreken maand kan niet meer aangepast worden.', 16
+						THROW 50011, 'Medewerker uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
 					END
 			END
 	END
