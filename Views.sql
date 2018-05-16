@@ -2,23 +2,26 @@ USE LeanDb
 GO
 
 --VIEW1 Bezettingspercentages per maand per medewerker
+
 CREATE VIEW vw_Bezetting AS
 SELECT p.medewerker_code, year(i.maand_datum) AS jaar,
-isnull(case when month(i.maand_datum) = 1 then (i.medewerker_uren / b.beschikbaar_uren) * 100 end, 0) Jan,
-isnull(case when month(i.maand_datum) = 2 then (i.medewerker_uren / b.beschikbaar_uren) * 100 end, 0) Feb,
-isnull(case when month(i.maand_datum) = 3 then (i.medewerker_uren / b.beschikbaar_uren) * 100 end, 0) Mar,
-isnull(case when month(i.maand_datum) = 4 then (i.medewerker_uren / b.beschikbaar_uren) * 100 end, 0) Apr,
-isnull(case when month(i.maand_datum) = 5 then (i.medewerker_uren / b.beschikbaar_uren) * 100 end, 0) Mei,
-isnull(case when month(i.maand_datum) = 6 then (i.medewerker_uren / b.beschikbaar_uren) * 100 end, 0) Jun,
-isnull(case when month(i.maand_datum) = 7 then (i.medewerker_uren / b.beschikbaar_uren) * 100 end, 0) Jul,
-isnull(case when month(i.maand_datum) = 8 then (i.medewerker_uren / b.beschikbaar_uren) * 100 end, 0) Aug,
-isnull(case when month(i.maand_datum) = 9 then (i.medewerker_uren / b.beschikbaar_uren) * 100 end, 0) Sep,
-isnull(case when month(i.maand_datum) = 10 then (i.medewerker_uren / b.beschikbaar_uren) * 100 end, 0) Okt,
-isnull(case when month(i.maand_datum) = 12 then (i.medewerker_uren / b.beschikbaar_uren) * 100 end, 0) Nov,
-isnull(case when month(i.maand_datum) = 13 then (i.medewerker_uren / b.beschikbaar_uren) * 100 end, 0) Dec
+isnull(case when month(i.maand_datum) = 1 then (CAST(i.medewerker_uren AS FLOAT) / b.beschikbaar_uren) * 100 end, 0) Jan,
+isnull(case when month(i.maand_datum) = 2 then (CAST(i.medewerker_uren AS FLOAT) / b.beschikbaar_uren) * 100 end, 0) Feb,
+isnull(case when month(i.maand_datum) = 3 then (CAST(i.medewerker_uren AS FLOAT) / b.beschikbaar_uren) * 100 end, 0) Mar,
+isnull(case when month(i.maand_datum) = 4 then (CAST(i.medewerker_uren AS FLOAT) / b.beschikbaar_uren) * 100 end, 0) Apr,
+isnull(case when month(i.maand_datum) = 5 then (CAST(i.medewerker_uren AS FLOAT) / b.beschikbaar_uren) * 100 end, 0) Mei,
+isnull(case when month(i.maand_datum) = 6 then (CAST(i.medewerker_uren AS FLOAT) / b.beschikbaar_uren) * 100 end, 0) Jun,
+isnull(case when month(i.maand_datum) = 7 then (CAST(i.medewerker_uren AS FLOAT) / b.beschikbaar_uren) * 100 end, 0) Jul,
+isnull(case when month(i.maand_datum) = 8 then (CAST(i.medewerker_uren AS FLOAT) / b.beschikbaar_uren) * 100 end, 0) Aug,
+isnull(case when month(i.maand_datum) = 9 then (CAST(i.medewerker_uren AS FLOAT) / b.beschikbaar_uren) * 100 end, 0) Sep,
+isnull(case when month(i.maand_datum) = 10 then (CAST(i.medewerker_uren AS FLOAT)/ b.beschikbaar_uren) * 100 end, 0) Okt,
+isnull(case when month(i.maand_datum) = 12 then (CAST(i.medewerker_uren AS FLOAT) / b.beschikbaar_uren) * 100 end, 0) Nov,
+isnull(case when month(i.maand_datum) = 13 then (CAST(i.medewerker_uren AS FLOAT) / b.beschikbaar_uren) * 100 end, 0) Dec
 FROM medewerker_op_project p LEFT OUTER JOIN medewerker_beschikbaarheid b ON p.medewerker_code = b.medewerker_code
 							 LEFT OUTER JOIN medewerker_ingepland_project i ON p.id = i.id
+WHERE b.beschikbaar_uren IS NOT NULL AND b.beschikbaar_uren > 0
 GROUP BY p.medewerker_code, i.medewerker_uren, b.beschikbaar_uren, i.maand_datum
+
 
 
 /*
