@@ -357,7 +357,7 @@ go
 /* Table: medewerker_op_project                                 */
 /*==============================================================*/
 create table medewerker_op_project (
-   id                   id                   not null,
+   id                   id                   not null IDENTITY,
    project_code         project_code         not null,
    medewerker_code      medewerker_code      not null,
    project_rol          project_rol          null,
