@@ -8,6 +8,7 @@ INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'jan 2018', 10);
 INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2018', 20);
 ROLLBACK TRANSACTION
+GO
 
 --Mislukking
 --[23000][547] The INSERT statement conflicted with the CHECK constraint "CK_UREN_MIN_MAX". The conflict occurred in database "LeanDb", table "dbo.medewerker_beschikbaarheid", column 'beschikbaar_uren'.
@@ -16,7 +17,7 @@ INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'jan 2018', 1000);
 INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2018', 820);
 ROLLBACK TRANSACTION
-
+GO
 
 --BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
 --Success
@@ -25,6 +26,7 @@ INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'jan 2018', 10);
 INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2018', 15);
 ROLLBACK TRANSACTION
+GO
 
 --Mislukking
 --[23000][547] The INSERT statement conflicted with the CHECK constraint "CK_UREN_MIN_MAX". The conflict occurred in database "LeanDb", table "dbo.medewerker_beschikbaarheid", column 'beschikbaar_uren'.
@@ -33,6 +35,7 @@ INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'jan 2018', -1);
 INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2018', -80);
 ROLLBACK TRANSACTION
+GO
 
 --BR3
 --Misschien evt. een while loop met honderd jan pieters?
@@ -42,7 +45,7 @@ EXEC sp_MedewerkerToevoegen 'Zweers', 'Johan' --code: JZ1
 EXEC sp_MedewerkerToevoegen 'Zweers', 'Jan' --code: JZ2
 SELECT * FROM medewerker
 ROLLBACK TRANSACTION
-
+GO
 
 --Test BR4
 --Insert een een tijd schatting van een persoon die uren beschikbaar heeft in de desbetreffende maand
@@ -63,7 +66,7 @@ INSERT INTO MEDEWERKER_BESCHIKBAARHEID (MEDEWERKER_CODE, maand, beschikbare_dage
 VALUES ('GB', '01-03-2002', 20)
 EXEC sp_InsertMedewerkerIngepland 1, 50, '01-03-2001'
 ROLLBACK TRANSACTION
-
+GO
 
 --insert geplande uren voor iemand die geen uren beschikbaar heeft in een maand.
 -- error: Msg 50006, Level 16, State 16, Procedure medewerkerNietInplannenAlsNietBeschikbaar, Line 21 [Batch Start Line 60]
