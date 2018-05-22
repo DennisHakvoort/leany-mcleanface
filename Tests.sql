@@ -43,6 +43,75 @@ EXEC sp_MedewerkerToevoegen 'Zweers', 'Jan' --code: JZ2
 SELECT * FROM medewerker
 ROLLBACK TRANSACTION
 
+
+--Test BR4
+--Insert een een tijd schatting van een persoon die uren beschikbaar heeft in de desbetreffende maand
+--succesvol
+BEGIN TRANSACTION
+INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
+VALUES ('GB', 'Gertruude', 'van Barneveld')
+INSERT INTO PROJECT_CATEGORIE (naam, parent)
+VALUES ('subsidie', NULL)
+INSERT INTO PROJECT (PROJECT_CODE, categorie_naam, BEGIN_DATUM, EIND_DATUM, PROJECT_NAAM)
+VALUES ('PR', 'subsidie', '01-01-1990', '01-01-2100', 'test project')
+INSERT INTO PROJECT_ROL_TYPE (project_rol)
+VALUES ('baas')
+INSERT INTO MEDEWERKER_OP_PROJECT (ID, PROJECT_CODE, MEDEWERKER_CODE, PROJECT_ROL)
+VALUES (1, 'PR', 'GB', 'baas')
+INSERT INTO MEDEWERKER_BESCHIKBAARHEID (MEDEWERKER_CODE, maand, BESCHIKBAAR_UREN)
+VALUES ('GB', '01-03-2002', 50)
+EXEC sp_InsertMedewerkerIngepland 1, 50, '01-03-2001'
+ROLLBACK TRANSACTION
+
+
+--insert geplande uren voor iemand die geen uren beschikbaar heeft in een maand.
+-- error: Msg 50006, Level 16, State 16, Procedure medewerkerNietInplannenAlsNietBeschikbaar, Line 21 [Batch Start Line 60]
+--Medewerker heeft geen beschikbare uren en kan dus niet ingepland worden
+
+BEGIN TRANSACTION
+BEGIN TRY
+INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
+VALUES ('GB', 'Gertruude', 'van Barneveld')
+INSERT INTO PROJECT_CATEGORIE (naam, parent)
+VALUES ('subsidie', NULL)
+INSERT INTO PROJECT (PROJECT_CODE, categorie_naam, BEGIN_DATUM, EIND_DATUM, PROJECT_NAAM)
+VALUES ('PR', 'subsidie', '01-01-1990', '01-01-2100', 'test project')
+INSERT INTO PROJECT_ROL_TYPE (project_rol)
+VALUES ('baas')
+INSERT INTO MEDEWERKER_OP_PROJECT (ID, PROJECT_CODE, MEDEWERKER_CODE, PROJECT_ROL)
+VALUES (1, 'PR', 'GB', 'baas')
+INSERT INTO MEDEWERKER_BESCHIKBAARHEID (MEDEWERKER_CODE, maand, BESCHIKBAAR_UREN)
+VALUES ('GB', '01-03-2002', 0)
+EXEC sp_InsertMedewerkerIngepland 1, 50, '01-03-2001'
+END TRY
+	BEGIN CATCH
+				SELECT 'test succesvol gefaald' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
+	END CATCH
+ROLLBACK TRANSACTION
+
+
+--Insert geplande uren voor iemand die beschikbaarheid nog niet doorgegeven heeft.
+--error: Msg 50006, Level 16, State 16, Procedure medewerkerNietInplannenAlsNietBeschikbaar, Line 21 [Batch Start Line 60]
+--Medewerker heeft geen beschikbare uren en kan dus niet ingepland worden
+BEGIN TRANSACTION
+BEGIN TRY
+INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
+VALUES ('GB', 'Gertruude', 'van Barneveld')
+INSERT INTO PROJECT_CATEGORIE (naam, parent)
+VALUES ('subsidie', NULL)
+INSERT INTO PROJECT (PROJECT_CODE, categorie_naam, BEGIN_DATUM, EIND_DATUM, PROJECT_NAAM)
+VALUES ('PR', 'subsidie', '01-01-1990', '01-01-2100', 'test project')
+INSERT INTO PROJECT_ROL_TYPE (project_rol)
+VALUES ('baas')
+INSERT INTO MEDEWERKER_OP_PROJECT (ID, PROJECT_CODE, MEDEWERKER_CODE, PROJECT_ROL)
+VALUES (1, 'PR', 'GB', 'baas')
+EXEC sp_InsertMedewerkerIngepland 1, 50, '01-03-2001'
+END TRY
+	BEGIN CATCH
+		SELECT 'test succesvol gefaald' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
+	END CATCH
+ROLLBACK TRANSACTION
+
 -- BR5 Faal Test - negatieve waarden
 BEGIN TRANSACTION
 	BEGIN TRY
@@ -268,7 +337,7 @@ DELETE FROM PROJECT_CATEGORIE
 WHERE naam = 'bedrijf1'
 ROLLBACK TRANSACTION
 
--- BR9 De waarden van project, medewerker op project en medewerker_ingepland_project
+-- BR9 BR9 De waarden van project, medewerker op project en medewerker_ingepland_project
 -- kunnen niet meer worden aangepast als project(eind_datum) is verstreken,
 -- Project
 -- Success
@@ -412,9 +481,6 @@ WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_op_project WHERE project_code = 1
 ROLLBACK TRANSACTION
 
-SELECT * FROM medewerker_beschikbaarheid
-SELECT * FROM medewerker
-SELECT * FROM project
 
 -- BR10 medewerker_beschikbaarheid kan niet worden aangepast als medewerker_beschikbaarheid(maand) is verstreken
 -- Success
@@ -438,21 +504,6 @@ ROLLBACK TRANSACTION
 --BR11 medewerker_ingepland_project kan niet meer worden aangepast als medewerker_ingepland_project(maand_datum) is verstreken
 --BR 11 Success 
 --Medewerker uren kunnen aangepast worden voor huidige datum en toekomstige tijdstip.
-BEGIN TRANSACTION
-INSERT INTO project_categorie VALUES ('training', NULL)
-INSERT INTO project VALUES (1, 'training', '15 jan 2018', '12 dec 2018', 'testproject')
-INSERT INTO project_rol_type VALUES ('tester')
-INSERT INTO medewerker VALUES (1, 'Khabar', 'Samir')
-INSERT INTO medewerker_op_project VALUES (1, 1, 1, 'tester')
-INSERT INTO medewerker_ingepland_project VALUES (1, 30, 'jun 2018')
-UPDATE medewerker_ingepland_project SET medewerker_uren = '20' WHERE id = 1
-WAITFOR DELAY '00:00:01'
-DELETE FROM medewerker_ingepland_project WHERE id = 1
-ROLLBACK TRANSACTION
-
---BR 11 Success 
---Medewerker beschikbare maanden kunnen aangepast worden voor huidige datum en toekomstige tijdstip.
-BEGIN TRANSACTION
 INSERT INTO project_categorie VALUES ('training', NULL)
 INSERT INTO project VALUES (1, 'training', '15 jan 2018', '12 dec 2018', 'testproject')
 INSERT INTO project_rol_type VALUES ('tester')
@@ -478,7 +529,6 @@ WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_ingepland_project WHERE id = 1
 ROLLBACK TRANSACTION
 
-
 --BR 11 Mislukte poging
 --[500016][50001] medewerker uren van een verstreken maand kunnen niet meer aangepast worden.
 BEGIN TRANSACTION
@@ -494,3 +544,4 @@ UPDATE medewerker_ingepland_project SET medewerker_uren = '20' WHERE id = 1
 WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_ingepland_project WHERE id = 1
 ROLLBACK TRANSACTION
+
