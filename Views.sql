@@ -45,5 +45,18 @@ INSERT INTO medewerker VALUES
 INSERT INTO medewerker_beschikbaarheid VALUES
 	()
 
---TEST DATA EINDIGD HIER
+--TEST DATA EINDIGT HIER
 */
+
+SELECT * FROM Project
+SELECT * FROM medewerker_op_project
+SELECT * FROM medewerker_ingepland_project
+SELECT * FROM medewerker_beschikbaarheid
+
+--View om projectbezetting in te zien
+
+SELECT  p.project_naam, p.project_code
+FROM	project p
+		INNER JOIN medewerker_op_project mop ON mop.project_code = p.project_code
+		INNER JOIN medewerker_ingepland_project mip ON mip.id = mop.id
+		INNER JOIN medewerker_beschikbaarheid mb ON mb.medewerker_code = mop.medewerker_code
