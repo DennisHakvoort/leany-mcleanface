@@ -162,9 +162,9 @@ AS BEGIN
 
 	BEGIN TRY
 		IF (@medewerker_uren < 0)
-			BEGIN
-				RAISERROR('Invalide invoerwaarde - negatieve uren', 16, 1)
-			END
+			
+				THROW 500012, 'Invalide invoerwaarde - negatieve uren', 16
+			
 	DECLARE @id int; -- id representeert de combinatie van een medewerker en project. Wordt uit de tabel medewerker_op_project
 		SET @id = (SELECT id
 					FROM	medewerker_op_project
@@ -184,7 +184,7 @@ AS BEGIN
 					VALUES	(@id, @medewerker_uren, @maand_datum);
 			END
 		ELSE
-			RAISERROR('Totaal geplande uren van de medewerker is meer dan 184 uur', 16, 1)
+			THROW 500013, 'Totaal geplande uren van de medewerker is meer dan 184 uur', 16
 
 		IF @TranCounter = 0 AND XACT_STATE() = 1
 			COMMIT TRANSACTION;
