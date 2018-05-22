@@ -4,14 +4,15 @@ USE LeanDb
 GO
 
 --PROCEDURE OM CONSTRAINTS TE DROPPEN ALS DEZE BESTAAN
+DROP PROCEDURE IF EXISTS sp_DropConstraint
 GO
-CREATE PROCEDURE SP_DROP_CONSTRAINT
+CREATE PROCEDURE sp_DropConstraint
 	@Constraint_name VARCHAR(255) = NULL,
-	@tablename VARCHAR(255) = NULL
+	@table_name VARCHAR(255) = NULL
 	AS
 	BEGIN TRY
 		declare @sql NVARCHAR(255)
-    SELECT @sql = 'ALTER TABLE ' + @tablename + ' DROP CONSTRAINT ' + @Constraint_name;
+    SELECT @sql = 'ALTER TABLE ' + @table_name + ' DROP CONSTRAINT ' + @Constraint_name;
 		EXEC sys.sp_executesql @stmt = @sql
 	END TRY
 	BEGIN CATCH
@@ -20,77 +21,147 @@ CREATE PROCEDURE SP_DROP_CONSTRAINT
 	GO
 
 --DROP ALLE BUSINESS RULES
-EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_UREN_MIN_MAX', @tablename = 'medewerker_beschikbaarheid'
-EXEC SP_DROP_CONSTRAINT @Constraint_name = 'CK_EINDDATUM_NA_BEGINDATUM', @tablename = 'project'
+EXEC sp_DropConstraint @Constraint_name = 'CK_UREN_MIN_MAX', @table_name = 'medewerker_beschikbaarheid'
+EXEC sp_DropConstraint @Constraint_name = 'CK_EINDDATUM_NA_BEGINDATUM', @table_name = 'project'
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenProject
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Ingepland
 DROP TRIGGER IF EXISTS trg_SubCategorieHeeftHoofdCategorie
 DROP TRIGGER IF EXISTS trg_GeenHoofdCategorieMetSubsVerwijderen
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Op_Project
+DROP TRIGGER IF EXISTS trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
+DROP TRIGGER IF EXISTS trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
 DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
+DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
+DROP PROC  IF EXISTS  sp_InsertMedewerkerIngepland
 
 
---BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 184
---BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
+--BR1 Medewerker_beschikbaar(beschikbaar_uren) kan niet meer zijn dan 184
+--BR2 Medewerker_beschikbaar(beschikbaar_uren) kan niet minder zijn dan 0
 ALTER TABLE medewerker_beschikbaarheid
-		ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbaar_uren < 184 AND beschikbaar_uren > 0)
-
-
-
---BR3
---medewerker(medewerker_code) bestaat uit de eerste letter van de voornaam,
---de eerste letter van de achternaam en
---een volgnummer dat met één verhoogd wanneer de medewerker code al bestaat.
+		ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbaar_uren <= 184 AND beschikbaar_uren >= 0)
 GO
-CREATE PROCEDURE sp_MedewerkerToevoegen
-					@achternaam CHAR(20), @voornaam CHAR(20)
+
+--BR4 Als een medewerker in een maand geen beschikbare uren ter beschikking heeft kan hij/zij niet hetzelfde maand in een project ingedeeld worden
+CREATE PROCEDURE sp_InsertMedewerkerIngepland
+@ID INT,
+@medewerker_Uren INT,
+@maand_datum DATETIME
 AS
-BEGIN
-BEGIN TRY
-DECLARE @va CHAR(2), @volgnummer INT, @code CHAR(4)
+	SET NOCOUNT ON 
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	SELECT @TranCounter
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
 
---@va zijn de initialen (voor- en achternaam)
-SET @va = (SELECT SUBSTRING(@voornaam, 1, 1)) + (SELECT SUBSTRING(@achternaam, 1, 1))
-SET @volgnummer = (SELECT		COUNT(medewerker_code)
-				   FROM			medewerker m
-				   WHERE		SUBSTRING(m.medewerker_code, 1, 2) = @va
-				   GROUP BY		SUBSTRING(m.medewerker_code, 1, 2))
+	BEGIN TRY
+		 IF EXISTS (SELECT *
+								FROM MEDEWERKER_OP_PROJECT m LEFT OUTER JOIN MEDEWERKER_INGEPLAND_PROJECT i ON m.ID = i.ID
+															 LEFT OUTER JOIN MEDEWERKER_BESCHIKBAARHEID b ON m.MEDEWERKER_CODE = b.MEDEWERKER_CODE
+								WHERE @id = m.ID AND (b.BESCHIKBAAR_UREN = 0 OR b.BESCHIKBAAR_UREN IS NULL))
+			BEGIN
+				;THROW 50006, 'Medewerker heeft geen beschikbare uren en kan dus niet ingepland worden', 16
+			END
+		ELSE
+			BEGIN
+				INSERT INTO MEDEWERKER_INGEPLAND_PROJECT (id, MEDEWERKER_UREN, MAAND_DATUM)
+				VALUES (@id, @medewerker_Uren, @maand_datum)
+						IF @TranCounter = 0 AND XACT_STATE() = 10
+							BEGIN
+								PRINT'COMMITTING'
+								COMMIT TRANSACTION;
+							END
+		END
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				PRINT'ROLLBACK TRANSACTION'
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
+				PRINT XACT_STATE()
+        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
 
-IF(@volgnummer > 0)
-BEGIN
-	SET @code = @va + (CAST(@volgnummer AS CHAR))
-END
-ELSE
-BEGIN
-	SET @code = @va
-END
-
-INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
-VALUES(@code, @achternaam, @voornaam)
-
-END TRY
-BEGIN CATCH
-DECLARE @ERROR_MESSAGE NVARCHAR(4000), @ERROR_SEVERITY INT, @ERROR_STATE INT
-
-SELECT @ERROR_MESSAGE = ERROR_MESSAGE(),
-	   @ERROR_SEVERITY = ERROR_SEVERITY(),
-	   @ERROR_STATE = ERROR_STATE()
-
-RAISERROR (@ERROR_MESSAGE, @ERROR_SEVERITY, @ERROR_STATE )
-END CATCH
-END
 GO
 
+-- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0
+-- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184
+CREATE PROCEDURE sp_ProjecturenInplannen
+@medewerker_code CHAR(4),
+@project_code CHAR(20),
+@medewerker_uren INT,
+@maand_datum datetime
+AS BEGIN
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
 
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+
+	BEGIN TRY
+		IF (@medewerker_uren < 0)
+			BEGIN
+				RAISERROR('Invalide invoerwaarde - negatieve uren', 16, 1)
+			END
+	DECLARE @id int; -- id representeert de combinatie van een medewerker en project. Wordt uit de tabel medewerker_op_project
+		SET @id = (SELECT id
+					FROM	medewerker_op_project
+					where	medewerker_code = @medewerker_code
+						AND	project_code = @project_code)
+
+		IF EXISTS (	SELECT	1
+					FROM	medewerker_ingepland_project mip
+						INNER JOIN medewerker_op_project mop ON mip.id = mop.id
+						INNER JOIN project p on mop.project_code = p.project_code
+					WHERE	mop.medewerker_code = @medewerker_code
+						AND	FORMAT(mip.maand_datum, 'yyyy-MM') = FORMAT(GETDATE(), 'yyyy-MM') --format naar yyyy-MM zodat het vergeleken kan worden
+					GROUP BY medewerker_code
+					HAVING	SUM(mip.medewerker_uren) + @medewerker_uren <= 184) -- 184 is het maximum aantal uren per maand voor een medewerker
+			BEGIN
+				INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+					VALUES	(@id, @medewerker_uren, @maand_datum);
+			END
+		ELSE
+			RAISERROR('Totaal geplande uren van de medewerker is meer dan 184 uur', 16, 1)
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
+GO
 
 --BR7 project(eind_datum) moet na project(begin_datum) vallen
 ALTER TABLE project WITH CHECK
 	ADD CONSTRAINT CK_EINDDATUM_NA_BEGINDATUM CHECK (eind_datum > begin_datum)
+GO
 
-
-
-/*BR8 project_categorie(parent) moet een waarde zijn
-uit de project_categorie(naam) of NULL. Het kan niet naar zichzelf verwijzen.*/
+--BR8 project_categorie(parent) moet een waarde zijn uit de project_categorie(naam) of NULL. Het kan niet naar zichzelf verwijzen.
 CREATE TRIGGER trg_SubCategorieHeeftHoofdCategorie
   ON project_categorie
   AFTER INSERT, UPDATE
@@ -132,11 +203,8 @@ BEGIN TRY
 END
 GO
 
-
-
--- BR9 De waarden van project, medewerker op project en medewerker_ingepland_project
--- kunnen niet meer worden aangepast als project(eind_datum) is verstreken,
-
+-- BR9 De waarden van project(1), medewerker_op_project(2) en medewerker_ingepland_project(3) kunnen niet meer worden aangepast als project(eind_datum) is verstreken
+--1
 CREATE TRIGGER trg_ProjectVerstrekenProject
 	ON project
 	AFTER INSERT, UPDATE, DELETE
@@ -153,7 +221,8 @@ CREATE TRIGGER trg_ProjectVerstrekenProject
 				THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 			END
 	END
-
+GO
+--2
 CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Ingepland
 	ON medewerker_ingepland_project
 	AFTER INSERT, UPDATE, DELETE
@@ -173,7 +242,8 @@ CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Ingepland
 					END
 			END
 	END
-
+GO
+--3
 CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
 	ON medewerker_op_project
 	AFTER UPDATE, INSERT, DELETE
@@ -193,6 +263,7 @@ CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
 					END
 			END
 	END
+GO
 
 -- BR10 medewerker_beschikbaarheid kan niet worden aangepast als medewerker_beschikbaarheid(maand) is verstreken
 CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
@@ -214,7 +285,7 @@ CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 					END
 			END
 	END
-
+GO
 
 --BR11 medewerker_ingepland_project kan niet meer worden aangepast als medewerker_ingepland_project(maand_datum) is verstreken
 CREATE TRIGGER trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
@@ -236,3 +307,4 @@ CREATE TRIGGER trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
 					END
 			END
 	END
+GO
