@@ -48,7 +48,7 @@ ROLLBACK TRANSACTION
 --Insert een een tijd schatting van een persoon die uren beschikbaar heeft in de desbetreffende maand
 --succesvol
 BEGIN TRANSACTION
-DBCC CHECKIDENT ('medewerker_op_project', RESEED, 1);  
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);  
 INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
 VALUES ('GB', 'Gertruude', 'van Barneveld')
 INSERT INTO PROJECT_CATEGORIE (naam, parent)
@@ -71,6 +71,7 @@ ROLLBACK TRANSACTION
 
 BEGIN TRANSACTION
 BEGIN TRY
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
 VALUES ('GB', 'Gertruude', 'van Barneveld')
 INSERT INTO PROJECT_CATEGORIE (naam, parent)
@@ -83,19 +84,20 @@ INSERT INTO MEDEWERKER_OP_PROJECT (PROJECT_CODE, MEDEWERKER_CODE, PROJECT_ROL)
 VALUES ('PR', 'GB', 'baas')
 INSERT INTO MEDEWERKER_BESCHIKBAARHEID (MEDEWERKER_CODE, maand, beschikbare_dagen)
 VALUES ('GB', '01-03-2002', 0)
-EXEC sp_InsertMedewerkerIngepland 1, 50, '01-03-2001'
-END TRY
+EXEC sp_InsertMedewerkerIngepland 1, 1, '01-03-2001'
+END TRY 
 	BEGIN CATCH
 				SELECT 'test succesvol gefaald' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
 	END CATCH
 ROLLBACK TRANSACTION
-
+GO
 
 --Insert geplande uren voor iemand die beschikbaarheid nog niet doorgegeven heeft.
 --error: Msg 50006, Level 16, State 16, Procedure medewerkerNietInplannenAlsNietBeschikbaar, Line 21 [Batch Start Line 60]
 --Medewerker heeft geen beschikbare uren en kan dus niet ingepland worden
 BEGIN TRANSACTION
 BEGIN TRY
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
 VALUES ('GB', 'Gertruude', 'van Barneveld')
 INSERT INTO PROJECT_CATEGORIE (naam, parent)
@@ -106,17 +108,18 @@ INSERT INTO PROJECT_ROL_TYPE (project_rol)
 VALUES ('baas')
 INSERT INTO MEDEWERKER_OP_PROJECT (PROJECT_CODE, MEDEWERKER_CODE, PROJECT_ROL)
 VALUES ('PR', 'GB', 'baas')
-EXEC sp_InsertMedewerkerIngepland 1, 50, '01-03-2001'
+EXEC sp_InsertMedewerkerIngepland 1, 10, '01-03-2001'
 END TRY
 	BEGIN CATCH
 		SELECT 'test succesvol gefaald' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
 	END CATCH
 ROLLBACK TRANSACTION
+GO
 
 -- BR5 Faal Test - negatieve waarden
 BEGIN TRANSACTION
 	BEGIN TRY
-		DBCC CHECKIDENT ('medewerker_op_project', RESEED, 1);  
+		DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);  
 		DECLARE @date DATETIME = GETDATE();
 
 		INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
@@ -157,7 +160,7 @@ GO
 -- BR5 Faal Test - over de limit
 BEGIN TRANSACTION
 	BEGIN TRY
-		DBCC CHECKIDENT ('medewerker_op_project', RESEED, 1);  
+		DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);  
 		DECLARE @date DATETIME = GETDATE();
 
 		INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
@@ -186,7 +189,7 @@ BEGIN TRANSACTION
 
 		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
 			VALUES	(1, 10, CONVERT(date, @date));
-
+		
 		EXEC sp_ProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 1000, @maand_datum = @date
 		PRINT 'test mislukt'
 	END TRY
@@ -199,7 +202,7 @@ GO
 -- BR5 Succes Test
 BEGIN TRANSACTION
 	BEGIN TRY
-		DBCC CHECKIDENT ('medewerker_op_project', RESEED, 1)
+		DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0)
 
 		DECLARE @date DATETIME = GETDATE();
 
@@ -225,15 +228,15 @@ BEGIN TRANSACTION
 			VALUES	('PROJC0101C21', 'aa', 'lector');
 			
 		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-			VALUES	(2, 10, CONVERT(date, @date));
+			VALUES	(1, 10, CONVERT(date, @date));
 		
 		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-			VALUES	(1, 10, CONVERT(date, @date));
+			VALUES	(2, 10, CONVERT(date, @date));
 		EXEC sp_ProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C11', @medewerker_uren = 10, @maand_datum = @date
 		PRINT 'test succesvol'
 	END TRY
 	BEGIN CATCH
-		SELECT 'test mislukt 1' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
+		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
 	END CATCH
 ROLLBACK TRANSACTION
 GO
@@ -310,6 +313,7 @@ BEGIN TRANSACTION
 INSERT INTO PROJECT_CATEGORIE
 VALUES ('subsidie', NULL)
 ROLLBACK TRANSACTION
+GO
 
 --voeg een subcategorie met een niet bestaande hoofdcategorie toe
 --Geeft error 50003 [2018-05-09 11:56:40] [S00016][50003] Deze subcategorie heeft geen geldige hoofdcategorie
@@ -317,6 +321,7 @@ BEGIN TRANSACTION
 INSERT INTO PROJECT_CATEGORIE
 VALUES ('school', 'onderwijs')
 ROLLBACK TRANSACTION
+GO
 
 --voeg een subcategorie toe met een bestaande hoofdcategorie
 --gaat goed
@@ -326,6 +331,7 @@ VALUES ('subsidie', NULL)
 INSERT INTO PROJECT_CATEGORIE (naam, parent)
 VALUES ('bedrijf1', 'subsidie')
 ROLLBACK TRANSACTION
+GO
 
 --verwijder een hoofdcategorie die een subcategorie bevat.
 --Geeft error [50002] Kan geen categorie met met subcategoriën verwijderen
@@ -337,6 +343,7 @@ VALUES ('bedrijf1', 'subsidie')
 DELETE FROM PROJECT_CATEGORIE
 WHERE naam = 'subsidie'
 ROLLBACK TRANSACTION
+GO
 
 --Verwijdert een subcategorie met geldige hoofdcategorie.
 --gaat goed
@@ -348,6 +355,7 @@ VALUES ('bedrijf1', 'subsidie')
 DELETE FROM PROJECT_CATEGORIE
 WHERE naam = 'bedrijf1'
 ROLLBACK TRANSACTION
+GO
 
 -- BR9 BR9 De waarden van project, medewerker op project en medewerker_ingepland_project
 -- kunnen niet meer worden aangepast als project(eind_datum) is verstreken,
@@ -359,6 +367,7 @@ INSERT INTO project VALUES (1, 'd', '15 jan 2019', '22 feb 2019', 'testerdetest'
 UPDATE project SET begin_datum = '23 sep 2018' WHERE project_code = 1
 DELETE FROM project WHERE project_code = 1
 ROLLBACK TRANSACTION
+GO
 
 -- Mislukking
 -- [S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
@@ -366,6 +375,7 @@ BEGIN TRANSACTION
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2018', '22 feb 2018', 'testerdetest')
 ROLLBACK TRANSACTION
+GO
 
 -- Mislukking
 -- [S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
@@ -374,6 +384,7 @@ INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2016', '22 feb 2019', 'testerdetest')
 UPDATE project SET eind_datum = '23 sep 2017' WHERE project_code = 1
 ROLLBACK TRANSACTION
+GO
 
 -- Mislukking
 -- [S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
@@ -383,6 +394,7 @@ INSERT INTO project VALUES (1, 'd', '15 jan 2017', CURRENT_TIMESTAMP, 'testerdet
 WAITFOR DELAY '00:00:01'
 UPDATE project SET eind_datum = '27 feb 2020' WHERE project_code = 1
 ROLLBACK TRANSACTION
+GO
 
 -- Mislukking
 -- [S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
@@ -393,21 +405,26 @@ UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
 WAITFOR DELAY '00:00:01'
 DELETE FROM project WHERE project_code = 1
 ROLLBACK TRANSACTION
-
+GO
+---------------------
 -- Medewerker_ingepland_project
 -- Success
 BEGIN TRANSACTION
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2019', '22 feb 2019', 'testerdetest')
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO project_rol_type VALUES ('tester')
-INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
+INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
+	VALUES (1, 'JP', 'tester')
 INSERT INTO medewerker_ingepland_project VALUES (1, 10, 'feb 2019')
 ROLLBACK TRANSACTION
+GO
 
 --Mislukking
 --[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest')
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
@@ -416,10 +433,12 @@ INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 WAITFOR DELAY '00:00:01'
 INSERT INTO medewerker_ingepland_project VALUES (1, 10, 'feb 2019')
 ROLLBACK TRANSACTION
+GO
 
 --Mislukking
 --[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
@@ -430,10 +449,12 @@ UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
 WAITFOR DELAY '00:00:01'
 UPDATE medewerker_ingepland_project SET medewerker_uren = 10 WHERE id = 1
 ROLLBACK TRANSACTION
+GO
 
 --Mislukking
 --[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
@@ -444,20 +465,24 @@ UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
 WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_ingepland_project WHERE id = 1
 ROLLBACK TRANSACTION
+GO
 
 -- medewerker_op_project
 -- Success
 BEGIN TRANSACTION
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2019', '22 feb 2019', 'testerdetest')
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 ROLLBACK TRANSACTION
+GO
 
 --Mislukking
 --[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest')
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
@@ -465,10 +490,12 @@ INSERT INTO project_rol_type VALUES ('tester')
 WAITFOR DELAY '00:00:01'
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 ROLLBACK TRANSACTION
+GO
 
 --Mislukking
 --[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
@@ -479,10 +506,12 @@ UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
 WAITFOR DELAY '00:00:01'
 UPDATE medewerker_op_project SET medewerker_code = 'JD' WHERE project_code = 1
 ROLLBACK TRANSACTION
+GO
 
 --Mislukking
 --[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')

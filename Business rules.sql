@@ -36,7 +36,7 @@ DROP PROC  IF EXISTS  sp_InsertMedewerkerIngepland
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 23 dagen. 23 dagen staan gelijk aan (23*8) 184 uren 
 --BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
 ALTER TABLE medewerker_beschikbaarheid
-		ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbare_dagen <= 23 AND beschikbare_dagen > 0)
+		ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbare_dagen <= 23 AND beschikbare_dagen >= 0)
 
 
 
