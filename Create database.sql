@@ -7,6 +7,7 @@ CREATE DATABASE LeanDb
 GO
 
 USE LeanDb
+GO
 
 /*==============================================================*/
 /* DBMS name:      Microsoft SQL Server 2008                    */
@@ -357,7 +358,7 @@ go
 /* Table: medewerker_op_project                                 */
 /*==============================================================*/
 create table medewerker_op_project (
-   id                   id                   not null,
+   id                   id                   not null          identity,
    project_code         project_code         not null,
    medewerker_code      medewerker_code      not null,
    project_rol          project_rol          null,
