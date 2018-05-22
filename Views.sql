@@ -55,8 +55,12 @@ SELECT * FROM medewerker_beschikbaarheid
 
 --View om projectbezetting in te zien
 
-SELECT  p.project_naam, p.project_code
-FROM	project p
-		INNER JOIN medewerker_op_project mop ON mop.project_code = p.project_code
-		INNER JOIN medewerker_ingepland_project mip ON mip.id = mop.id
-		INNER JOIN medewerker_beschikbaarheid mb ON mb.medewerker_code = mop.medewerker_code
+SELECT		YEAR(mip.maand_datum) AS jaar, p.project_naam, p.project_code, MONTH(mip.maand_datum) AS maand, mop.medewerker_code, (CAST(mip.medewerker_uren AS FLOAT) / NULLIF(mb.beschikbaar_uren, 0) * 100.0) AS [percentage_pp_maand], mip.medewerker_uren, mb.beschikbaar_uren
+FROM		project p
+			RIGHT JOIN medewerker_op_project mop ON mop.project_code = p.project_code
+			RIGHT JOIN medewerker_ingepland_project mip ON mip.id = mop.id
+			INNER JOIN medewerker_beschikbaarheid mb ON mb.medewerker_code = mop.medewerker_code AND mb.maand = mip.maand_datum
+GROUP BY	mop.medewerker_code, mop.project_code, mip.maand_datum, p.project_naam, p.project_code, mip.medewerker_uren, mb.beschikbaar_uren
+ORDER BY	YEAR(mip.maand_datum) DESC, project_code ASC, maand ASC, medewerker_code ASC
+
+select * from medewerker_beschikbaarheid where medewerker_code='UC'
