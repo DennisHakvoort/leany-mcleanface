@@ -4,18 +4,18 @@ GO
 --VIEW1 Bezettingspercentages per maand per medewerker
 CREATE VIEW vw_Bezetting AS
 SELECT j.medewerker_code, year(maand_datum) AS jaar,
-isnull(sum(case when month(maand_datum) = 1 then ROUND((CAST(totaal_uren AS FLOAT) / beschikbaar_uren) * 100, 2) end), 0) Jan,
-isnull(sum(case when month(maand_datum) = 2 then ROUND((CAST(totaal_uren AS FLOAT) / beschikbaar_uren) * 100, 2) end), 0) Feb,
-isnull(sum(case when month(maand_datum) = 3 then ROUND((CAST(totaal_uren AS FLOAT) / beschikbaar_uren) * 100, 2) end), 0) Mar,
-isnull(sum(case when month(maand_datum) = 4 then ROUND((CAST(totaal_uren AS FLOAT) / beschikbaar_uren) * 100, 2) end), 0) Apr,
-isnull(sum(case when month(maand_datum) = 5 then ROUND((CAST(totaal_uren AS FLOAT) / beschikbaar_uren) * 100, 2) end), 0) Mei,
-isnull(sum(case when month(maand_datum) = 6 then ROUND((CAST(totaal_uren AS FLOAT) / beschikbaar_uren) * 100, 2) end), 0) Jun,
-isnull(sum(case when month(maand_datum) = 7 then ROUND((CAST(totaal_uren AS FLOAT) / beschikbaar_uren) * 100, 2) end), 0) Jul,
-isnull(sum(case when month(maand_datum) = 8 then ROUND((CAST(totaal_uren AS FLOAT) / beschikbaar_uren) * 100, 2) end), 0) Aug,
-isnull(sum(case when month(maand_datum) = 9 then ROUND((CAST(totaal_uren AS FLOAT) / beschikbaar_uren) * 100, 2) end), 0) Sep,
-isnull(sum(case when month(maand_datum) = 10 then ROUND((CAST(totaal_uren AS FLOAT)/ beschikbaar_uren) * 100, 2) end), 0) Okt,
-isnull(sum(case when month(maand_datum) = 11 then ROUND((CAST(totaal_uren AS FLOAT) / beschikbaar_uren) * 100, 2) end), 0) Nov,
-isnull(sum(case when month(maand_datum) = 12 then ROUND((CAST(totaal_uren AS FLOAT) / beschikbaar_uren) * 100, 2) end), 0) Dec,
+isnull(sum(case when month(maand_datum) = 1 then ROUND((CAST(totaal_uren AS FLOAT) / (beschikbare_dagen * 8)) * 100, 2) end), 0) Jan,
+isnull(sum(case when month(maand_datum) = 2 then ROUND((CAST(totaal_uren AS FLOAT) / (beschikbare_dagen * 8)) * 100, 2) end), 0) Feb,
+isnull(sum(case when month(maand_datum) = 3 then ROUND((CAST(totaal_uren AS FLOAT) / (beschikbare_dagen * 8)) * 100, 2) end), 0) Mar,
+isnull(sum(case when month(maand_datum) = 4 then ROUND((CAST(totaal_uren AS FLOAT) / (beschikbare_dagen * 8)) * 100, 2) end), 0) Apr,
+isnull(sum(case when month(maand_datum) = 5 then ROUND((CAST(totaal_uren AS FLOAT) / (beschikbare_dagen * 8)) * 100, 2) end), 0) Mei,
+isnull(sum(case when month(maand_datum) = 6 then ROUND((CAST(totaal_uren AS FLOAT) / (beschikbare_dagen * 8)) * 100, 2) end), 0) Jun,
+isnull(sum(case when month(maand_datum) = 7 then ROUND((CAST(totaal_uren AS FLOAT) / (beschikbare_dagen * 8)) * 100, 2) end), 0) Jul,
+isnull(sum(case when month(maand_datum) = 8 then ROUND((CAST(totaal_uren AS FLOAT) / (beschikbare_dagen * 8)) * 100, 2) end), 0) Aug,
+isnull(sum(case when month(maand_datum) = 9 then ROUND((CAST(totaal_uren AS FLOAT) / (beschikbare_dagen * 8)) * 100, 2) end), 0) Sep,
+isnull(sum(case when month(maand_datum) = 10 then ROUND((CAST(totaal_uren AS FLOAT)/ (beschikbare_dagen * 8)) * 100, 2) end), 0) Okt,
+isnull(sum(case when month(maand_datum) = 11 then ROUND((CAST(totaal_uren AS FLOAT) / (beschikbare_dagen * 8)) * 100, 2) end), 0) Nov,
+isnull(sum(case when month(maand_datum) = 12 then ROUND((CAST(totaal_uren AS FLOAT) / (beschikbare_dagen * 8)) * 100, 2) end), 0) Dec,
 sum(totaal_uren) as totaal_uren
 FROM (SELECT mop.medewerker_code, maand_datum, sum(mip.medewerker_uren) totaal_uren
 			FROM medewerker_op_project mop INNER JOIN medewerker_ingepland_project mip ON mop.id = mip.id
@@ -23,7 +23,7 @@ FROM (SELECT mop.medewerker_code, maand_datum, sum(mip.medewerker_uren) totaal_u
 					ON j.medewerker_code = m.medewerker_code
 					AND year(maand_datum) = year(maand)
 					AND month(maand_datum) = month(maand)
-WHERE beschikbaar_uren > 0 AND totaal_uren > 0
+WHERE beschikbare_dagen > 0 AND totaal_uren > 0
 GROUP BY j.medewerker_code, year(maand_datum)
 
 
