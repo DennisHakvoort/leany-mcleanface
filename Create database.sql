@@ -218,6 +218,10 @@ if exists(select 1 from systypes where name='uren')
    drop type uren
 go
 
+if exists(select 1 from systypes where name='dagen')
+   drop type dagen
+go
+
 if exists(select 1 from systypes where name='voornaam')
    drop type voornaam
 go
@@ -226,14 +230,14 @@ go
 /* Domain: achternaam                                           */
 /*==============================================================*/
 create type achternaam
-   from char(20)
+   from nvarchar(20)
 go
 
 /*==============================================================*/
 /* Domain: categorie_naam                                       */
 /*==============================================================*/
 create type categorie_naam
-   from char(40)
+   from varchar(40)
 go
 
 /*==============================================================*/
@@ -268,35 +272,35 @@ go
 /* Domain: medewerker_code                                      */
 /*==============================================================*/
 create type medewerker_code
-   from char(4)
+   from varchar(4)
 go
 
 /*==============================================================*/
 /* Domain: medewerker_rol                                       */
 /*==============================================================*/
 create type medewerker_rol
-   from char(40)
+   from varchar(40)
 go
 
 /*==============================================================*/
 /* Domain: project_code                                         */
 /*==============================================================*/
 create type project_code
-   from char(20)
+   from varchar(20)
 go
 
 /*==============================================================*/
 /* Domain: project_naam                                         */
 /*==============================================================*/
 create type project_naam
-   from char(40)
+   from varchar(40)
 go
 
 /*==============================================================*/
 /* Domain: project_rol                                          */
 /*==============================================================*/
 create type project_rol
-   from char(40)
+   from varchar(40)
 go
 
 /*==============================================================*/
@@ -307,10 +311,17 @@ create type uren
 go
 
 /*==============================================================*/
+/* Domain: dagen                                                */
+/*==============================================================*/
+create type dagen
+   from int
+go
+
+/*==============================================================*/
 /* Domain: voornaam                                             */
 /*==============================================================*/
 create type voornaam
-   from char(20)
+   from nvarchar(20)
 go
 
 /*==============================================================*/
@@ -330,7 +341,7 @@ go
 create table medewerker_beschikbaarheid (
    medewerker_code      medewerker_code      not null,
    maand                jaar                 not null,
-   beschikbaar_uren     uren                 not null,
+   beschikbare_dagen    dagen                not null,
    constraint PK_MEDEWERKER_BESCHIKBAARHEID primary key (medewerker_code, maand)
 )
 go
@@ -358,7 +369,7 @@ go
 /* Table: medewerker_op_project                                 */
 /*==============================================================*/
 create table medewerker_op_project (
-   id                   id                   not null          identity,
+   id                   id                   IDENTITY(1,1) NOT NULL,
    project_code         project_code         not null,
    medewerker_code      medewerker_code      not null,
    project_rol          project_rol          null,
@@ -409,7 +420,7 @@ create table project (
    categorie_naam       categorie_naam       not null,
    begin_datum          datum                not null,
    eind_datum           datum                not null,
-   project_naam         char(40)             not null,
+   project_naam         varchar(40)             not null,
    constraint PK_PROJECT primary key nonclustered (project_code)
 )
 go

@@ -33,10 +33,10 @@ DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
 DROP PROC  IF EXISTS  sp_InsertMedewerkerIngepland
 
 
---BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 184
+--BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 23 dagen. 23 dagen staan gelijk aan (23*8) 184 uren 
 --BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
 ALTER TABLE medewerker_beschikbaarheid
-		ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbaar_uren <= 184 AND beschikbaar_uren >= 0)
+		ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbare_dagen <= 23 AND beschikbare_dagen >= 0)
 
 
 
@@ -90,7 +90,7 @@ GO
 
 CREATE PROCEDURE sp_InsertMedewerkerIngepland
 @ID INT,
-@medewerker_Uren INT,
+@medewerker_uren INT,
 @maand_datum DATETIME
 AS
 	SET NOCOUNT ON 
@@ -107,7 +107,7 @@ AS
 		 IF EXISTS (SELECT *
 								FROM MEDEWERKER_OP_PROJECT m LEFT OUTER JOIN MEDEWERKER_INGEPLAND_PROJECT i ON m.ID = i.ID
 															 LEFT OUTER JOIN MEDEWERKER_BESCHIKBAARHEID b ON m.MEDEWERKER_CODE = b.MEDEWERKER_CODE
-								WHERE @id = m.ID AND (b.BESCHIKBAAR_UREN = 0 OR b.BESCHIKBAAR_UREN IS NULL))
+								WHERE @id = m.ID AND (b.beschikbare_dagen = 0 OR b.beschikbare_dagen IS NULL))
 			BEGIN
 				;THROW 50006, 'Medewerker heeft geen beschikbare uren en kan dus niet ingepland worden', 16
 			END
@@ -141,7 +141,7 @@ GO
 
 
 -- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0
--- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184
+-- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184 (184 uur staat gelijk aan 23 dagen (23*8 = 184))
 
 CREATE PROCEDURE sp_ProjecturenInplannen
 @medewerker_code CHAR(4),
@@ -162,9 +162,9 @@ AS BEGIN
 
 	BEGIN TRY
 		IF (@medewerker_uren < 0)
-			BEGIN
-				RAISERROR('Invalide invoerwaarde - negatieve uren', 16, 1)
-			END
+			
+				THROW 500012, 'Invalide invoerwaarde - negatieve uren', 16
+			
 	DECLARE @id int; -- id representeert de combinatie van een medewerker en project. Wordt uit de tabel medewerker_op_project
 		SET @id = (SELECT id
 					FROM	medewerker_op_project
@@ -184,7 +184,7 @@ AS BEGIN
 					VALUES	(@id, @medewerker_uren, @maand_datum);
 			END
 		ELSE
-			RAISERROR('Totaal geplande uren van de medewerker is meer dan 184 uur', 16, 1)
+			THROW 500013, 'Totaal geplande uren van de medewerker is meer dan 184 uur', 16
 
 		IF @TranCounter = 0 AND XACT_STATE() = 1
 			COMMIT TRANSACTION;
