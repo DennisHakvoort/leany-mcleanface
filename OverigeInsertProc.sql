@@ -7,11 +7,8 @@ DROP PROCEDURE IF EXISTS sp_InsertProjectRolType
 DROP PROCEDURE IF EXISTS sp_InsertProject
 DROP PROCEDURE IF EXISTS sp_InsertProjectCategorie
 DROP PROCEDURE IF EXISTS sp_InsertMedewerkerOpProject
-<<<<<<< HEAD
 DROP PROCEDURE IF EXISTS sp_aanpassenBeschikbareDagen
-=======
-DROP PROCEDURE IF EXISTS sp_invullenBeschikbareUren
->>>>>>> 8079b4e1d31aba6a0f2a0a236de9e95eb92a5541
+DROP PROCEDURE IF EXISTS sp_invullenBeschikbareDagen
 
 --insert procedure medeweker_rol
 GO
