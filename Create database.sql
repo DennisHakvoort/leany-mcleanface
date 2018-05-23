@@ -218,6 +218,10 @@ if exists(select 1 from systypes where name='uren')
    drop type uren
 go
 
+if exists(select 1 from systypes where name='dagen')
+   drop type dagen
+go
+
 if exists(select 1 from systypes where name='voornaam')
    drop type voornaam
 go
@@ -307,6 +311,13 @@ create type uren
 go
 
 /*==============================================================*/
+/* Domain: dagen                                                */
+/*==============================================================*/
+create type dagen
+   from int
+go
+
+/*==============================================================*/
 /* Domain: voornaam                                             */
 /*==============================================================*/
 create type voornaam
@@ -330,7 +341,7 @@ go
 create table medewerker_beschikbaarheid (
    medewerker_code      medewerker_code      not null,
    maand                jaar                 not null,
-   beschikbaar_uren     uren                 not null,
+   beschikbare_dagen    dagen                not null,
    constraint PK_MEDEWERKER_BESCHIKBAARHEID primary key (medewerker_code, maand)
 )
 go
@@ -409,7 +420,7 @@ create table project (
    categorie_naam       categorie_naam       not null,
    begin_datum          datum                not null,
    eind_datum           datum                not null,
-   project_naam         char(40)             not null,
+   project_naam         varchar(40)             not null,
    constraint PK_PROJECT primary key nonclustered (project_code)
 )
 go
