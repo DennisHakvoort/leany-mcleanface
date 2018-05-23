@@ -2,17 +2,17 @@ USE LeanDb
 GO
 
 DROP PROCEDURE IF EXISTS SP_insertMedewerkerRol
-DROP PROCEDURE IF EXISTS SP_insertMedewerkerRolType
-DROP PROCEDURE IF EXISTS SP_insertProjectRoleType
-DROP PROCEDURE IF EXISTS SP_insertProject
-DROP PROCEDURE IF EXISTS SP_insertProjectCategorie
-DROP PROCEDURE IF EXISTS SP_insertMedewerkerOpProject
+DROP PROCEDURE IF EXISTS sp_InsertMedewerkerRolType
+DROP PROCEDURE IF EXISTS sp_InsertProjectRolType
+DROP PROCEDURE IF EXISTS sp_InsertProject
+DROP PROCEDURE IF EXISTS sp_InsertProjectCategorie
+DROP PROCEDURE IF EXISTS sp_InsertMedewerkerOpProject
 
 --insert procedure medeweker_rol
 GO
-CREATE PROCEDURE SP_insertMedewerkerRol
-@medewerker_code CHAR,
-@medewerker_rol  CHAR
+CREATE PROCEDURE sp_InsertMedewerkerRol
+@medewerker_code CHAR(40),
+@medewerker_rol  CHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -44,8 +44,8 @@ AS
 
 	GO
 --Insert procedure medewerker rol type
-CREATE PROCEDURE SP_insertMedewerkerRolType
-@medewerker_rol  CHAR
+CREATE PROCEDURE sp_InsertMedewerkerRolType
+@medewerker_rol  CHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -75,10 +75,11 @@ AS
 		THROW
 	END CATCH
 
+
 GO
 --procedure insert project rol type
-CREATE PROCEDURE SP_insertProjectRoleType
-@project_rol  CHAR
+CREATE PROCEDURE sp_InsertProjectRolType
+@project_rol  CHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -110,12 +111,12 @@ AS
 
 GO
 --procedure insert project
-CREATE PROCEDURE SP_insertProject
-@project_code   CHAR,
-@categorie_naam CHAR,
+CREATE PROCEDURE sp_InsertProject
+@project_code   CHAR(20),
+@categorie_naam CHAR(40),
 @begin_datum	DATETIME,
 @eind_datum		DATETIME,
-@project_naam   CHAR
+@project_naam   CHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -147,9 +148,9 @@ AS
 
 GO
 --insert project categorie
-CREATE PROCEDURE SP_insertProjectCategorie
-@naam   CHAR,
-@parent CHAR
+CREATE PROCEDURE sp_InsertProjectCategorie
+@naam   CHAR(40),
+@parent CHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -181,11 +182,10 @@ AS
 
 GO
 --insert medewerker op project
-CREATE PROCEDURE SP_insertMedewerkerOpProject
-@id				 INT,
-@project_code    CHAR,
-@medewerker_code CHAR,
-@project_rol	 DATETIME
+CREATE PROCEDURE sp_InsertMedewerkerOpProject
+@project_code    CHAR(20),
+@medewerker_code CHAR(4),
+@project_rol	 CHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -197,8 +197,8 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		 INSERT INTO medewerker_op_project (id, project_code, medewerker_code, project_rol)
-		 VALUES (@id, @project_code, @medewerker_code, @project_rol)
+		 INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
+		 VALUES (@project_code, @medewerker_code, @project_rol)
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
