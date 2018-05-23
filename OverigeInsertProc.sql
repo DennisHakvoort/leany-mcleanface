@@ -11,7 +11,7 @@ DROP PROCEDURE IF EXISTS sp_InsertMedewerkerOpProject
 --insert procedure medeweker_rol
 GO
 CREATE PROCEDURE sp_InsertMedewerkerRol
-@medewerker_code CHAR(40),
+@medewerker_code CHAR(5),
 @medewerker_rol  CHAR(40)
 AS
 	SET NOCOUNT ON
@@ -184,7 +184,7 @@ GO
 --insert medewerker op project
 CREATE PROCEDURE sp_InsertMedewerkerOpProject
 @project_code    CHAR(20),
-@medewerker_code CHAR(4),
+@medewerker_code CHAR(5),
 @project_rol	 CHAR(40)
 AS
 	SET NOCOUNT ON
