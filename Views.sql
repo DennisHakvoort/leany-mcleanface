@@ -54,13 +54,22 @@ SELECT * FROM medewerker_ingepland_project
 SELECT * FROM medewerker_beschikbaarheid
 
 --View om projectbezetting in te zien
+GO
+CREATE VIEW vw_Totaal_Gepland_Beschikbaar_Jaar
+AS
+SELECT		mb.medewerker_code, YEAR(mb.maand) AS jaar, SUM(mb.beschikbaar_uren) AS totaal_beschikbaar_jaar, SUM(mip.medewerker_uren) AS totaal_ingepland_jaar, (CAST(SUM(mip.medewerker_uren) AS FLOAT) / NULLIF(SUM(mb.beschikbaar_uren), 0) * 100) AS percentage_ingepland_beschikbaar
+FROM		medewerker_beschikbaarheid mb
+			RIGHT JOIN medewerker_op_project mop ON mop.medewerker_code = mb.medewerker_code
+			RIGHT JOIN medewerker_ingepland_project mip ON mip.id = mop.id AND YEAR(mip.maand_datum) = YEAR(mb.maand)
+GROUP BY	mb.medewerker_code, YEAR(mb.maand)
+GO
 
-SELECT		YEAR(mip.maand_datum) AS jaar, p.project_naam, p.project_code, MONTH(mip.maand_datum) AS maand, mop.medewerker_code, (CAST(mip.medewerker_uren AS FLOAT) / NULLIF(mb.beschikbaar_uren, 0) * 100.0) AS [percentage_pp_maand], mip.medewerker_uren, mb.beschikbaar_uren
+SELECT		YEAR(mip.maand_datum) AS jaar, p.project_naam, p.project_code, mop.medewerker_code, SUM(mip.medewerker_uren) AS totaal_ingepland_project, vtgbj.totaal_ingepland_jaar, vtgbj.totaal_beschikbaar_jaar, vtgbj.percentage_ingepland_beschikbaar
 FROM		project p
 			RIGHT JOIN medewerker_op_project mop ON mop.project_code = p.project_code
 			RIGHT JOIN medewerker_ingepland_project mip ON mip.id = mop.id
-			INNER JOIN medewerker_beschikbaarheid mb ON mb.medewerker_code = mop.medewerker_code AND mb.maand = mip.maand_datum
-GROUP BY	mop.medewerker_code, mop.project_code, mip.maand_datum, p.project_naam, p.project_code, mip.medewerker_uren, mb.beschikbaar_uren
-ORDER BY	YEAR(mip.maand_datum) DESC, project_code ASC, maand ASC, medewerker_code ASC
+			RIGHT JOIN vw_Totaal_Gepland_Beschikbaar_Jaar vtgbj ON vtgbj.jaar = YEAR(mip.maand_datum) AND vtgbj.medewerker_code = mop.medewerker_code
+GROUP BY	mop.medewerker_code, YEAR(mip.maand_datum), p.project_code, p.project_naam, vtgbj.totaal_ingepland_jaar, vtgbj.totaal_beschikbaar_jaar, vtgbj.percentage_ingepland_beschikbaar
+ORDER BY	YEAR(mip.maand_datum) DESC, medewerker_code ASC
 
-select * from medewerker_beschikbaarheid where medewerker_code='UC'
+select * from medewerker_beschikbaarheid where medewerker_code='UC' --1338 ------1512
