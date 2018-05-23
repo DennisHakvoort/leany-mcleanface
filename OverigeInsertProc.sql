@@ -218,7 +218,8 @@ AS
 
 GO
 
-CREATE PROCEDURE sp_invullenBeschikbareUren
+-- insert beschikbare dagen van een medewerker
+CREATE PROCEDURE sp_invullenBeschikbareDagen
 @medewerker_code VARCHAR(5),
 @maand DATE,
 @beschikbare_dagen INT
