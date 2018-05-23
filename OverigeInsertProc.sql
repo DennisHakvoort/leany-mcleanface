@@ -7,7 +7,11 @@ DROP PROCEDURE IF EXISTS sp_InsertProjectRolType
 DROP PROCEDURE IF EXISTS sp_InsertProject
 DROP PROCEDURE IF EXISTS sp_InsertProjectCategorie
 DROP PROCEDURE IF EXISTS sp_InsertMedewerkerOpProject
+<<<<<<< HEAD
 DROP PROCEDURE IF EXISTS sp_aanpassenBeschikbareDagen
+=======
+DROP PROCEDURE IF EXISTS sp_invullenBeschikbareUren
+>>>>>>> 8079b4e1d31aba6a0f2a0a236de9e95eb92a5541
 
 --insert procedure medeweker_rol
 GO
@@ -215,7 +219,41 @@ AS
 			END;
 		THROW
 	END CATCH
+GO
 
+-- insert beschikbare dagen van een medewerker
+CREATE PROCEDURE sp_invullenBeschikbareDagen
+@medewerker_code VARCHAR(5),
+@maand DATE,
+@beschikbare_dagen INT
+AS BEGIN
+	SET NOCOUNT ON 
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	SELECT @TranCounter
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+
+		INSERT INTO medewerker_beschikbaarheid(medewerker_code, maand, beschikbare_dagen)
+			VALUES	(@medewerker_code, @maand, @beschikbare_dagen);
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
+GO
 
 -- update beschikbare dagen van een medewerker
 CREATE PROCEDURE sp_aanpassenBeschikbareDagen
@@ -233,10 +271,10 @@ AS BEGIN
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		
-		update table medewerker_beschikbaarheid
-		set beschikbaredagen = @beschikbaredagen
-		where medewerker_code = @medewerker_code and (FORMAT(maand, 'yyyy-MM')) = (FORMAT(@maand, 'yyyy-MM'))
+
+		UPDATE medewerker_beschikbaarheid
+		SET beschikbare_dagen = @beschikbare_dagen
+		WHERE medewerker_code = @medewerker_code and (FORMAT(maand, 'yyyy-MM')) = (FORMAT(@maand, 'yyyy-MM'))
 
 	END TRY
 	BEGIN CATCH
