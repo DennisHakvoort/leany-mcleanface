@@ -7,6 +7,7 @@ DROP PROCEDURE IF EXISTS sp_InsertProjectRolType
 DROP PROCEDURE IF EXISTS sp_InsertProject
 DROP PROCEDURE IF EXISTS sp_InsertProjectCategorie
 DROP PROCEDURE IF EXISTS sp_InsertMedewerkerOpProject
+DROP PROCEDURE IF EXISTS sp_invullenBeschikbareUren
 
 --insert procedure medeweker_rol
 GO
@@ -214,3 +215,39 @@ AS
 			END;
 		THROW
 	END CATCH
+
+GO
+
+CREATE PROCEDURE sp_invullenBeschikbareUren
+@medewerker_code VARCHAR(5),
+@maand DATE,
+@beschikbare_dagen INT
+AS BEGIN
+	SET NOCOUNT ON 
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	SELECT @TranCounter
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		
+		INSERT INTO medewerker_beschikbaarheid(medewerker_code, maand, beschikbare_dagen)
+			VALUES	(@medewerker_code, @maand, @beschikbare_dagen);
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
+exec sp_invullenBeschikbareUren @medewerker_code = 'aa', @maand = '2018-01-01', @beschikbare_dagen = 10
+select * from medewerker_beschikbaarheid
