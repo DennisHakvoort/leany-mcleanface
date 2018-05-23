@@ -46,41 +46,44 @@ ALTER TABLE medewerker_beschikbaarheid
 --een volgnummer dat met één verhoogd wanneer de medewerker code al bestaat.
 GO
 CREATE PROCEDURE sp_MedewerkerToevoegen
-					@achternaam CHAR(20), @voornaam CHAR(20)
-AS
-BEGIN
-BEGIN TRY
-DECLARE @va CHAR(2), @volgnummer INT, @code CHAR(4)
+@achternaam NVARCHAR(20),
+@voornaam NVARCHAR(20),
+@medewerker_code VARCHAR(5)
+AS BEGIN
+	SET NOCOUNT ON 
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	SELECT @TranCounter
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF NOT EXISTS (SELECT '@'
+						FROM	medewerker
+						where medewerker_code = @medewerker_code)
+			BEGIN
+				INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
+					VALUES(@medewerker_code, @achternaam, @voornaam)
+			END
 
---@va zijn de initialen (voor- en achternaam)
-SET @va = (SELECT SUBSTRING(@voornaam, 1, 1)) + (SELECT SUBSTRING(@achternaam, 1, 1))
-SET @volgnummer = (SELECT		COUNT(medewerker_code)
-				   FROM			medewerker m
-				   WHERE		SUBSTRING(m.medewerker_code, 1, 2) = @va
-				   GROUP BY		SUBSTRING(m.medewerker_code, 1, 2))
-
-IF(@volgnummer > 0)
-BEGIN
-	SET @code = @va + (CAST(@volgnummer AS CHAR))
-END
-ELSE
-BEGIN
-	SET @code = @va
-END
-
-INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
-VALUES(@code, @achternaam, @voornaam)
-
-END TRY
-BEGIN CATCH
-DECLARE @ERROR_MESSAGE NVARCHAR(4000), @ERROR_SEVERITY INT, @ERROR_STATE INT
-
-SELECT @ERROR_MESSAGE = ERROR_MESSAGE(),
-	   @ERROR_SEVERITY = ERROR_SEVERITY(),
-	   @ERROR_STATE = ERROR_STATE()
-
-RAISERROR (@ERROR_MESSAGE, @ERROR_SEVERITY, @ERROR_STATE )
-END CATCH
+		;THROW 500014, 'Medewerker code is al in gebruik', 16
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				PRINT'ROLLBACK TRANSACTION'
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
+				PRINT XACT_STATE()
+        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
 END
 GO
 

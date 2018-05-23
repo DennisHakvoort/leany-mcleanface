@@ -37,9 +37,8 @@ ROLLBACK TRANSACTION
 --BR3
 --Misschien evt. een while loop met honderd jan pieters?
 BEGIN TRANSACTION --werken allemaal
-EXEC sp_MedewerkerToevoegen 'Zwart', 'Jan Pieter' --code: JZ
-EXEC sp_MedewerkerToevoegen 'Zweers', 'Johan' --code: JZ1
-EXEC sp_MedewerkerToevoegen 'Zweers', 'Jan' --code: JZ2
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'pieter zwart', @medewerker_code = 'aaaaa'
+
 SELECT * FROM medewerker
 ROLLBACK TRANSACTION
 
