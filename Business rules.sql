@@ -60,27 +60,23 @@ AS BEGIN
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		IF NOT EXISTS (SELECT '@'
+		IF EXISTS (SELECT '@'
 						FROM	medewerker
 						where medewerker_code = @medewerker_code)
-			BEGIN
-				INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
-					VALUES(@medewerker_code, @achternaam, @voornaam)
-			END
+			THROW 500014, 'Medewerker code is al in gebruik', 16
 
-		;THROW 500014, 'Medewerker code is al in gebruik', 16
+		INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
+			VALUES(@medewerker_code, @achternaam, @voornaam);
+		
 	END TRY
 	BEGIN CATCH
-		IF @TranCounter = 0
+			IF @TranCounter = 0
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION'
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
-				PRINT XACT_STATE()
-        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
 		THROW
 	END CATCH

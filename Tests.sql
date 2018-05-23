@@ -38,11 +38,17 @@ ROLLBACK TRANSACTION
 GO
 
 --BR3
---Misschien evt. een while loop met honderd jan pieters?
+--Succes test
 BEGIN TRANSACTION --werken allemaal
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'pieter zwart', @medewerker_code = 'aaaaa'
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aaaa'
+ROLLBACK TRANSACTION
+GO
 
-SELECT * FROM medewerker
+--BR3
+--Faal test
+BEGIN TRANSACTION --werken allemaal
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa'
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa'
 ROLLBACK TRANSACTION
 GO
 
