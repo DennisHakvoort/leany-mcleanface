@@ -372,7 +372,7 @@ GO
 -- Success
 BEGIN TRANSACTION
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2019', '22 feb 2019', 'testerdetest')
+INSERT INTO project VALUES (1, 'd', '15 jan 2019', '22 feb 2019', 'testerdetest', 0)
 UPDATE project SET begin_datum = '23 sep 2018' WHERE project_code = 1
 DELETE FROM project WHERE project_code = 1
 ROLLBACK TRANSACTION
@@ -382,7 +382,7 @@ GO
 -- [S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2018', '22 feb 2018', 'testerdetest')
+INSERT INTO project VALUES (1, 'd', '15 jan 2018', '22 feb 2018', 'testerdetest', 0)
 ROLLBACK TRANSACTION
 GO
 
@@ -390,7 +390,7 @@ GO
 -- [S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2016', '22 feb 2019', 'testerdetest')
+INSERT INTO project VALUES (1, 'd', '15 jan 2016', '22 feb 2019', 'testerdetest', 0)
 UPDATE project SET eind_datum = '23 sep 2017' WHERE project_code = 1
 ROLLBACK TRANSACTION
 GO
@@ -399,7 +399,7 @@ GO
 -- [S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2017', CURRENT_TIMESTAMP, 'testerdetest')
+INSERT INTO project VALUES (1, 'd', '15 jan 2017', CURRENT_TIMESTAMP, 'testerdetest', 0)
 WAITFOR DELAY '00:00:01'
 UPDATE project SET eind_datum = '27 feb 2020' WHERE project_code = 1
 ROLLBACK TRANSACTION
@@ -409,7 +409,7 @@ GO
 -- [S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2016', '22 feb 2019', 'testerdetest')
+INSERT INTO project VALUES (1, 'd', '15 jan 2016', '22 feb 2019', 'testerdetest', 0)
 UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
 WAITFOR DELAY '00:00:01'
 DELETE FROM project WHERE project_code = 1
@@ -422,7 +422,7 @@ BEGIN TRANSACTION
 IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2019', '22 feb 2019', 'testerdetest')
+INSERT INTO project VALUES (1, 'd', '15 jan 2019', '22 feb 2019', 'testerdetest', 0)
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
@@ -437,7 +437,7 @@ BEGIN TRANSACTION
 IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest')
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest', 0)
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
@@ -452,7 +452,7 @@ BEGIN TRANSACTION
 IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest', 0)
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
@@ -469,7 +469,7 @@ BEGIN TRANSACTION
 IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest', 0)
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
@@ -486,7 +486,7 @@ BEGIN TRANSACTION
 IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2019', '22 feb 2019', 'testerdetest')
+INSERT INTO project VALUES (1, 'd', '15 jan 2019', '22 feb 2019', 'testerdetest', 0)
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
@@ -499,7 +499,7 @@ BEGIN TRANSACTION
 IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest')
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest', 0)
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO project_rol_type VALUES ('tester')
 WAITFOR DELAY '00:00:01'
@@ -513,7 +513,7 @@ BEGIN TRANSACTION
 IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest', 0)
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO medewerker VALUES ('JD', 'Jan', 'Dieter')
 INSERT INTO project_rol_type VALUES ('tester')
@@ -530,7 +530,7 @@ BEGIN TRANSACTION
 IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest', 0)
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
