@@ -51,6 +51,7 @@ GO
 --Insert een een tijd schatting van een persoon die uren beschikbaar heeft in de desbetreffende maand
 --succesvol
 BEGIN TRANSACTION
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);  
 INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
 VALUES ('GB', 'Gertruude', 'van Barneveld')
@@ -74,6 +75,7 @@ GO
 
 BEGIN TRANSACTION
 BEGIN TRY
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
 VALUES ('GB', 'Gertruude', 'van Barneveld')
@@ -100,6 +102,7 @@ GO
 --Medewerker heeft geen beschikbare uren en kan dus niet ingepland worden
 BEGIN TRANSACTION
 BEGIN TRY
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
 VALUES ('GB', 'Gertruude', 'van Barneveld')
@@ -121,7 +124,8 @@ GO
 
 -- BR5 Faal Test - negatieve waarden
 BEGIN TRANSACTION
-	BEGIN TRY
+	BEGIN TRY	
+		IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 		DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);  
 		DECLARE @date DATETIME = GETDATE();
 
@@ -163,6 +167,7 @@ GO
 -- BR5 Faal Test - over de limit
 BEGIN TRANSACTION
 	BEGIN TRY
+		IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 		DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);  
 		DECLARE @date DATETIME = GETDATE();
 
@@ -205,6 +210,7 @@ GO
 -- BR5 Succes Test
 BEGIN TRANSACTION
 	BEGIN TRY
+		IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 		DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0)
 
 		DECLARE @date DATETIME = GETDATE();
@@ -413,6 +419,7 @@ GO
 -- Medewerker_ingepland_project
 -- Success
 BEGIN TRANSACTION
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2019', '22 feb 2019', 'testerdetest')
@@ -427,6 +434,7 @@ GO
 --Mislukking
 --[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest')
@@ -441,6 +449,7 @@ GO
 --Mislukking
 --[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
@@ -450,13 +459,14 @@ INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 INSERT INTO medewerker_ingepland_project VALUES (1, 10, 'feb 2019')
 UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
 WAITFOR DELAY '00:00:01'
-UPDATE medewerker_ingepland_project SET medewerker_uren = 10 WHERE id = 1
+UPDATE medewerker_ingepland_project SET medewerker_uren = 10 WHERE id = (select id from medewerker_op_project where medewerker_code = 'JP' and project_code = 1)
 ROLLBACK TRANSACTION
 GO
 
 --Mislukking
 --[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
@@ -466,13 +476,14 @@ INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 INSERT INTO medewerker_ingepland_project VALUES (1, 10, 'feb 2019')
 UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
 WAITFOR DELAY '00:00:01'
-DELETE FROM medewerker_ingepland_project WHERE id = 1
+DELETE FROM medewerker_ingepland_project WHERE id = (select id from medewerker_op_project where medewerker_code = 'JP' and project_code = 1)
 ROLLBACK TRANSACTION
 GO
 
 -- medewerker_op_project
 -- Success
 BEGIN TRANSACTION
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2019', '22 feb 2019', 'testerdetest')
@@ -485,6 +496,7 @@ GO
 --Mislukking
 --[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest')
@@ -498,6 +510,7 @@ GO
 --Mislukking
 --[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
@@ -514,6 +527,7 @@ GO
 --Mislukking
 --[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
 BEGIN TRANSACTION
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest')
@@ -523,4 +537,4 @@ INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
 WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_op_project WHERE project_code = 1
-ROLLBACK TRANSACTION
+ROLLBACK TRANSACTION 
