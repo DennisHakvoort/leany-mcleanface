@@ -1,6 +1,6 @@
 --Tests sp_WijzigCategorieen
 
---Insert mogelijke data
+--Insert toegestane data
 --succesvol
 BEGIN TRANSACTION
 INSERT INTO project_categorie (naam, parent)

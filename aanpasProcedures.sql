@@ -24,7 +24,7 @@ AS
 		IF NOT EXISTS (SELECT naam
 				   FROM project_categorie
 				   WHERE naam = @naamOud)
-			THROW 50010, 'Deze categorie bestaat niet', 16
+			THROW 50009, 'Deze categorie bestaat niet', 16
 			END
 		UPDATE project_categorie
 		SET naam = @naamNieuw, parent =@parentNieuw
