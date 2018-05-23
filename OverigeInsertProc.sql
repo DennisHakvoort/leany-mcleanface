@@ -249,5 +249,3 @@ AS BEGIN
 		THROW
 	END CATCH
 END
-exec sp_invullenBeschikbareUren @medewerker_code = 'aa', @maand = '2018-01-01', @beschikbare_dagen = 10
-select * from medewerker_beschikbaarheid
