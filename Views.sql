@@ -62,14 +62,17 @@ FROM		medewerker_beschikbaarheid mb
 			RIGHT JOIN medewerker_op_project mop ON mop.medewerker_code = mb.medewerker_code
 			RIGHT JOIN medewerker_ingepland_project mip ON mip.id = mop.id AND YEAR(mip.maand_datum) = YEAR(mb.maand)
 GROUP BY	mb.medewerker_code, YEAR(mb.maand)
+
 GO
 
+CREATE VIEW vw_Project_Overzicht_Bezetting
+AS
 SELECT		YEAR(mip.maand_datum) AS jaar, p.project_naam, p.project_code, mop.medewerker_code, SUM(mip.medewerker_uren) AS totaal_ingepland_project, vtgbj.totaal_ingepland_jaar, vtgbj.totaal_beschikbaar_jaar, vtgbj.percentage_ingepland_beschikbaar
 FROM		project p
 			RIGHT JOIN medewerker_op_project mop ON mop.project_code = p.project_code
 			RIGHT JOIN medewerker_ingepland_project mip ON mip.id = mop.id
 			RIGHT JOIN vw_Totaal_Gepland_Beschikbaar_Jaar vtgbj ON vtgbj.jaar = YEAR(mip.maand_datum) AND vtgbj.medewerker_code = mop.medewerker_code
 GROUP BY	mop.medewerker_code, YEAR(mip.maand_datum), p.project_code, p.project_naam, vtgbj.totaal_ingepland_jaar, vtgbj.totaal_beschikbaar_jaar, vtgbj.percentage_ingepland_beschikbaar
-ORDER BY	YEAR(mip.maand_datum) DESC, medewerker_code ASC
+GO
 
 select * from medewerker_beschikbaarheid where medewerker_code='UC' --1338 ------1512
