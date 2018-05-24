@@ -35,14 +35,19 @@ INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2018', -80);
 ROLLBACK TRANSACTION
 
 --BR3
---Misschien evt. een while loop met honderd jan pieters?
+--Succes test
 BEGIN TRANSACTION --werken allemaal
-EXEC sp_MedewerkerToevoegen 'Zwart', 'Jan Pieter' --code: JZ
-EXEC sp_MedewerkerToevoegen 'Zweers', 'Johan' --code: JZ1
-EXEC sp_MedewerkerToevoegen 'Zweers', 'Jan' --code: JZ2
-SELECT * FROM medewerker
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aaaa', @wachtwoord = 'wachtwoord123'
 ROLLBACK TRANSACTION
+GO
 
+--BR3
+--Faal test
+BEGIN TRANSACTION --werken allemaal
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123'
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123'
+ROLLBACK TRANSACTION
+GO
 
 --Test BR4
 --Insert een een tijd schatting van een persoon die uren beschikbaar heeft in de desbetreffende maand
@@ -560,5 +565,3 @@ EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @passwoord = 'TEST'
 EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @passwoord = 'TEST'
 ROLLBACK TRANSACTION
 GO
-
-
