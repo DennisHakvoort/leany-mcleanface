@@ -39,7 +39,7 @@ DROP PROCEDURE IF EXISTS  sp_InsertMedewerkerIngepland
 --BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
 ALTER TABLE medewerker_beschikbaarheid
 		ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbare_dagen <= 23 AND beschikbare_dagen >= 0)
-
+GO
 --BR3
 --medewerker(medewerker_code) bestaat uit de eerste letter van de voornaam,
 --de eerste letter van de achternaam en
@@ -54,7 +54,6 @@ AS BEGIN
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
@@ -135,7 +134,6 @@ AS
 	END CATCH
 
 GO
-
 
 -- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0
 -- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184 (184 uur staat gelijk aan 23 dagen (23*8 = 184))
@@ -331,7 +329,7 @@ CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 GO
 
 --BR11 medewerker_ingepland_project kan niet meer worden aangepast als medewerker_ingepland_project(maand_datum) is verstreken
-ALTER TRIGGER trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
+CREATE TRIGGER trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
 	ON medewerker_ingepland_project
 	AFTER UPDATE, INSERT, DELETE
 	AS
@@ -351,18 +349,17 @@ ALTER TRIGGER trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
 			END
 	END
 GO
-
+			       
 --BR13
 --een database login user aanmaken en een rol toewijzen
 CREATE PROCEDURE sp_DatabaseUserToevoegen
 @login_naam VARCHAR(255),
 @passwoord  VARCHAR(255)
-	AS BEGIN
+AS
 	SET NOCOUNT ON 
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
@@ -394,6 +391,4 @@ CREATE PROCEDURE sp_DatabaseUserToevoegen
 			END;
 		THROW
 	END CATCH
-END
-GO					       
-						     
+GO	
