@@ -524,7 +524,18 @@ DELETE FROM medewerker_op_project WHERE project_code = 1
 ROLLBACK TRANSACTION  
 									  
 -- BR10 medewerker_beschikbaarheid kan niet worden aangepast als medewerker_beschikbaarheid(maand) is verstreken.
--- Success
+-- Succesvol insert nieuwe medewerker_beschikbaarheid datum (moet nieuwer dan huidige datum zijn).
+BEGIN TRANSACTION
+INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
+INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '10 sep 2018', '30')
+WAITFOR DELAY '00:00:01'
+SELECT * FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
+SELECT * FROM Medewerker WHERE medewerker_code = 'HF'
+DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
+DELETE FROM medewerker WHERE medewerker_code = 'HF'
+ROLLBACK TRANSACTION
+
+--Succesvol medewerker_beschikbaarheid maand updaten toegestaan als die groter is dan huidige datum.
 BEGIN TRANSACTION
 INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
 INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '10 sep 2018', '30')
@@ -548,7 +559,7 @@ DELETE FROM medewerker WHERE medewerker_code = 'HF'
 ROLLBACK TRANSACTION
 
 --Mislukte poging
---[500016][50001] je mag niet een maand als beschikbaarheid instellen als die verstreken is.
+--[500016][50001] je mag niet een maand als beschikbaarheid instellen als de ingevulde maand verstreken is.
 BEGIN TRANSACTION
 INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
 INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '25 may 2017', '30')
