@@ -22,6 +22,7 @@ ROLLBACK TRANSACTION
 
 --Tests sp_WijzigenMedewerkerRol
 --Pas een bestaande medewerker rol aan.
+--succesvol
 BEGIN TRANSACTION
 INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 VALUES ('HM', 'Henk', 'Meh')
@@ -49,3 +50,22 @@ VALUES ('HM', 'leider')
 EXEC sp_WijzigenMedewerkerRol 'HL', 'leider', 'Meister'
 ROLLBACK TRANSACTION
 
+
+--Tests sp_WijzigMedewerkerRolType
+
+--Probeer toegestane data te wijzigen
+--succesvol
+BEGIN TRANSACTION
+ INSERT INTO medewerker_rol_type
+ VALUES ('admin')
+ EXEC sp_WijzigMedewerkerRolType 'admin', 'super-user'
+ROLLBACK TRANSACTION
+
+--Probeer een niet bestaande rol te wijzigen.
+--Msg 50008, Level 16, State 16, Procedure sp_WijzigMedewerkerRolType, Line 21 [Batch Start Line 34]
+--medewerker rol bestaat niet.
+BEGIN TRANSACTION
+ INSERT INTO medewerker_rol_type
+ VALUES ('admin')
+ EXEC sp_WijzigMedewerkerRolType 'geen admin', 'super-user'
+ROLLBACK TRANSACTION
