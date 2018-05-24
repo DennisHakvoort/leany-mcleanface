@@ -522,3 +522,39 @@ UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
 WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_op_project WHERE project_code = 1
 ROLLBACK TRANSACTION 
+
+GO
+-- BR14 De beschikbaarheid van een medewerker kan maar wordt per maand opgegeven.
+-- succes test
+BEGIN TRANSACTION
+DECLARE @date DATETIME = GETDATE();
+INSERT INTO medewerker VALUES ('JD', 'Jan', 'Dieter')
+EXEC sp_invullenBeschikbareDagen @medewerker_code = 'JD', @maand = @date, @beschikbare_dagen = 20
+ROLLBACK TRANSACTION
+
+GO
+-- BR14 De beschikbaarheid van een medewerker kan maar wordt per maand opgegeven.
+-- faal test zelfde maand invullen
+BEGIN TRANSACTION
+	BEGIN TRY
+		DECLARE @date DATETIME = GETDATE();
+		INSERT INTO medewerker VALUES ('JD', 'Jan', 'Dieter')
+		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'JD', @maand = @date, @beschikbare_dagen = 20
+		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'JD', @maand = @date, @beschikbare_dagen = 20
+	END TRY
+	BEGIN CATCH
+		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
+	END CATCH
+ROLLBACK TRANSACTION
+
+-- BR14 De beschikbaarheid van een medewerker kan maar wordt per maand opgegeven.
+-- faal test in het verleden invullen
+BEGIN TRANSACTION
+	BEGIN TRY
+		INSERT INTO medewerker VALUES ('JD', 'Jan', 'Dieter')
+		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'JD', @maand = '1900-01-01', @beschikbare_dagen = 20
+	END TRY
+	BEGIN CATCH
+		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
+	END CATCH
+ROLLBACK TRANSACTION

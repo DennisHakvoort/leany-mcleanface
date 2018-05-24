@@ -30,7 +30,8 @@ DROP TRIGGER IF EXISTS trg_GeenHoofdCategorieMetSubsVerwijderen
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Op_Project
 DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
 DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
-DROP PROC  IF EXISTS  sp_InsertMedewerkerIngepland
+DROP PROCEDURE IF EXISTS  sp_InsertMedewerkerIngepland
+DROP PROCEDURE IF EXISTS sp_invullenBeschikbareDagen
 
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 23 dagen. 23 dagen staan gelijk aan (23*8) 184 uren 
@@ -317,3 +318,45 @@ CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
 			END
 	END
 GO
+
+-- BR14 De beschikbaarheid van een medewerker kan maar wordt per maand opgegeven.
+CREATE PROCEDURE sp_invullenBeschikbareDagen
+@medewerker_code VARCHAR(5),
+@maand DATE,
+@beschikbare_dagen INT
+AS BEGIN
+	SET NOCOUNT ON 
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	SELECT @TranCounter
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		
+		IF EXISTS (SELECT '@'
+					FROM medewerker_beschikbaarheid
+					WHERE medewerker_code = @medewerker_code
+					and FORMAT(maand, 'yyyy-MM') = FORMAT(@maand, 'yyyy-MM'))
+						THROW 500016, 'Medewerkerbeschikbaarheid is voor de ingevulde maand al ingepland', 16;
+
+		IF (FORMAT(@maand, 'yyyy-MM') < FORMAT(GETDATE(), 'yyyy-MM'))
+						THROW 500017, 'U kan geen medewerkerbeschikbaarheid in het verleden opgegeven', 16;
+
+		INSERT INTO medewerker_beschikbaarheid(medewerker_code, maand, beschikbare_dagen)
+			VALUES	(@medewerker_code, @maand, @beschikbare_dagen);
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
