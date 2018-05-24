@@ -215,38 +215,4 @@ AS
 			END;
 		THROW
 	END CATCH
-
 GO
-
--- insert beschikbare dagen van een medewerker
-CREATE PROCEDURE sp_invullenBeschikbareDagen
-@medewerker_code VARCHAR(5),
-@maand DATE,
-@beschikbare_dagen INT
-AS BEGIN
-	SET NOCOUNT ON 
-	SET XACT_ABORT OFF
-	DECLARE @TranCounter INT;
-	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
-	IF @TranCounter > 0
-		SAVE TRANSACTION ProcedureSave;
-	ELSE
-		BEGIN TRANSACTION;
-	BEGIN TRY
-		
-		INSERT INTO medewerker_beschikbaarheid(medewerker_code, maand, beschikbare_dagen)
-			VALUES	(@medewerker_code, @maand, @beschikbare_dagen);
-	END TRY
-	BEGIN CATCH
-			IF @TranCounter = 0
-			BEGIN
-				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
-			END;
-		ELSE
-			BEGIN
-				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
-			END;
-		THROW
-	END CATCH
-END
