@@ -1,5 +1,4 @@
 --Tests sp_WijzigCategorieen
-
 --Insert toegestane data
 --succesvol
 BEGIN TRANSACTION
@@ -36,13 +35,12 @@ GO
 --Msg 50008, Level 16, State 16, Procedure sp_WijzigMedewerkerRolType, Line 21 [Batch Start Line 34]
 --medewerker rol bestaat niet.
 BEGIN TRANSACTION
-begin try
- INSERT INTO medewerker_rol_type
- VALUES ('admin')
- EXEC sp_WijzigMedewerkerRolType 'geen admin', 'super-user'
- end try
- begin catch
- rollback transaction
- end catch
+	BEGIN TRY
+		INSERT INTO medewerker_rol_type
+		VALUES ('admin')
+		EXEC sp_WijzigMedewerkerRolType 'geen admin', 'super-user'
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRANSACTION
+	END CATCH
 ROLLBACK TRANSACTION
-
