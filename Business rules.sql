@@ -331,7 +331,7 @@ CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 GO
 
 --BR11 medewerker_ingepland_project kan niet meer worden aangepast als medewerker_ingepland_project(maand_datum) is verstreken
-CREATE TRIGGER trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
+ALTER TRIGGER trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
 	ON medewerker_ingepland_project
 	AFTER UPDATE, INSERT, DELETE
 	AS
@@ -339,12 +339,12 @@ CREATE TRIGGER trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
 		IF(@@ROWCOUNT > 0)
 			BEGIN
 				IF	(EXISTS(SELECT '!'
-										FROM (inserted I INNER JOIN medewerker_ingepland_project mip ON i.maand_datum = mip.maand_datum) INNER JOIN project p ON p.project_code = mip.id
-										WHERE MONTH(i.maand_datum) < MONTH(CURRENT_TIMESTAMP))
+										FROM (inserted I INNER JOIN medewerker_ingepland_project mip ON i.id = mip.id)
+										WHERE FORMAT(i.maand_datum, 'yyyy-MM') < FORMAT(GETDATE(), 'yyyy-MM'))
 					OR
 						EXISTS(SELECT	'!'
-										FROM (deleted D INNER JOIN medewerker_ingepland_project mip ON d.maand_datum = mip.maand_datum) INNER JOIN project p ON p.project_code = mip.id
-										WHERE MONTH(d.maand_datum) < MONTH(CURRENT_TIMESTAMP)))
+										FROM (deleted D INNER JOIN medewerker_ingepland_project mip ON d.id = mip.id) 
+										WHERE FORMAT(d.maand_datum, 'yyyy-MM')  < FORMAT(GETDATE(), 'yyyy-MM')))
 					BEGIN
 						THROW 50011, 'Medewerker uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
 					END
