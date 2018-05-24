@@ -1,7 +1,7 @@
 
 
 DROP PROCEDURE IF EXISTS sp_WijzigCategorieen
-
+DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
 --SP wijzigen categorieën
 
 GO
@@ -45,6 +45,7 @@ AS
 		THROW
 	END CATCH
 
+GO
 			--SP aanpassen medewerker rol types
 CREATE PROCEDURE sp_WijzigMedewerkerRolType
 @medewerker_Rol_Oud   CHAR(40),
