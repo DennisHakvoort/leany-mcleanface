@@ -57,7 +57,7 @@ GO
 --succesvol
 BEGIN TRANSACTION
 IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
-DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);  
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
 VALUES ('GB', 'Gertruude', 'van Barneveld')
 INSERT INTO PROJECT_CATEGORIE (naam, parent)

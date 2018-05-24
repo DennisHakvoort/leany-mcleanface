@@ -30,7 +30,7 @@ DROP TRIGGER IF EXISTS trg_GeenHoofdCategorieMetSubsVerwijderen
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Op_Project
 DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
 DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
-DROP PROC  IF EXISTS  sp_InsertMedewerkerIngepland
+DROP PROC IF EXISTS  sp_InsertMedewerkerIngepland
 
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 23 dagen. 23 dagen staan gelijk aan (23*8) 184 uren 
@@ -96,7 +96,6 @@ AS
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
