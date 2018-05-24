@@ -11,7 +11,7 @@ GO
 
 /*==============================================================*/
 /* DBMS name:      Microsoft SQL Server 2008                    */
-/* Created on:     23-5-2018 16:41:22                           */
+/* Created on:     24-5-2018 10:51:54                           */
 /*==============================================================*/
 
 
@@ -373,8 +373,8 @@ go
 /*==============================================================*/
 create table medewerker (
    medewerker_code      MEDEWERKER_CODE      not null,
-   achternaam           NAAM                 not null,
    voornaam             NAAM                 not null,
+   achternaam           NAAM                 not null,
    constraint PK_MEDEWERKER primary key nonclustered (medewerker_code)
 )
 go
@@ -403,8 +403,8 @@ go
 /*==============================================================*/
 create table medewerker_ingepland_project (
    id                   ID                   not null,
-   maand_datum          MAAND                not null,
    medewerker_uren      UREN                 not null,
+   maand_datum          MAAND                not null,
    constraint PK_MEDEWERKER_INGEPLAND_PROJEC primary key nonclustered (id, medewerker_uren, maand_datum)
 )
 go
@@ -415,8 +415,8 @@ go
 create table medewerker_op_project (
    id                   ID                   not null             IDENTITY,
    project_code         PROJECT_CODE         not null,
-   project_rol          PROJECT_ROL          not null,
    medewerker_code      MEDEWERKER_CODE      not null,
+   project_rol          PROJECT_ROL          not null,
    constraint PK_MEDEWERKER_OP_PROJECT primary key nonclustered (id)
 )
 go
@@ -462,9 +462,9 @@ go
 create table project (
    project_code         PROJECT_CODE         not null,
    categorie_naam       CATEGORIE_NAAM       not null,
-   project_naam         PROJECT_NAAM         not null,
    begin_datum          DATUM                not null,
    eind_datum           DATUM                not null,
+   project_naam         PROJECT_NAAM         not null,
    verwachte_uren       UREN                 null,
    constraint PK_PROJECT primary key nonclustered (project_code)
 )
