@@ -20,3 +20,20 @@ VALUES ('subsidie', NULL),
 EXEC sp_WijzigCategorieen 'bestaat niet', 'Cursus', NULL
 ROLLBACK TRANSACTION
 
+--Tests sp_wijzigProjectRol
+--wijzig een bestaande categorie
+--Succesvol
+BEGIN TRANSACTION
+INSERT INTO project_rol_type
+VALUES ('leider')
+EXEC sp_WijzigProjectRol 'leider', 'supreme-leader'
+ROLLBACK TRANSACTION
+
+--Probeer een niet bestaande categorie te wijzigen
+--Msg 50013, Level 16, State 16, Procedure sp_WijzigProjectRol, Line 19 [Batch Start Line 33]
+--Project rol bestaat niet.
+BEGIN TRANSACTION
+INSERT INTO project_rol_type
+VALUES ('leider')
+EXEC sp_WijzigProjectRol 'Megchelaar', 'supreme-leader'
+ROLLBACK TRANSACTION
