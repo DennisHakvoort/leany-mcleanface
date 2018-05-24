@@ -5,8 +5,8 @@ USE LeanDb
 --Success
 BEGIN TRANSACTION
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'jan 2018', 10);
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2018', 20);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'sep 2018', 10);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'dec 2018', 20);
 ROLLBACK TRANSACTION
 GO
 
@@ -642,22 +642,6 @@ INSERT INTO medewerker VALUES ('HFQWE', 'Khabar', 'Samir')
 INSERT INTO medewerker_op_project VALUES ('proj1049', 'HFQWE', 'tester')
 INSERT INTO medewerker_ingepland_project VALUES ((SELECT IDENT_CURRENT('medewerker_op_project')), 30, 'jun 2017')
 DELETE FROM medewerker_ingepland_project WHERE id = (SELECT IDENT_CURRENT('medewerker_op_project'))
-ROLLBACK TRANSACTION
-
---BR 11 Mislukte poging
---[500016][50001] medewerker uren van een verstreken maand kunnen niet meer aangepast worden.
-BEGIN TRANSACTION
-INSERT INTO project_categorie VALUES ('training', NULL)
-INSERT INTO project VALUES (1, 'training', '15 jan 2018', '12 dec 2018', 'testproject')
-INSERT INTO project_rol_type VALUES ('tester')
-INSERT INTO medewerker VALUES (1, 'Khabar', 'Samir')
-INSERT INTO medewerker_op_project VALUES (1, 1, 1, 'tester')
-INSERT INTO medewerker_ingepland_project VALUES (1, 30, 'jun 2018')
-UPDATE medewerker_ingepland_project SET maand_datum = 'feb 2018' WHERE id = 1
-WAITFOR DELAY '00:00:01'
-UPDATE medewerker_ingepland_project SET medewerker_uren = '20' WHERE id = 1
-WAITFOR DELAY '00:00:01'
-DELETE FROM medewerker_ingepland_project WHERE id = 1
 ROLLBACK TRANSACTION
 
 --BR 13 voeg een database user toe
