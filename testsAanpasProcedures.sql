@@ -20,6 +20,36 @@ VALUES ('subsidie', NULL),
 EXEC sp_WijzigCategorieen 'bestaat niet', 'Cursus', NULL
 ROLLBACK TRANSACTION
 
+--Tests sp_WijzigenMedewerkerRol
+--Pas een bestaande medewerker rol aan.
+--succesvol
+BEGIN TRANSACTION
+INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+VALUES ('HM', 'Henk', 'Meh')
+INSERT INTO medewerker_rol_type
+VALUES ('leider')
+INSERT INTO medewerker_rol_type
+VALUES ('Meister')
+INSERT INTO medewerker_rol(medewerker_code, medewerker_rol)
+VALUES ('HM', 'leider')
+EXEC sp_WijzigenMedewerkerRol 'HM', 'leider', 'Meister'
+ROLLBACK TRANSACTION
+
+--pas een niet bestaande medewerker rol/medewerker code cobinatie aan.
+--Msg 50015, Level 16, State 16, Procedure sp_WijzigenMedewerkerRol, Line 22 [Batch Start Line 37]
+--Medewerker in combinatie met deze rol bestaat niet.
+BEGIN TRANSACTION
+INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+VALUES ('HM', 'Henk', 'Meh')
+INSERT INTO medewerker_rol_type
+VALUES ('leider')
+INSERT INTO medewerker_rol_type
+VALUES ('Meister')
+INSERT INTO medewerker_rol(medewerker_code, medewerker_rol)
+VALUES ('HM', 'leider')
+EXEC sp_WijzigenMedewerkerRol 'HL', 'leider', 'Meister'
+ROLLBACK TRANSACTION
+
 
 --Tests sp_WijzigMedewerkerRolType
 
