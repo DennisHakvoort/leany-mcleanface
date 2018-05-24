@@ -371,6 +371,11 @@ CREATE PROCEDURE sp_DatabaseUserToevoegen
 
 	BEGIN TRY
 		declare @sql NVARCHAR(255)
+		IF EXISTS (select '!'
+					 FROM [sys].[server_principals]
+					 WHERE name = @login_naam)
+		THROW 50013, 'De naam moet uniek zijn.', 16
+
     SELECT @sql = 'CREATE LOGIN ' + @login_naam + ' WITH PASSWORD ' + '= ''' + @passwoord + ''''
 		PRINT @sql
 		EXEC sys.sp_executesql @stmt = @sql
