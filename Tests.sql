@@ -523,51 +523,114 @@ WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_op_project WHERE project_code = 1
 ROLLBACK TRANSACTION  
 									  
--- BR10 medewerker_beschikbaarheid kan niet worden aangepast als medewerker_beschikbaarheid(maand) is verstreken
+-- BR10 medewerker_beschikbaarheid kan niet worden aangepast als medewerker_beschikbaarheid(maand) is verstreken.
 -- Success
 BEGIN TRANSACTION
-INSERT INTO medewerker VALUES (1, 'SurnameTest', 'FirstnameTest')
-INSERT INTO medewerker_beschikbaarheid VALUES (1, '01 jan 2015', '30')
-UPDATE medewerker_beschikbaarheid SET maand = '23 sep 2014' WHERE medewerker_code = 1
-DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 1
+INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
+INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '10 sep 2018', '30')
+UPDATE medewerker_beschikbaarheid SET maand = '10 jan 2019' WHERE medewerker_code = 'HF'
+WAITFOR DELAY '00:00:01'
+SELECT * FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
+SELECT * FROM Medewerker WHERE medewerker_code = 'HF'
+DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
+DELETE FROM medewerker WHERE medewerker_code = 'HF'
 ROLLBACK TRANSACTION
 
 --Mislukte poging
---[500016][50001] Verstreken maand kan niet meer aangepast worden.
+--[500016][50001] maand data kan niet aangepast worden naar een verstreken maand.
 BEGIN TRANSACTION
-INSERT INTO medewerker VALUES (1, 'Khabat', 'Samir')
-INSERT INTO medewerker_beschikbaarheid VALUES (1, '01 jan 2015', '30')
-UPDATE medewerker_beschikbaarheid SET maand = '23 sep 2014' WHERE medewerker_code = 1
+INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
+INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '25 may 2018', '30')
+UPDATE medewerker_beschikbaarheid SET maand = '10 jan 2018' WHERE medewerker_code = 'HF'
 WAITFOR DELAY '00:00:01'
-DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 1
+DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
+DELETE FROM medewerker WHERE medewerker_code = 'HF'
+ROLLBACK TRANSACTION
+
+--Mislukte poging
+--[500016][50001] je mag niet een maand als beschikbaarheid instellen als die verstreken is.
+BEGIN TRANSACTION
+INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
+INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '25 may 2017', '30')
+WAITFOR DELAY '00:00:01'
+DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
+DELETE FROM medewerker WHERE medewerker_code = 'HF'
 ROLLBACK TRANSACTION
 
 --BR11 medewerker_ingepland_project kan niet meer worden aangepast als medewerker_ingepland_project(maand_datum) is verstreken
 --BR 11 Success 
 --Medewerker uren kunnen aangepast worden voor huidige datum en toekomstige tijdstip.
+BEGIN TRANSACTION
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('training', NULL)
-INSERT INTO project VALUES (1, 'training', '15 jan 2018', '12 dec 2018', 'testproject')
+INSERT INTO project VALUES ('proj1049', 'training', '15 jan 2018', '12 dec 2018', 'testproject')
 INSERT INTO project_rol_type VALUES ('tester')
-INSERT INTO medewerker VALUES (1, 'Khabar', 'Samir')
-INSERT INTO medewerker_op_project VALUES (1, 1, 1, 'tester')
-INSERT INTO medewerker_ingepland_project VALUES (1, 30, 'jun 2018')
-UPDATE medewerker_ingepland_project SET maand_datum = 'jul 2018' WHERE id = 1
+INSERT INTO medewerker VALUES ('HFQWE', 'Khabar', 'Samir')
+INSERT INTO medewerker_op_project VALUES ('proj1049', 'HFQWE', 'tester')
+INSERT INTO medewerker_ingepland_project VALUES ((SELECT IDENT_CURRENT('medewerker_op_project')), 30, 'jun 2018')
+UPDATE medewerker_ingepland_project SET maand_datum = 'jul 2018' WHERE id = (SELECT IDENT_CURRENT('medewerker_op_project'))
 WAITFOR DELAY '00:00:01'
-DELETE FROM medewerker_ingepland_project WHERE id = 1
+DELETE FROM medewerker_ingepland_project WHERE id = (SELECT IDENT_CURRENT('medewerker_op_project'))
+ROLLBACK TRANSACTION
+
+--BR 11 Success 
+--Medewerker kan ingedeeld worden in een project als de maand groter is dan huidige datum.
+BEGIN TRANSACTION
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
+INSERT INTO project_categorie VALUES ('training', NULL)
+INSERT INTO project VALUES ('proj1049', 'training', '15 jan 2018', '12 dec 2018', 'testproject')
+INSERT INTO project_rol_type VALUES ('tester')
+INSERT INTO medewerker VALUES ('HFQWE', 'Khabar', 'Samir')
+INSERT INTO medewerker_op_project VALUES ('proj1049', 'HFQWE', 'tester')
+INSERT INTO medewerker_ingepland_project VALUES ((SELECT IDENT_CURRENT('medewerker_op_project')), 30, 'jun 2018')
+DELETE FROM medewerker_ingepland_project WHERE id = (SELECT IDENT_CURRENT('medewerker_op_project'))
+ROLLBACK TRANSACTION
+
+--BR 11 succesvol uren van een maand aanpassen dat nog niet verstreken is
+BEGIN TRANSACTION
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
+INSERT INTO project_categorie VALUES ('training', NULL)
+INSERT INTO project VALUES ('proj1049', 'training', '15 jan 2018', '12 dec 2018', 'testproject')
+INSERT INTO project_rol_type VALUES ('tester')
+INSERT INTO medewerker VALUES ('HFQWE', 'Khabar', 'Samir')
+INSERT INTO medewerker_op_project VALUES ('proj1049', 'HFQWE', 'tester')
+INSERT INTO medewerker_ingepland_project VALUES ((SELECT IDENT_CURRENT('medewerker_op_project')), 30, 'jun 2018')
+UPDATE medewerker_ingepland_project SET medewerker_uren = '20' WHERE id = (SELECT IDENT_CURRENT('medewerker_op_project'))
+WAITFOR DELAY '00:00:01'
+DELETE FROM medewerker_ingepland_project WHERE id = (SELECT IDENT_CURRENT('medewerker_op_project'))
 ROLLBACK TRANSACTION
 
 --BR 11 Mislukte poging
 --[500016][50001] medewerker verstreken maand(en) kunnen niet meer aangepast worden.
 BEGIN TRANSACTION
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO project_categorie VALUES ('training', NULL)
-INSERT INTO project VALUES (1, 'training', '15 jan 2018', '12 dec 2018', 'testproject')
+INSERT INTO project VALUES ('proj1049', 'training', '15 jan 2018', '12 dec 2018', 'testproject')
 INSERT INTO project_rol_type VALUES ('tester')
-INSERT INTO medewerker VALUES (1, 'Khabar', 'Samir')
-INSERT INTO medewerker_op_project VALUES (1, 1, 1, 'tester')
-INSERT INTO medewerker_ingepland_project VALUES (1, 30, 'jun 2018')
-UPDATE medewerker_ingepland_project SET maand_datum = 'feb 2018' WHERE id = 1
+INSERT INTO medewerker VALUES ('HFQWE', 'Khabar', 'Samir')
+INSERT INTO medewerker_op_project VALUES ('proj1049', 'HFQWE', 'tester')
+INSERT INTO medewerker_ingepland_project VALUES ((SELECT IDENT_CURRENT('medewerker_op_project')), 30, 'jun 2018')
+UPDATE medewerker_ingepland_project SET maand_datum = 'feb 2018' WHERE id = (select IDENT_CURRENT('medewerker_op_project'))
 WAITFOR DELAY '00:00:01'
-DELETE FROM medewerker_ingepland_project WHERE id = 1
+DELETE FROM medewerker_ingepland_project WHERE id = (SELECT IDENT_CURRENT('medewerker_op_project'))
+ROLLBACK TRANSACTION
+
+--BR 11 Mislukte poging
+--[500016][50001] medewerker kan niet een verstreken maand ingepland krijgen voor een project.
+BEGIN TRANSACTION
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
+INSERT INTO project_categorie VALUES ('training', NULL)
+INSERT INTO project VALUES ('proj1049', 'training', '15 jan 2018', '12 dec 2018', 'testproject')
+INSERT INTO project_rol_type VALUES ('tester')
+INSERT INTO medewerker VALUES ('HFQWE', 'Khabar', 'Samir')
+INSERT INTO medewerker_op_project VALUES ('proj1049', 'HFQWE', 'tester')
+INSERT INTO medewerker_ingepland_project VALUES ((SELECT IDENT_CURRENT('medewerker_op_project')), 30, 'jun 2017')
+DELETE FROM medewerker_ingepland_project WHERE id = (SELECT IDENT_CURRENT('medewerker_op_project'))
 ROLLBACK TRANSACTION
 
 --BR 11 Mislukte poging
@@ -586,7 +649,7 @@ WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_ingepland_project WHERE id = 1
 ROLLBACK TRANSACTION
 
---BR 13
+--BR 13 voeg een database user toe
 --success
 BEGIN TRANSACTION
 EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @passwoord = 'TEST'
