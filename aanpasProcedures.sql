@@ -2,6 +2,7 @@
 
 DROP PROCEDURE IF EXISTS sp_WijzigCategorieen
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
+DROP PROCEDURE IF EXISTS sp_WijzignBeschikbareDagen
 --SP wijzigen categorieën
 
 GO
@@ -85,3 +86,39 @@ AS
 			END;
 		THROW
 	END CATCH
+
+GO
+-- update beschikbare dagen van een medewerker
+CREATE PROCEDURE sp_WijzignBeschikbareDagen
+@medewerker_code VARCHAR(5),
+@maand DATE,
+@beschikbare_dagen INT
+AS BEGIN
+	SET NOCOUNT ON 
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	SELECT @TranCounter
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+
+		UPDATE medewerker_beschikbaarheid
+		SET beschikbare_dagen = @beschikbare_dagen
+		WHERE medewerker_code = @medewerker_code and (FORMAT(maand, 'yyyy-MM')) = (FORMAT(@maand, 'yyyy-MM'))
+
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
