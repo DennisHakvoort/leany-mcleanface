@@ -168,3 +168,48 @@ AS
 			END;
 		THROW
 	END CATCH
+GO
+
+--SP 9 Toevoegen SP aanpassen medewerker.
+CREATE PROCEDURE sp_WijzigenMedewerker
+@medewerker_code VARCHAR(5),
+@achternaam NVARCHAR(20),
+@voornaam NVARCHAR(20)
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	SELECT @TranCounter
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+	
+		if NOT EXISTS (SELECT '!'
+					FROM medewerker
+					WHERE medewerker_code = @medewerker_code)
+		
+		THROW 50090, 'een medewerker met dit medewerker_code bestaat niet.', 16
+
+		UPDATE medewerker
+		SET medewerker_code = @medewerker_code, achternaam = @achternaam, voornaam = @voornaam
+		WHERE medewerker_code = @medewerker_code
+
+	END TRY
+		BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				PRINT'ROLLBACK TRANSACTION'
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
+				PRINT XACT_STATE()
+        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+GO
