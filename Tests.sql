@@ -37,20 +37,32 @@ INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2018', -80);
 ROLLBACK TRANSACTION
 GO
 
+
+
 --BR3
 --Succes test
 BEGIN TRANSACTION --werken allemaal
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aaaa', @wachtwoord = 'wachtwoord123'
+INSERT INTO medewerker_rol_type VALUES ('test')
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aaaa', @wachtwoord = 'wachtwoord123', @rol = 'test'
 ROLLBACK TRANSACTION
 GO
 
 --BR3
---Faal test
+--[50014] Medewerker code is al in gebruik
 BEGIN TRANSACTION --werken allemaal
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123'
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123'
+INSERT INTO medewerker_rol_type VALUES ('test')
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123', @rol = 'test'
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123', @rol = 'test'
 ROLLBACK TRANSACTION
 GO
+
+
+--[S00016][50020] Dit is geen bestaande rol
+BEGIN TRANSACTION --werken allemaal
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123', @rol = 'test'
+ROLLBACK TRANSACTION
+GO
+
 
 --Test BR4
 --Insert een een tijd schatting van een persoon die uren beschikbaar heeft in de desbetreffende maand
@@ -648,17 +660,15 @@ ROLLBACK TRANSACTION
 --BR 13 voeg een database user toe
 --success
 BEGIN TRANSACTION
-EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @passwoord = 'TEST'
+EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @wachtwoord = 'TEST'
 ROLLBACK TRANSACTION
 
-EXEC sp_DatabaseUserToevoegen @login_naam = teataccount, @passwoord = 'TEST'
-
-DROP LOGIN teataccount
+EXEC sp_DatabaseUserToevoegen @login_naam = teataccount, @wachtwoord = 'TEST'
 --BR 13 Mislukte poging
 -- een medewerker dat bestaat kan je niet nogmaals erin zetten.
 BEGIN TRANSACTION
-EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @passwoord = 'TEST'
-EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @passwoord = 'TEST'
+EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @wachtwoord = 'TEST'
+EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @wachtwoord = 'TEST'
 ROLLBACK TRANSACTION
 ROLLBACK TRANSACTION
 GO
@@ -796,7 +806,7 @@ GO
 --BR 13 voeg een database user toe
 --success
 BEGIN TRANSACTION
-EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @ = 'TEST'
+EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @wachtwoord = 'TEST'
 ROLLBACK TRANSACTION
 GO
 

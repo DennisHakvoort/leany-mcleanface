@@ -33,7 +33,8 @@ DROP TRIGGER IF EXISTS trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
 DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
 DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
 DROP PROCEDURE IF EXISTS sp_DatabaseUserToevoegen
-DROP PROCEDURE IF EXISTS  sp_InsertMedewerkerIngepland
+DROP PROCEDURE IF EXISTS sp_InsertMedewerkerIngepland
+DROP PROCEDURE IF EXISTS sp_invullenBeschikbareDagen
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 23 dagen. 23 dagen staan gelijk aan (23*8) 184 uren 
 --BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
@@ -49,7 +50,8 @@ CREATE PROCEDURE sp_MedewerkerToevoegen
 @achternaam NVARCHAR(20),
 @voornaam NVARCHAR(20),
 @medewerker_code VARCHAR(5),
-@wachtwoord VARCHAR(40)
+@wachtwoord VARCHAR(40),
+@rol varchar(40)
 AS BEGIN
 	SET NOCOUNT ON 
 	SET XACT_ABORT OFF
@@ -63,12 +65,22 @@ AS BEGIN
 		IF EXISTS (SELECT '@'
 				FROM medewerker
 				WHERE medewerker_code = @medewerker_code)
-			THROW 500014, 'Medewerker code is al in gebruik', 16
+			THROW 50014, 'Medewerker code is al in gebruik', 16
 
-		INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
-			VALUES(@medewerker_code, @achternaam, @voornaam);
+		IF (exists(	SELECT '!'
+								FROM medewerker_rol_type
+								WHERE medewerker_rol = @rol))
+			BEGIN
+				INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
+					VALUES(@medewerker_code, @achternaam, @voornaam);
+				INSERT INTO medewerker_rol VALUES (@medewerker_code, @rol)
 
-		EXEC sp_DatabaseUserToevoegen @login_naam = @medewerker_code, @passwoord = @wachtwoord
+				EXEC sp_DatabaseUserToevoegen @login_naam = @medewerker_code, @wachtwoord = @wachtwoord
+			END
+		ELSE
+			BEGIN
+				THROW 50020, 'Dit is geen bestaande rol', 16
+			END
 	END TRY
 	BEGIN CATCH
 			IF @TranCounter = 0
@@ -344,16 +356,9 @@ AS
 										WHERE FORMAT(d.maand_datum, 'yyyy-MM')  < FORMAT(GETDATE(), 'yyyy-MM')))
 					BEGIN
 						THROW 50011, 'Medewerker uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
-
-				IF (EXISTS(SELECT '!'
-									FROM inserted
-									WHERE eind_datum < CURRENT_TIMESTAMP)
-				OR (EXISTS(	SELECT '!'
-										FROM deleted
-										WHERE eind_datum < CURRENT_TIMESTAMP)))
-				THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 			END
 	END
+END
 GO
 
 --BR13 een database login user aanmaken en een rol toewijzen
