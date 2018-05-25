@@ -1,6 +1,6 @@
 USE LeanDB
-GO
 
+GO
 --Tests sp_WijzigCategorieen
 --Insert toegestane data
 --succesvol
@@ -24,13 +24,45 @@ EXEC sp_WijzigCategorieen 'bestaat niet', 'Cursus', NULL
 ROLLBACK TRANSACTION
 
 GO
+--Tests sp_WijzigenMedewerkerRol
+--Pas een bestaande medewerker rol aan.
+--succesvol
+BEGIN TRANSACTION
+INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+VALUES ('HM', 'Henk', 'Meh')
+INSERT INTO medewerker_rol_type
+VALUES ('leider')
+INSERT INTO medewerker_rol_type
+VALUES ('Meister')
+INSERT INTO medewerker_rol(medewerker_code, medewerker_rol)
+VALUES ('HM', 'leider')
+EXEC sp_WijzigenMedewerkerRol 'HM', 'leider', 'Meister'
+ROLLBACK TRANSACTION
+
+GO
+--pas een niet bestaande medewerker rol/medewerker code cobinatie aan.
+--Msg 50015, Level 16, State 16, Procedure sp_WijzigenMedewerkerRol, Line 22 [Batch Start Line 37]
+--Medewerker in combinatie met deze rol bestaat niet.
+BEGIN TRANSACTION
+INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+VALUES ('HM', 'Henk', 'Meh')
+INSERT INTO medewerker_rol_type
+VALUES ('leider')
+INSERT INTO medewerker_rol_type
+VALUES ('Meister')
+INSERT INTO medewerker_rol(medewerker_code, medewerker_rol)
+VALUES ('HM', 'leider')
+EXEC sp_WijzigenMedewerkerRol 'HL', 'leider', 'Meister'
+ROLLBACK TRANSACTION
+
+GO
 --Tests sp_WijzigMedewerkerRolType
 --Probeer toegestane data te wijzigen
 --succesvol
 BEGIN TRANSACTION
- INSERT INTO medewerker_rol_type
- VALUES ('admin')
- EXEC sp_WijzigMedewerkerRolType 'admin', 'super-user'
+	INSERT INTO medewerker_rol_type
+		VALUES ('admin')
+	EXEC sp_WijzigMedewerkerRolType 'admin', 'super-user'
 ROLLBACK TRANSACTION
 
 GO
