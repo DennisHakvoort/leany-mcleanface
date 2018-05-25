@@ -149,10 +149,15 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+		BEGIN
 		IF NOT EXISTS (SELECT *
 					   FROM medewerker_op_project
 				       WHERE project_code = @project_code AND medewerker_code = @medewerker_code)
 		THROW 50019, 'Medewerker is nooit aan dit project gekoppeld', 16
+			END
+		UPDATE MEDEWERKER_OP_PROJECT
+			SET project_rol = @nieuwe_ProjectRol
+		WHERE project_code = @project_code AND medewerker_code = @medewerker_code
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
