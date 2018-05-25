@@ -7,7 +7,6 @@ DROP PROCEDURE IF EXISTS sp_InsertProjectRolType
 DROP PROCEDURE IF EXISTS sp_InsertProject
 DROP PROCEDURE IF EXISTS sp_InsertProjectCategorie
 DROP PROCEDURE IF EXISTS sp_InsertMedewerkerOpProject
-DROP PROCEDURE IF EXISTS sp_invullenBeschikbareUren
 
 --insert procedure medeweker_rol
 GO

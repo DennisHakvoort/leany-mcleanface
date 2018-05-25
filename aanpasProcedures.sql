@@ -1,11 +1,12 @@
-
+USE LeanDb
+GO
 
 DROP PROCEDURE IF EXISTS sp_WijzigCategorieen
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
+DROP PROCEDURE IF EXISTS sp_WijzigBeschikbareDagen
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerRol
 
 --SP wijzigen categorieën
-
 GO
 CREATE PROCEDURE sp_WijzigCategorieen
 @naamOud   CHAR(40),
@@ -47,8 +48,8 @@ AS
 		THROW
 	END CATCH
 
+--SP aanpassen medewerker rol types
 GO
-			--SP aanpassen medewerker rol types
 CREATE PROCEDURE sp_WijzigMedewerkerRolType
 @medewerker_Rol_Oud   CHAR(40),
 @medewerker_Rol_Nieuw CHAR(40)
@@ -88,9 +89,46 @@ AS
 		THROW
 	END CATCH
 
+-- update beschikbare dagen van een medewerker
 GO
+CREATE PROCEDURE sp_WijzigBeschikbareDagen
+@medewerker_code VARCHAR(5),
+@maand DATE,
+@beschikbare_dagen INT
+AS BEGIN
+	SET NOCOUNT ON 
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	SELECT @TranCounter
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		UPDATE medewerker_beschikbaarheid
+		SET beschikbare_dagen = @beschikbare_dagen
+		WHERE medewerker_code = @medewerker_code and (FORMAT(maand, 'yyyy-MM')) = (FORMAT(@maand, 'yyyy-MM'))
+
+		IF @@ROWCOUNT = 0
+		THROW 50019, 'Mederwerker is in de opgegeven maand nog niet ingepland', 16;
+
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
 
 --SP het veranderen van een rol die een medewerker is toegekend.
+GO
 CREATE PROCEDURE sp_WijzigenMedewerkerRol
 @medewerker_code CHAR(5),
 @oude_rol        CHAR(40),
@@ -130,5 +168,3 @@ AS
 			END;
 		THROW
 	END CATCH
-
-
