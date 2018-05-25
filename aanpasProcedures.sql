@@ -1,8 +1,9 @@
-
+USE LeanDb
+GO
 
 DROP PROCEDURE IF EXISTS sp_WijzigCategorieen
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
-DROP PROCEDURE IF EXISTS sp_WijzignBeschikbareDagen
+DROP PROCEDURE IF EXISTS sp_WijzigBeschikbareDagen
 --SP wijzigen categorieën
 
 GO
@@ -89,7 +90,7 @@ AS
 
 GO
 -- update beschikbare dagen van een medewerker
-CREATE PROCEDURE sp_WijzignBeschikbareDagen
+CREATE PROCEDURE sp_WijzigBeschikbareDagen
 @medewerker_code VARCHAR(5),
 @maand DATE,
 @beschikbare_dagen INT
@@ -104,10 +105,12 @@ AS BEGIN
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-
 		UPDATE medewerker_beschikbaarheid
 		SET beschikbare_dagen = @beschikbare_dagen
 		WHERE medewerker_code = @medewerker_code and (FORMAT(maand, 'yyyy-MM')) = (FORMAT(@maand, 'yyyy-MM'))
+
+		IF @@ROWCOUNT = 0
+		THROW 50019, 'Mederwerker is in de opgegeven maand nog niet ingepland', 16;
 
 	END TRY
 	BEGIN CATCH

@@ -1,3 +1,6 @@
+USE LeanDB
+GO
+
 --Tests sp_WijzigCategorieen
 --Insert toegestane data
 --succesvol
@@ -43,4 +46,31 @@ BEGIN TRANSACTION
 	BEGIN CATCH
 		ROLLBACK TRANSACTION
 	END CATCH
+ROLLBACK TRANSACTION
+
+GO
+-- Test sp_wijzigbeschikbareDagen
+-- Succes test
+BEGIN TRANSACTION
+	DECLARE @date DATETIME = getdate()
+
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('aa', 'anton', 'ameland');
+	INSERT INTO medewerker_beschikbaarheid (medewerker_code, maand, beschikbare_dagen)
+		VALUES ('aa', @date, 10)
+	EXEC sp_WijzignBeschikbareDagen @medewerker_code = 'aa', @maand = @date, @beschikbare_dagen = 20;
+ROLLBACK TRANSACTION
+
+GO
+-- Test sp_wijzigbeschikbareDagen
+-- faal test
+-- Msg 500019, Level 16, State 16, Procedure sp_WijzignBeschikbareDagen, Line 22 [Batch Start Line 65]
+-- Mederwerker is in de opgegeven maand nog niet ingepland
+BEGIN TRANSACTION
+	DECLARE @date DATETIME = getdate()
+
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('aa', 'anton', 'ameland');	
+	EXEC sp_WijzignBeschikbareDagen @medewerker_code = 'aa', @maand = @date, @beschikbare_dagen = 20;
+	select * from medewerker_beschikbaarheid
 ROLLBACK TRANSACTION
