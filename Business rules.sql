@@ -360,7 +360,7 @@ GO
 --BR13 een database login user aanmaken en een rol toewijzen
 CREATE PROCEDURE sp_DatabaseUserToevoegen
 @login_naam VARCHAR(255),
-@passwoord  VARCHAR(255)
+@wachtwoord VARCHAR(40)
 AS
 	SET NOCOUNT ON 
 	SET XACT_ABORT OFF
@@ -378,7 +378,7 @@ AS
 					 WHERE name = @login_naam)
 		THROW 50013, 'De naam moet uniek zijn.', 16
 
-    SELECT @sql = 'CREATE LOGIN ' + @login_naam + ' WITH PASSWORD ' + '= ''' + @passwoord + ''''
+    SELECT @sql = 'CREATE LOGIN ' + @login_naam + ' WITH PASSWORD ' + '= ''' + @wachtwoord + ''''
 		PRINT @sql
 		EXEC sys.sp_executesql @stmt = @sql
 	END TRY
