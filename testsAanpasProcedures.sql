@@ -69,3 +69,42 @@ BEGIN TRANSACTION
  VALUES ('admin')
  EXEC sp_WijzigMedewerkerRolType 'geen admin', 'super-user'
 ROLLBACK TRANSACTION
+
+--Tests sp_WijzigenMedewerkerOpProject
+--Probeer een bestaande medewerker met project te wijzigen
+--succesvol
+BEGIN TRANSACTION
+ INSERT INTO project_categorie (naam, parent)
+ VALUES ('subsidie', NULL)
+ INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+ VALUES('BB', 'subsidie', '01-01-2001', '01-01-2020', 'BB')
+ INSERT INTO project_rol_type
+ VALUES ('leider')
+ INSERT INTO project_rol_type
+ VALUES ('meister')
+ INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+ VALUES ('HB', 'Henk', 'Bruin')
+ INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
+ VALUES ('BB', 'HB', 'meister')
+ EXEC sp_WijzigenMedewerkerOpProject 'BB', 'HB', 'leider'
+ROLLBACK TRANSACTION
+
+--Probeer een niet bestaande medewerker/ project combinatie aan te passen
+--Msg 50019, Level 16, State 16, Procedure sp_WijzigenMedewerkerOpProject, Line 21 [Batch Start Line 92]
+--Medewerker is nooit aan dit project gekoppeld
+BEGIN TRANSACTION
+ INSERT INTO project_categorie (naam, parent)
+ VALUES ('subsidie', NULL)
+ INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+ VALUES('BB', 'subsidie', '01-01-2001', '01-01-2020', 'BB')
+ INSERT INTO project_rol_type
+ VALUES ('leider')
+ INSERT INTO project_rol_type
+ VALUES ('meister')
+ INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+ VALUES ('HB', 'Henk', 'Bruin')
+ INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
+ VALUES ('BB', 'HB', 'meister')
+ EXEC sp_WijzigenMedewerkerOpProject 'Bk', 'HB', 'leider'
+ROLLBACK TRANSACTION
+

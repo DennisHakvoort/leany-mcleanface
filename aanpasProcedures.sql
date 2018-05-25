@@ -3,6 +3,7 @@
 DROP PROCEDURE IF EXISTS sp_WijzigCategorieen
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerRol
+DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerOpProject
 
 --SP wijzigen categorieën
 
@@ -130,5 +131,41 @@ AS
 			END;
 		THROW
 	END CATCH
+GO
 
+--Sp aanpassen medewerker op project
+CREATE PROCEDURE sp_WijzigenMedewerkerOpProject
+@project_code CHAR(20),
+@medewerker_code CHAR(5),
+@nieuwe_ProjectRol CHAR(40)
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	SELECT @TranCounter
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF NOT EXISTS (SELECT *
+					   FROM medewerker_op_project
+				       WHERE project_code = @project_code AND medewerker_code = @medewerker_code)
+		THROW 50019, 'Medewerker is nooit aan dit project gekoppeld', 16
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				PRINT'ROLLBACK TRANSACTION'
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
+				PRINT XACT_STATE()
+        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
 
