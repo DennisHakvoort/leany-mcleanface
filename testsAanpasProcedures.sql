@@ -101,3 +101,19 @@ BEGIN TRANSACTION
 	EXEC sp_WijzignBeschikbareDagen @medewerker_code = 'aa', @maand = @date, @beschikbare_dagen = 20;
 	select * from medewerker_beschikbaarheid
 ROLLBACK TRANSACTION
+GO
+
+--SP 9 Toevoegen SP aanpassen medewerker.
+--Succes test
+BEGIN TRANSACTION
+INSERT INTO medewerker VALUES ('aa34F', 'Samir', 'WieDan')
+EXEC sp_WijzigenMedewerker  'aa34F', 'Fatima', 'Ahmeeeeeed';
+SELECT medewerker_code, voornaam, achternaam FROM medewerker WHERE medewerker_code = 'aa34F'
+ROLLBACK TRANSACTION
+
+--SP 9 Toevoegen SP aanpassen medewerker
+--Faal test
+--Msg 50090, 'een medewerker met dit medewerker_code bestaat niet.', 16
+BEGIN TRANSACTION
+EXEC sp_WijzigenMedewerker 'a1122', 'Fatima', 'Ahmed';
+ROLLBACK TRANSACTION
