@@ -34,6 +34,7 @@ DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
 DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
 DROP PROCEDURE IF EXISTS sp_DatabaseUserToevoegen
 DROP PROCEDURE IF EXISTS  sp_InsertMedewerkerIngepland
+DROP PROCEDURE IF EXISTS  sp_invullenBeschikbareDagen
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 23 dagen. 23 dagen staan gelijk aan (23*8) 184 uren 
 --BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
@@ -342,16 +343,19 @@ AS
 						EXISTS(SELECT	'!'
 										FROM (deleted D INNER JOIN medewerker_ingepland_project mip ON d.id = mip.id)
 										WHERE FORMAT(d.maand_datum, 'yyyy-MM')  < FORMAT(GETDATE(), 'yyyy-MM')))
-					BEGIN
-						THROW 50011, 'Medewerker uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
+					
+					THROW 50011, 'Medewerker uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
+					
 
 				IF (EXISTS(SELECT '!'
-									FROM inserted
+									FROM inserted i INNER JOIN medewerker_op_project mop ON i.id = mop.id
+										INNER JOIN project p ON mop.project_code = p.project_code
 									WHERE eind_datum < CURRENT_TIMESTAMP)
 				OR (EXISTS(	SELECT '!'
-										FROM deleted
+										FROM deleted d INNER JOIN medewerker_op_project mop ON d.id = mop.id
+										INNER JOIN project p ON mop.project_code = p.project_code
 										WHERE eind_datum < CURRENT_TIMESTAMP)))
-				THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
+					THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 			END
 	END
 GO

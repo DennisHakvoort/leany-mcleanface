@@ -168,3 +168,43 @@ AS
 			END;
 		THROW
 	END CATCH
+
+--proc
+GO
+CREATE PROCEDURE sp_aanpassenProject
+@project_code VARCHAR(5),
+@categorie_naam VARCHAR(40),
+@begin_datum DATETIME,
+@eind_datum DATETIME,
+@project_naam VARCHAR(40)
+AS BEGIN
+	SET NOCOUNT ON 
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	SELECT @TranCounter
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		UPDATE project
+		SET categorie_naam = @categorie_naam, 
+		WHERE project_code = @project_code
+
+		IF @@ROWCOUNT = 0
+		THROW 50099, 'Mederwerker is in de opgegeven maand nog niet ingepland', 16;
+
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
