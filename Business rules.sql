@@ -18,8 +18,8 @@ CREATE PROCEDURE sp_DropConstraint
 	BEGIN CATCH
 		PRINT 'Het volgende constraint is niet gedropt, waarschijnlijk omdat deze niet bestond: ' + @Constraint_name
 	END CATCH
-	GO
-
+GO
+  
 --DROP ALLE BUSINESS RULES
 EXEC sp_DropConstraint @Constraint_name = 'CK_UREN_MIN_MAX', @table_name = 'medewerker_beschikbaarheid'
 EXEC sp_DropConstraint @Constraint_name = 'CK_EINDDATUM_NA_BEGINDATUM', @table_name = 'project'
@@ -40,6 +40,7 @@ DROP PROCEDURE IF EXISTS  sp_InsertMedewerkerIngepland
 ALTER TABLE medewerker_beschikbaarheid
 		ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbare_dagen <= 23 AND beschikbare_dagen >= 0)
 GO
+
 --BR3
 --medewerker(medewerker_code) bestaat uit de eerste letter van de voornaam,
 --de eerste letter van de achternaam en
@@ -132,9 +133,8 @@ AS
 			END;
 		THROW
 	END CATCH
-
 GO
-
+                              
 -- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0
 -- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184 (184 uur staat gelijk aan 23 dagen (23*8 = 184))
 CREATE PROCEDURE sp_ProjecturenInplannen
@@ -204,8 +204,8 @@ GO
 
 --BR8 project_categorie(parent) moet een waarde zijn uit de project_categorie(naam) of NULL. Het kan niet naar zichzelf verwijzen.
 CREATE TRIGGER trg_SubCategorieHeeftHoofdCategorie
-  ON project_categorie
-  AFTER INSERT, UPDATE
+ ON project_categorie
+ AFTER INSERT, UPDATE
 AS
 BEGIN
 BEGIN TRY
@@ -236,7 +236,7 @@ BEGIN TRY
 			 WHERE parent IS NULL AND naam IN (SELECT parent
 											  FROM project_categorie
 											  )))
-		THROW 50002, 'Kan geen categorie met met subcategori�n verwijderen', 16
+		THROW 50002, 'Kan geen categorie met met subcategories verwijderen', 16
   END TRY
   BEGIN CATCH
     THROW
@@ -330,9 +330,9 @@ GO
 
 --BR11 medewerker_ingepland_project kan niet meer worden aangepast als medewerker_ingepland_project(maand_datum) is verstreken
 CREATE TRIGGER trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
-	ON medewerker_ingepland_project
-	AFTER UPDATE, INSERT, DELETE
-	AS
+ON medewerker_ingepland_project
+AFTER UPDATE, INSERT, DELETE
+AS
 	BEGIN
 		IF(@@ROWCOUNT > 0)
 			BEGIN
@@ -345,13 +345,19 @@ CREATE TRIGGER trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
 										WHERE FORMAT(d.maand_datum, 'yyyy-MM')  < FORMAT(GETDATE(), 'yyyy-MM')))
 					BEGIN
 						THROW 50011, 'Medewerker uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
-					END
+
+				IF (EXISTS(SELECT '!'
+									FROM inserted
+									WHERE eind_datum < CURRENT_TIMESTAMP)
+				OR (EXISTS(	SELECT '!'
+										FROM deleted
+										WHERE eind_datum < CURRENT_TIMESTAMP)))
+				THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 			END
 	END
 GO
-			       
---BR13
---een database login user aanmaken en een rol toewijzen
+                   
+--BR13 een database login user aanmaken en een rol toewijzen
 CREATE PROCEDURE sp_DatabaseUserToevoegen
 @login_naam VARCHAR(255),
 @passwoord  VARCHAR(255)
@@ -392,3 +398,45 @@ AS
 		THROW
 	END CATCH
 GO	
+
+-- BR14 De beschikbaarheid van een medewerker kan maar wordt per maand opgegeven.
+CREATE PROCEDURE sp_invullenBeschikbareDagen
+@medewerker_code VARCHAR(5),
+@maand DATE,
+@beschikbare_dagen INT
+AS BEGIN
+	SET NOCOUNT ON 
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	SELECT @TranCounter
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		
+		IF EXISTS (SELECT '@'
+					FROM medewerker_beschikbaarheid
+					WHERE medewerker_code = @medewerker_code
+					and FORMAT(maand, 'yyyy-MM') = FORMAT(@maand, 'yyyy-MM'))
+						THROW 500016, 'Medewerkerbeschikbaarheid is voor de ingevulde maand al ingepland', 16;
+
+		IF (FORMAT(@maand, 'yyyy-MM') < FORMAT(GETDATE(), 'yyyy-MM'))
+						THROW 500017, 'U kan geen medewerkerbeschikbaarheid in het verleden opgegeven', 16;
+
+		INSERT INTO medewerker_beschikbaarheid(medewerker_code, maand, beschikbare_dagen)
+			VALUES	(@medewerker_code, @maand, @beschikbare_dagen);
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
