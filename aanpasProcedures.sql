@@ -5,6 +5,7 @@ DROP PROCEDURE IF EXISTS sp_WijzigCategorieen
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_WijzigBeschikbareDagen
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerRol
+DROP PROCEDURE IF EXISTS sp_VerwijderenMedewerkerRol
 
 --SP wijzigen categorieën
 GO
@@ -168,3 +169,45 @@ AS
 			END;
 		THROW
 	END CATCH
+GO
+
+--SP 16 Toevoegen SP verwijderen medewerker_rol
+CREATE PROCEDURE sp_VerwijderenMedewerkerRol
+@medewerker_code VARCHAR(5),
+@medewerker_rol VARCHAR(40)
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	SELECT @TranCounter
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		BEGIN	
+		IF NOT EXISTS (SELECT '!'
+				FROM medewerker m INNER JOIN medewerker_rol mr
+				ON m.medewerker_code = mr.medewerker_code
+				WHERE mr.medewerker_rol = @medewerker_rol AND mr.medewerker_code = @medewerker_code)
+		THROW 50096, 'deze medewerker heeft niet de ingevoerde medewerker_rol.', 16
+		END
+		DELETE FROM medewerker_rol
+		WHERE medewerker_code = @medewerker_code
+	END TRY
+		BEGIN CATCH
+			IF @TranCounter = 0
+				BEGIN
+					PRINT'ROLLBACK TRANSACTION'
+					IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+				END;
+			ELSE
+				BEGIN
+					PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
+					PRINT XACT_STATE()
+			IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+				END;
+				THROW
+	END CATCH
+GO
