@@ -101,3 +101,32 @@ BEGIN TRANSACTION
 	EXEC sp_WijzignBeschikbareDagen @medewerker_code = 'aa', @maand = @date, @beschikbare_dagen = 20;
 	select * from medewerker_beschikbaarheid
 ROLLBACK TRANSACTION
+GO
+
+--Test sp_VerwijderenMedewerkerRolType
+--Verwijder een medewerker_rol_type die niet in gebruik is
+--Succes test
+BEGIN TRANSACTION
+	INSERT INTO medewerker_rol_type VALUES ('CEO');
+	EXEC sp_VerwijderenMedewerkerRolType 'CEO'
+	SELECT * FROM medewerker_rol_type
+	SELECT * FROM medewerker_rol
+	DELETE FROM medewerker_rol_type WHERE medewerker_rol = 'CEO'
+ROLLBACK TRANSACTION
+GO
+
+--Een medewerker_rol_type die al aan een medewerker gekoppeld is kan niet verwijderd worden
+--Msg 50097, Level 16, State 16, Procedure sp_VerwijderenMedewerkerRolType, Line 20 [Batch Start Line 118]
+--een medewerker_rol_type in gebruik kan niet verwijdert worden.
+BEGIN TRANSACTION
+	INSERT INTO medewerker VALUES ('aa123', 'Samir', 'Amed');
+	INSERT INTO medewerker_rol_type VALUES ('Tester');
+	INSERT INTO medewerker_rol VALUES ('aa123', 'Tester');
+
+	EXEC sp_VerwijderenMedewerkerRolType 'Tester'
+
+	DELETE FROM medewerker_rol WHERE medewerker_code = 'aa123'
+	DELETE FROM medewerker WHERE medewerker_code = 'aa123'
+	DELETE FROM medewerker_rol_type WHERE medewerker_rol = 'Tester'
+ROLLBACK TRANSACTION
+GO
