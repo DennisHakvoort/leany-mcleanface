@@ -869,7 +869,7 @@ GO
 
 -- BR15 Begin_datum van een project mag niet worden aangepast als een medewerker is ingepland in dezelfde maand of een medewerker is ingepland voor de nieuwe begin_datum.
 -- faal test
--- Msg 500025, Level 16, State 16, Procedure trg_UpdateBegindatumValtNaIngeplandMedewerker, Line 15 [Batch Start Line 873]
+-- Msg 50025, Level 16, State 16, Procedure trg_UpdateBegindatumValtNaIngeplandMedewerker, Line 15 [Batch Start Line 873]
 -- Begindatum mag niet worden aangepast als het project is gestart
 BEGIN TRANSACTION
 	DECLARE @date DATE = GETDATE() -100
@@ -888,7 +888,7 @@ GO
 
 -- BR15 Begin_datum van een project mag niet worden aangepast als een medewerker is ingepland in dezelfde maand of een medewerker is ingepland voor de nieuwe begin_datum.
 -- faal test
--- Msg 500023, Level 16, State 16, Procedure trg_UpdateBegindatumValtNaIngeplandMedewerker, Line 23 [Batch Start Line 892]
+-- Msg 50023, Level 16, State 16, Procedure trg_UpdateBegindatumValtNaIngeplandMedewerker, Line 23 [Batch Start Line 892]
 -- Begindatum kan niet worden aangepast. Een medewerker is al ingepland voor de begindatum.
 BEGIN TRANSACTION
 	DECLARE @date DATE = GETDATE() +100
@@ -932,7 +932,7 @@ GO
 
 -- BR16 Einddatum voor een project mag alleen verlengt worden.
 -- faal test
--- Msg 500024, Level 16, State 16, Procedure trg_UpdateEinddatumAlleenVerlengen, Line 14 [Batch Start Line 931]
+-- Msg 50024, Level 16, State 16, Procedure trg_UpdateEinddatumAlleenVerlengen, Line 14 [Batch Start Line 931]
 -- Nieuwe eind datum valt voor de oude eind datum.
 BEGIN TRANSACTION
 	DECLARE @date DATE = GETDATE() +100

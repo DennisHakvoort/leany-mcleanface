@@ -425,10 +425,10 @@ AS BEGIN
 					FROM medewerker_beschikbaarheid
 					WHERE medewerker_code = @medewerker_code
 					and FORMAT(maand, 'yyyy-MM') = FORMAT(@maand, 'yyyy-MM'))
-						THROW 500016, 'Medewerkerbeschikbaarheid is voor de ingevulde maand al ingepland', 16;
+						THROW 50016, 'Medewerkerbeschikbaarheid is voor de ingevulde maand al ingepland', 16;
 
 		IF (FORMAT(@maand, 'yyyy-MM') < FORMAT(GETDATE(), 'yyyy-MM'))
-						THROW 500017, 'U kan geen medewerkerbeschikbaarheid in het verleden opgegeven', 16;
+						THROW 50017, 'U kan geen medewerkerbeschikbaarheid in het verleden opgegeven', 16;
 
 		INSERT INTO medewerker_beschikbaarheid(medewerker_code, maand, beschikbare_dagen)
 			VALUES	(@medewerker_code, @maand, @beschikbare_dagen);
@@ -468,7 +468,7 @@ BEGIN
 					INNER JOIN medewerker_ingepland_project mip ON mop.id = mip.id
 					WHERE FORMAT(i.begin_datum, 'yyyy-MM') < FORMAT(mip.maand_datum, 'yyyy-MM'))
 
-		THROW 500023, 'Begindatum kan niet worden aangepast. Een medewerker is al ingepland voor de begindatum.', 16
+		THROW 50023, 'Begindatum kan niet worden aangepast. Een medewerker is al ingepland voor de begindatum.', 16
 	END TRY
 	BEGIN CATCH
 		THROW
@@ -488,7 +488,7 @@ BEGIN
 					INNER JOIN deleted d ON i.project_code = d.project_code
 					WHERE i.eind_datum < d.eind_datum)
 
-		THROW 500024, 'Nieuwe einddatum valt voor de oude einddatum.', 16
+		THROW 50024, 'Nieuwe einddatum valt voor de oude einddatum.', 16
 
 	END TRY
 	BEGIN CATCH
