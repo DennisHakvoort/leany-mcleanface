@@ -85,7 +85,7 @@ BEGIN TRANSACTION
 		VALUES ('aa', 'anton', 'ameland');
 	INSERT INTO medewerker_beschikbaarheid (medewerker_code, maand, beschikbare_dagen)
 		VALUES ('aa', @date, 10)
-	EXEC sp_WijzignBeschikbareDagen @medewerker_code = 'aa', @maand = @date, @beschikbare_dagen = 20;
+	EXEC sp_WijzigBeschikbareDagen @medewerker_code = 'aa', @maand = @date, @beschikbare_dagen = 20;
 ROLLBACK TRANSACTION
 
 GO
@@ -98,6 +98,24 @@ BEGIN TRANSACTION
 
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 		VALUES ('aa', 'anton', 'ameland');	
-	EXEC sp_WijzignBeschikbareDagen @medewerker_code = 'aa', @maand = @date, @beschikbare_dagen = 20;
-	select * from medewerker_beschikbaarheid
+	EXEC sp_WijzigBeschikbareDagen @medewerker_code = 'aa', @maand = @date, @beschikbare_dagen = 20;
+ROLLBACK TRANSACTION
+
+GO
+-- Test sp_aanpassenProject
+-- succes test
+BEGIN TRANSACTION
+	DECLARE @date DATETIME = (getdate() + 10);
+	DECLARE @einddatum DATETIME = (getdate() + 300);
+	select @date, @einddatum
+
+	INSERT INTO project_categorie (naam, parent)
+		VALUES ('werkschool', NULL);
+	INSERT INTO project_categorie (naam, parent)
+		VALUES ('wiskunde', NULL);
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum)
+		VALUES ('PROJAH01', 'project AH', 'werkschool', GETDATE() + 30, GETDATE() +200);
+	select * from project
+	EXEC sp_aanpassenProject @project_code = 'PROJAH01', @categorie_naam = 'wiskunde', @begin_datum = @date
+		,@eind_datum = @einddatum, @project_naam = 'project LIDL', @verwachte_uren = 90
 ROLLBACK TRANSACTION

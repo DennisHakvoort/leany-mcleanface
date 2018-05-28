@@ -5,6 +5,7 @@ DROP PROCEDURE IF EXISTS sp_WijzigCategorieen
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_WijzigBeschikbareDagen
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerRol
+DROP PROCEDURE IF EXISTS sp_aanpassenProject
 
 --SP wijzigen categorieën
 GO
@@ -169,14 +170,15 @@ AS
 		THROW
 	END CATCH
 
---proc
+--SP wijzigen projecten
 GO
 CREATE PROCEDURE sp_aanpassenProject
-@project_code VARCHAR(5),
+@project_code VARCHAR(20),
 @categorie_naam VARCHAR(40),
 @begin_datum DATETIME,
 @eind_datum DATETIME,
-@project_naam VARCHAR(40)
+@project_naam VARCHAR(40),
+@verwachte_uren INT
 AS BEGIN
 	SET NOCOUNT ON 
 	SET XACT_ABORT OFF
@@ -189,12 +191,12 @@ AS BEGIN
 		BEGIN TRANSACTION;
 	BEGIN TRY
 		UPDATE project
-		SET categorie_naam = @categorie_naam, 
+		SET categorie_naam = @categorie_naam,
+			begin_datum = @begin_datum,
+			eind_datum = @eind_datum,
+			project_naam = @project_naam,
+			verwachte_uren = @verwachte_uren
 		WHERE project_code = @project_code
-
-		IF @@ROWCOUNT = 0
-		THROW 50099, 'Mederwerker is in de opgegeven maand nog niet ingepland', 16;
-
 	END TRY
 	BEGIN CATCH
 			IF @TranCounter = 0
