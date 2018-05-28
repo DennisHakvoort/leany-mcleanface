@@ -107,26 +107,16 @@ GO
 --Verwijder een medewerker_ingepland_project record
 --Succes test
 BEGIN TRANSACTION
-	DELETE FROM medewerker_ingepland_project WHERE id = 1;
-	DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'cod95';
-	DELETE FROM medewerker_rol WHERE medewerker_code = 'cod95';
-	DELETE FROM medewerker_rol_type WHERE medewerker_rol = 'DeaTeacher';
-	DELETE FROM medewerker_op_project WHERE id = 1;
-	DELETE FROM medewerker WHERE medewerker_code = 'cod95';
-	DELETE FROM project WHERE project_code = 'DEA12';
-	DELETE FROM tag_van_categorie WHERE naam = 'DEA_project';
-	DELETE FROM project_categorie WHERE naam = 'DEA_project';
-	DELETE FROM project_rol_type WHERE project_rol = 'CEO';
-	DELETE FROM categorie_tag WHERE tag_naam = 'school';
-
+BEGIN TRY
 	IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 	DBCC CHECKIDENT ('medewerker_op_project', RESEED,1);
 	INSERT INTO medewerker VALUES ('cod95', 'Gebruiker7', 'Achternaam7');
 	INSERT INTO medewerker_beschikbaarheid VALUES ('cod95', 'jan 2019', 12);
 	INSERT INTO medewerker_rol_type VALUES ('DeaTeacher');
 	INSERT INTO medewerker_rol VALUES ('cod95', 'DeaTeacher');
-	INSERT INTO categorie_tag VALUES ('school');
+	INSERT INTO project_categorie VALUES ('HAN Arnhem', null);
 	INSERT INTO project_categorie VALUES ('DEA_project', 'HAN Arnhem');
+	INSERT INTO categorie_tag VALUES ('school');
 	INSERT INTO tag_van_categorie VALUES ('DEA_project', 'school');
 	INSERT INTO project VALUES ('DEA12', 'DEA_project', '11 jan 2019', '11 dec 2019', 'DEA_project_2018', 320);
 	INSERT INTO project_rol_type VALUES ('CEO');
@@ -134,7 +124,12 @@ BEGIN TRANSACTION
 	INSERT INTO medewerker_ingepland_project VALUES (IDENT_CURRENT('medewerker_op_project'), 300, 'jan 2019');
 
 	DECLARE @id int = IDENT_CURRENT('medewerker_op_project');
-	EXEC sp_VerwijderenMedewerkerIngeplandProject @id;
+	EXEC sp_VerwijderenMedewerkerIngeplandProject @id, 'jan 2019';
+	SELECT * FROM medewerker_ingepland_project WHERE id = IDENT_CURRENT('medewerker_op_project')
+END TRY
+	BEGIN CATCH
+		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
+	END CATCH
 ROLLBACK TRANSACTION
 GO
 
@@ -145,6 +140,6 @@ GO
 BEGIN TRANSACTION
 	SELECT * FROM medewerker_ingepland_project
 	DECLARE @id int = IDENT_CURRENT('medewerker_op_project');
-	EXEC sp_VerwijderenMedewerkerIngeplandProject @id;
+	EXEC sp_VerwijderenMedewerkerIngeplandProject @id, 'feb 2018';
 ROLLBACK TRANSACTION
 GO
