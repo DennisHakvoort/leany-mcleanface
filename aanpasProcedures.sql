@@ -5,6 +5,7 @@ DROP PROCEDURE IF EXISTS sp_WijzigCategorieen
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_WijzigBeschikbareDagen
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerRol
+DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerIngeplandProject
 
 --SP wijzigen categorieën
 GO
@@ -168,3 +169,46 @@ AS
 			END;
 		THROW
 	END CATCH
+GO
+
+--SP 8 Toevoegen SP aanpassen medewerker_ingepland_project
+CREATE PROCEDURE sp_WijzigenMedewerkerIngeplandProject
+@id INT,
+@medewerker_uren INT,
+@maand_datum DATETIME
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		BEGIN	
+		IF NOT EXISTS (SELECT '!'
+				FROM medewerker_ingepland_project mip INNER JOIN medewerker_op_project mop
+				ON mip.id = mop.id
+				WHERE mip.id = @id)
+		THROW 50080, 'Er bestaat geen medewerker_ingepland_project record met de opgegeven id', 16
+		END
+		UPDATE medewerker_ingepland_project
+		SET medewerker_uren = @medewerker_uren
+		WHERE id = @id AND maand_datum = @maand_datum
+	END TRY
+		BEGIN CATCH
+			IF @TranCounter = 0
+				BEGIN
+					PRINT'ROLLBACK TRANSACTION'
+					IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+				END;
+			ELSE
+				BEGIN
+					PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
+					PRINT XACT_STATE()
+			IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+				END;
+				THROW
+	END CATCH
+GO
