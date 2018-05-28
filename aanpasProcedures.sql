@@ -173,7 +173,8 @@ GO
 
 --SP 15 Toevoegen SP verwijderen medewerker_ingepland_project
 CREATE PROCEDURE sp_VerwijderenMedewerkerIngeplandProject
-@id INT
+@id INT,
+@maand_datum DATETIME												  
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -188,11 +189,11 @@ AS
 		IF NOT EXISTS (SELECT '!'
 				FROM medewerker_ingepland_project mip INNER JOIN medewerker_op_project mop
 				ON mip.id = mop.id
-				WHERE mip.id = @id)
+				WHERE mip.id = @id AND mip.maand_datum = @maand_datum)
 		THROW 50095, 'Er bestaat geen medewerker_ingepland_project record met de opgegeven id', 16
 		END
 		DELETE FROM medewerker_ingepland_project
-		WHERE id = @id
+		WHERE id = @id AND maand_datum = @maand_datum
 	END TRY
 		BEGIN CATCH
 			IF @TranCounter = 0
