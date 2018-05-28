@@ -30,11 +30,14 @@ DROP TRIGGER IF EXISTS trg_GeenHoofdCategorieMetSubsVerwijderen
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Op_Project
 DROP TRIGGER IF EXISTS trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 DROP TRIGGER IF EXISTS trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
+DROP TRIGGER IF EXISTS trg_UpdateBegindatumValtNaIngeplandMedewerker
+DROP TRIGGER IF EXISTS trg_UpdateEinddatumAlleenVerlengen
 DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
 DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
 DROP PROCEDURE IF EXISTS sp_DatabaseUserToevoegen
-DROP PROCEDURE IF EXISTS  sp_InsertMedewerkerIngepland
-DROP PROCEDURE IF EXISTS  sp_invullenBeschikbareDagen
+DROP PROCEDURE IF EXISTS sp_InsertMedewerkerIngepland
+DROP PROCEDURE IF EXISTS sp_invullenBeschikbareDagen
+
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 23 dagen. 23 dagen staan gelijk aan (23*8) 184 uren 
 --BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
@@ -443,3 +446,55 @@ AS BEGIN
 		THROW
 	END CATCH
 END
+GO
+
+-- BR15 Begin_datum van een project mag niet worden aangepast als een medewerker is
+-- ingepland in dezelfde maand of een medewerker is ingepland voor de nieuwe begin_datum.
+CREATE TRIGGER trg_UpdateBegindatumValtNaIngeplandMedewerker
+  ON project
+  AFTER UPDATE
+AS
+BEGIN
+	BEGIN TRY
+		IF EXISTS(SELECT '@'
+					FROM inserted i
+					INNER JOIN medewerker_op_project mop ON i.project_code = mop.project_code
+					INNER JOIN medewerker_ingepland_project mip ON mop.id = mip.id
+					WHERE FORMAT(i.begin_datum, 'yyyy-MM') < FORMAT(GETDATE(), 'yyyy-MM'))
+
+		THROW 500025, 'Begindatum mag niet worden aangepast als het project is gestart', 16
+
+		IF EXISTS(SELECT '@'
+					FROM inserted i
+					INNER JOIN medewerker_op_project mop ON i.project_code = mop.project_code
+					INNER JOIN medewerker_ingepland_project mip ON mop.id = mip.id
+					WHERE FORMAT(i.begin_datum, 'yyyy-MM') < FORMAT(mip.maand_datum, 'yyyy-MM'))
+
+		THROW 500023, 'Begindatum kan niet worden aangepast. Een medewerker is al ingepland voor de begindatum.', 16
+	END TRY
+	BEGIN CATCH
+		THROW
+	END CATCH
+END
+GO
+
+-- BR16 Einddatum voor een project mag alleen verlengt worden.
+CREATE TRIGGER trg_UpdateEinddatumAlleenVerlengen
+  ON project
+  AFTER UPDATE
+AS
+BEGIN
+	BEGIN TRY
+		IF EXISTS(SELECT '@'
+					FROM inserted i
+					INNER JOIN deleted d ON i.project_code = d.project_code
+					WHERE i.eind_datum < d.eind_datum)
+
+		THROW 500024, 'Nieuwe eind datum valt voor de oude eind datum.', 16
+
+	END TRY
+	BEGIN CATCH
+		THROW
+	END CATCH
+END
+GO

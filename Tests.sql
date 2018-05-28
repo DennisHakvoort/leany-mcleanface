@@ -822,11 +822,12 @@ ROLLBACK TRANSACTION
 GO
 
 -- BR14 De beschikbaarheid van een medewerker kan maar wordt per maand opgegeven.
--- succes test
+-- succes test invullen beschikbaarheid van de medewerker
 BEGIN TRANSACTION
-DECLARE @date DATETIME = GETDATE();
-INSERT INTO medewerker VALUES ('JD', 'Jan', 'Dieter')
-EXEC sp_invullenBeschikbareDagen @medewerker_code = 'JD', @maand = @date, @beschikbare_dagen = 20
+	DECLARE @date DATETIME = GETDATE();
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('BR', 'Boris', 'Brilmans')
+	EXEC sp_invullenBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
 ROLLBACK TRANSACTION
 GO
 
@@ -835,9 +836,10 @@ GO
 BEGIN TRANSACTION
 	BEGIN TRY
 		DECLARE @date DATETIME = GETDATE();
-		INSERT INTO medewerker VALUES ('JD', 'Jan', 'Dieter')
-		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'JD', @maand = @date, @beschikbare_dagen = 20
-		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'JD', @maand = @date, @beschikbare_dagen = 20
+		INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+			VALUES ('BRN', 'Borido', 'Borisen')
+		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
+		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
 	END TRY
 	BEGIN CATCH
 		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
@@ -845,47 +847,20 @@ BEGIN TRANSACTION
 ROLLBACK TRANSACTION
 GO
 
---Mislukking
---[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+-- BR15 Begin_datum van een project mag niet worden aangepast als een medewerker is
+-- succes test
 BEGIN TRANSACTION
-INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest',0)
-INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
-INSERT INTO project_rol_type VALUES ('tester')
-INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
-WAITFOR DELAY '00:00:01'
-INSERT INTO medewerker_ingepland_project VALUES ((select IDENT_CURRENT('medewerker_op_project')), 10, 'feb 2019')
+	DECLARE @date DATE = GETDATE()
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('KB01', 'Kean', 'Bergmans')
+	INSERT INTO project_categorie (naam, parent)
+		VALUES ('school', NULL)
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum)
+		VALUES ('projo0321', 'beste project', 'school', @date, @date + 300, 0)
+	INSERT INTO project_rol_type (project_rol)
+		VALUES ('notulist')
+	INSERT INTO medewerker_op_project (medewerker_code, project_code, project_rol)
+		VALUES ('KB01', 'projo0321', 'notulist')
+	INSERT INTO medewerker_ingepland_project (id, maand_datum, medewerker_uren)
+		VALUES (IDENT_CURRENT('medewerker_op_project'), @date+1, 10)
 ROLLBACK TRANSACTION
-GO
-
---Mislukking
---[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
-BEGIN TRANSACTION
-IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
-DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
-INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest',  0)
-INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
-INSERT INTO project_rol_type VALUES ('tester')
-INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
-INSERT INTO medewerker_ingepland_project VALUES ((select IDENT_CURRENT('medewerker_op_project')), 10, 'feb 2019')
-UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
-WAITFOR DELAY '00:00:01'
-UPDATE medewerker_ingepland_project SET medewerker_uren = 10 WHERE id = (select IDENT_CURRENT('medewerker_op_project'))
-ROLLBACK TRANSACTION
-GO
-
---Mislukking
---[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
-BEGIN TRANSACTION
-INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest', 0)
-INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
-INSERT INTO project_rol_type VALUES ('tester')
-INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
-INSERT INTO medewerker_ingepland_project VALUES ((select IDENT_CURRENT('medewerker_op_project')), 10, 'feb 2019')
-UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
-WAITFOR DELAY '00:00:01'
-DELETE FROM medewerker_ingepland_project WHERE id = (select IDENT_CURRENT('medewerker_op_project'))
-ROLLBACK TRANSACTION
-GO
