@@ -847,20 +847,104 @@ BEGIN TRANSACTION
 ROLLBACK TRANSACTION
 GO
 
--- BR15 Begin_datum van een project mag niet worden aangepast als een medewerker is
+-- BR15 Begin_datum van een project mag niet worden aangepast als een medewerker is ingepland in dezelfde maand of een medewerker is ingepland voor de nieuwe begin_datum.
 -- succes test
 BEGIN TRANSACTION
 	DECLARE @date DATE = GETDATE()
+	DECLARE @einddatum DATE = GETDATE() +300
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 		VALUES ('KB01', 'Kean', 'Bergmans')
 	INSERT INTO project_categorie (naam, parent)
 		VALUES ('school', NULL)
-	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum)
-		VALUES ('projo0321', 'beste project', 'school', @date, @date + 300, 0)
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
+		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
 	INSERT INTO project_rol_type (project_rol)
 		VALUES ('notulist')
 	INSERT INTO medewerker_op_project (medewerker_code, project_code, project_rol)
 		VALUES ('KB01', 'projo0321', 'notulist')
 	INSERT INTO medewerker_ingepland_project (id, maand_datum, medewerker_uren)
-		VALUES (IDENT_CURRENT('medewerker_op_project'), @date+1, 10)
+		VALUES (IDENT_CURRENT('medewerker_op_project'), (@date), 10)
+ROLLBACK TRANSACTION
+GO
+
+-- BR15 Begin_datum van een project mag niet worden aangepast als een medewerker is ingepland in dezelfde maand of een medewerker is ingepland voor de nieuwe begin_datum.
+-- faal test
+-- Msg 500025, Level 16, State 16, Procedure trg_UpdateBegindatumValtNaIngeplandMedewerker, Line 15 [Batch Start Line 873]
+-- Begindatum mag niet worden aangepast als het project is gestart
+BEGIN TRANSACTION
+	DECLARE @date DATE = GETDATE() -100
+	DECLARE @einddatum DATE = GETDATE() +300
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('WB02', 'Wouter', 'Bosh')
+	INSERT INTO project_categorie (naam, parent)
+		VALUES ('school', NULL)
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
+		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
+	UPDATE PROJECT
+	SET begin_datum = GETDATE() +20
+	WHERE project_code = 'projo0321'
+ROLLBACK TRANSACTION
+GO
+
+-- BR15 Begin_datum van een project mag niet worden aangepast als een medewerker is ingepland in dezelfde maand of een medewerker is ingepland voor de nieuwe begin_datum.
+-- faal test
+-- Msg 500023, Level 16, State 16, Procedure trg_UpdateBegindatumValtNaIngeplandMedewerker, Line 23 [Batch Start Line 892]
+-- Begindatum kan niet worden aangepast. Een medewerker is al ingepland voor de begindatum.
+BEGIN TRANSACTION
+	DECLARE @date DATE = GETDATE() +100
+	DECLARE @einddatum DATE = GETDATE() +300
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('RZK1', 'Rudolf', 'Bergmans')
+	INSERT INTO project_categorie (naam, parent)
+		VALUES ('school', NULL)
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
+		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
+	INSERT INTO project_rol_type (project_rol)
+		VALUES ('notulist')
+	INSERT INTO medewerker_op_project (medewerker_code, project_code, project_rol)
+		VALUES ('RZK1', 'projo0321', 'notulist')
+	INSERT INTO medewerker_ingepland_project (id, maand_datum, medewerker_uren)
+		VALUES (IDENT_CURRENT('medewerker_op_project'), (@date), 10)
+
+	UPDATE PROJECT
+	SET begin_datum = GETDATE() +20
+	WHERE project_code = 'projo0321'
+ROLLBACK TRANSACTION
+GO
+
+-- BR16 Einddatum voor een project mag alleen verlengt worden.
+-- succes test
+BEGIN TRANSACTION
+	DECLARE @date DATE = GETDATE() +100
+	DECLARE @einddatum DATE = GETDATE() +300
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('BB10', 'Berend', 'Botje')
+	INSERT INTO project_categorie (naam, parent)
+		VALUES ('school', NULL)
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
+		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
+
+	UPDATE PROJECT
+	SET eind_datum = GETDATE() +400
+	WHERE project_code = 'projo0321'
+ROLLBACK TRANSACTION
+GO
+
+-- BR16 Einddatum voor een project mag alleen verlengt worden.
+-- faal test
+-- Msg 500024, Level 16, State 16, Procedure trg_UpdateEinddatumAlleenVerlengen, Line 14 [Batch Start Line 931]
+-- Nieuwe eind datum valt voor de oude eind datum.
+BEGIN TRANSACTION
+	DECLARE @date DATE = GETDATE() +100
+	DECLARE @einddatum DATE = GETDATE() +300
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('MM99', 'Meep', 'Meepster')
+	INSERT INTO project_categorie (naam, parent)
+		VALUES ('school', NULL)
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
+		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
+
+	UPDATE PROJECT
+	SET eind_datum = GETDATE() +200
+	WHERE project_code = 'projo0321'
 ROLLBACK TRANSACTION

@@ -456,11 +456,10 @@ CREATE TRIGGER trg_UpdateBegindatumValtNaIngeplandMedewerker
 AS
 BEGIN
 	BEGIN TRY
+	select * from deleted
 		IF EXISTS(SELECT '@'
-					FROM inserted i
-					INNER JOIN medewerker_op_project mop ON i.project_code = mop.project_code
-					INNER JOIN medewerker_ingepland_project mip ON mop.id = mip.id
-					WHERE FORMAT(i.begin_datum, 'yyyy-MM') < FORMAT(GETDATE(), 'yyyy-MM'))
+					FROM deleted d
+					WHERE d.begin_datum < GETDATE())
 
 		THROW 500025, 'Begindatum mag niet worden aangepast als het project is gestart', 16
 
@@ -490,7 +489,7 @@ BEGIN
 					INNER JOIN deleted d ON i.project_code = d.project_code
 					WHERE i.eind_datum < d.eind_datum)
 
-		THROW 500024, 'Nieuwe eind datum valt voor de oude eind datum.', 16
+		THROW 500024, 'Nieuwe einddatum valt voor de oude einddatum.', 16
 
 	END TRY
 	BEGIN CATCH
