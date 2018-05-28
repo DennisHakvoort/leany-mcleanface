@@ -48,23 +48,27 @@ INSERT INTO medewerker_beschikbaarheid VALUES
 --TEST DATA EINDIGT HIER
 */
 
-SELECT * FROM Project
-SELECT * FROM medewerker_op_project
-SELECT * FROM medewerker_ingepland_project
-SELECT * FROM medewerker_beschikbaarheid
+--Views om projectbezetting in te zien
 
---View om projectbezetting in te zien
+--Onderstaande view geeft weer hoeveel uren een medewerker beschikbaar is en hoeveel uren een medewerker is ingepland per jaar. 
+--Hiermee wordt ook een percentage berekent dat aangeeft hoeveel procent van de beschikbare tijd gebruikt wordt.
 GO
 CREATE VIEW vw_Totaal_Gepland_Beschikbaar_Jaar
 AS
-SELECT		mb.medewerker_code, YEAR(mb.maand) AS jaar, SUM(mb.beschikbaar_uren) AS totaal_beschikbaar_jaar, SUM(mip.medewerker_uren) AS totaal_ingepland_jaar, (CAST(SUM(mip.medewerker_uren) AS FLOAT) / NULLIF(SUM(mb.beschikbaar_uren), 0) * 100) AS percentage_ingepland_beschikbaar
+SELECT		mb.medewerker_code, mip.jaar AS jaar, SUM(mb.beschikbaar_uren) AS totaal_beschikbaar_jaar, medewerker_uren AS totaal_ingepland_jaar, (CAST(mip.medewerker_uren AS FLOAT) / NULLIF(SUM(mb.beschikbaar_uren), 0) * 100) AS percentage_ingepland_beschikbaar
 FROM		medewerker_beschikbaarheid mb
-			RIGHT JOIN medewerker_op_project mop ON mop.medewerker_code = mb.medewerker_code
-			RIGHT JOIN medewerker_ingepland_project mip ON mip.id = mop.id AND YEAR(mip.maand_datum) = YEAR(mb.maand)
-GROUP BY	mb.medewerker_code, YEAR(mb.maand)
+			RIGHT JOIN (SELECT		mo.medewerker_code, YEAR(mi.maand_datum) as jaar, SUM(mi.medewerker_uren) as medewerker_uren
+						FROM		medewerker_ingepland_project mi 
+									INNER JOIN medewerker_op_project mo ON mi.id = mo.id
+						GROUP BY	YEAR(mi.maand_datum), mo.medewerker_code) mip ON mb.medewerker_code = mip.medewerker_code 
+										AND YEAR(mb.maand) = mip.jaar
+GROUP BY	mip.jaar, mb.medewerker_code, mip.medewerker_uren
 
 GO
 
+--Onderstaande view geeft per medewerker aan hoeveel uren de medewerker in totaal aan welk project besteedt, en verwerkt hier ook de informatie van de 
+--bovenstaande view in. Door ze zo te combineren hoeft er in een front-end van slechts één view geselecteerd te worden - om verwarring
+--te voorkomen.
 CREATE VIEW vw_Project_Overzicht_Bezetting
 AS
 SELECT		YEAR(mip.maand_datum) AS jaar, p.project_naam, p.project_code, mop.medewerker_code, SUM(mip.medewerker_uren) AS totaal_ingepland_project, vtgbj.totaal_ingepland_jaar, vtgbj.totaal_beschikbaar_jaar, vtgbj.percentage_ingepland_beschikbaar
@@ -74,5 +78,3 @@ FROM		project p
 			RIGHT JOIN vw_Totaal_Gepland_Beschikbaar_Jaar vtgbj ON vtgbj.jaar = YEAR(mip.maand_datum) AND vtgbj.medewerker_code = mop.medewerker_code
 GROUP BY	mop.medewerker_code, YEAR(mip.maand_datum), p.project_code, p.project_naam, vtgbj.totaal_ingepland_jaar, vtgbj.totaal_beschikbaar_jaar, vtgbj.percentage_ingepland_beschikbaar
 GO
-
-select * from medewerker_beschikbaarheid where medewerker_code='UC' --1338 ------1512
