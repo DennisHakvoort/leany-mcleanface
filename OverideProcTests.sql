@@ -1,6 +1,6 @@
 
 BEGIN TRANSACTION
-EXEC sp_MedewerkerToevoegen 'van Megchelen', 'Supreme leader'
+EXEC sp_MedewerkerToevoegen 'van Megchelen', 'Supreme leader', 'Sv'
 EXEC sp_InsertMedewerkerRolType 'lid'
 EXEC sp_InsertMedewerkerRol 'Sv', 'lid'
 EXEC sp_InsertProjectRolType 'projectleider'
