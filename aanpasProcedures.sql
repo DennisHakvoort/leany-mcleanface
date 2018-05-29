@@ -67,6 +67,9 @@ AS
 	UPDATE medewerker_rol_type
 	SET medewerker_rol = @medewerker_Rol_Nieuw
 	WHERE medewerker_rol = @medewerker_Rol_Oud
+    IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
