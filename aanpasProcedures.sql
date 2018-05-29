@@ -2,33 +2,32 @@ USE LeanDb
 GO
 
 DROP PROCEDURE IF EXISTS sp_WijzigCategorieen
+DROP PROCEDURE IF EXISTS sp_WijzigProjectRol
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_WijzigBeschikbareDagen
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerRol
+DROP PROCEDURE IF EXISTS sp_WijzigProject
 
 --SP wijzigen categorieën
 GO
 CREATE PROCEDURE sp_WijzigCategorieen
-@naamOud   CHAR(40),
-@naamNieuw CHAR(40),
-@parentNieuw CHAR(40)
+@naamOud   VARCHAR(40),
+@naamNieuw VARCHAR(40),
+@parentNieuw VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-	BEGIN
 		IF NOT EXISTS (SELECT naam
-				   FROM project_categorie
-				   WHERE naam = @naamOud)
+				       FROM project_categorie
+				       WHERE naam = @naamOud)
 			THROW 50009, 'Deze categorie bestaat niet', 16
-			END
 		UPDATE project_categorie
 		SET naam = @naamNieuw, parent =@parentNieuw
 		WHERE naam = @naamOud
@@ -47,8 +46,31 @@ AS
 			END;
 		THROW
 	END CATCH
+GO
 
---SP aanpassen medewerker rol types
+--SP voor wijzigen projectrollen
+CREATE PROCEDURE sp_WijzigProjectRol
+@project_rol_oud    VARCHAR(40),
+@project_rol_nieuw  VARCHAR(40)
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+  	IF NOT EXISTS (SELECT project_rol
+				   FROM project_rol_type
+				   WHERE project_rol = @project_rol_oud)
+	THROW 50013, 'Project rol bestaat niet.', 16
+	UPDATE project_rol_type
+	SET project_rol = @project_rol_nieuw
+	WHERE project_rol = @project_rol_oud
+
+--SP aanpassen medewerkerroltypes
 GO
 CREATE PROCEDURE sp_WijzigMedewerkerRolType
 @medewerker_Rol_Oud   CHAR(40),
@@ -58,7 +80,6 @@ AS
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
@@ -68,7 +89,7 @@ AS
 		IF NOT EXISTS (SELECT medewerker_rol
 				   FROM medewerker_rol_type
 				   WHERE medewerker_rol = @medewerker_Rol_Oud)
-		THROW 50008, 'medewerker rol bestaat niet.', 16
+		THROW 50008, 'Medewerkerrol bestaat niet.', 16
 		END
 	UPDATE medewerker_rol_type
 	SET medewerker_rol = @medewerker_Rol_Nieuw
@@ -138,7 +159,6 @@ AS
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
@@ -153,6 +173,8 @@ AS
 	UPDATE medewerker_rol
 	SET medewerker_rol = @nieuwe_rol
 	WHERE medewerker_code = @medewerker_code AND medewerker_rol = @oude_rol
+  IF @TranCounter = 0 AND XACT_STATE() = 1
+    COMMIT TRANSACTION
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
@@ -168,3 +190,53 @@ AS
 			END;
 		THROW
 	END CATCH
+
+--SP wijzigen projecten
+GO
+CREATE PROCEDURE sp_WijzigProject
+@project_code VARCHAR(20),
+@categorie_naam VARCHAR(40),
+@begin_datum DATETIME,
+@eind_datum DATETIME,
+@project_naam VARCHAR(40),
+@verwachte_uren INT
+AS BEGIN
+	SET NOCOUNT ON 
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+
+		IF NOT EXISTS (SELECT '@'
+					FROM project
+					WHERE project_code = @project_code)
+			
+				THROW 50027, 'Opgegeven project code bestaat niet', 16
+			
+		UPDATE project
+		SET categorie_naam = @categorie_naam,
+			begin_datum = @begin_datum,
+			eind_datum = @eind_datum,
+			project_naam = @project_naam,
+			verwachte_uren = @verwachte_uren
+		WHERE project_code = @project_code
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
