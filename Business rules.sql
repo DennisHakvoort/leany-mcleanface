@@ -19,7 +19,7 @@ CREATE PROCEDURE sp_DropConstraint
 		PRINT 'Het volgende constraint is niet gedropt, waarschijnlijk omdat deze niet bestond: ' + @Constraint_name
 	END CATCH
 GO
-  
+
 --DROP ALLE BUSINESS RULES
 EXEC sp_DropConstraint @Constraint_name = 'CK_UREN_MIN_MAX', @table_name = 'medewerker_beschikbaarheid'
 EXEC sp_DropConstraint @Constraint_name = 'CK_EINDDATUM_NA_BEGINDATUM', @table_name = 'project'
@@ -30,10 +30,14 @@ DROP TRIGGER IF EXISTS trg_GeenHoofdCategorieMetSubsVerwijderen
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Op_Project
 DROP TRIGGER IF EXISTS trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 DROP TRIGGER IF EXISTS trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
+DROP TRIGGER IF EXISTS trg_UpdateBegindatumValtNaIngeplandMedewerker
+DROP TRIGGER IF EXISTS trg_UpdateEinddatumAlleenVerlengen
 DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
 DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
 DROP PROCEDURE IF EXISTS sp_DatabaseUserToevoegen
-DROP PROCEDURE IF EXISTS  sp_InsertMedewerkerIngepland
+DROP PROCEDURE IF EXISTS sp_InsertMedewerkerIngepland
+DROP PROCEDURE IF EXISTS sp_invullenBeschikbareDagen
+
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 23 dagen. 23 dagen staan gelijk aan (23*8) 184 uren 
 --BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
@@ -67,7 +71,7 @@ AS BEGIN
 
 		INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
 			VALUES(@medewerker_code, @achternaam, @voornaam);
-			
+
 		EXEC sp_DatabaseUserToevoegen @login_naam = @medewerker_code, @passwoord = @wachtwoord
 	END TRY
 	BEGIN CATCH
@@ -94,7 +98,6 @@ AS
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
@@ -134,7 +137,7 @@ AS
 		THROW
 	END CATCH
 GO
-                              
+
 -- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0
 -- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184 (184 uur staat gelijk aan 23 dagen (23*8 = 184))
 CREATE PROCEDURE sp_ProjecturenInplannen
@@ -196,7 +199,7 @@ AS BEGIN
 		THROW
 	END CATCH
 END
-						      
+
 --BR7 project(eind_datum) moet na project(begin_datum) vallen.
 ALTER TABLE project WITH CHECK
 	ADD CONSTRAINT CK_EINDDATUM_NA_BEGINDATUM CHECK (eind_datum > begin_datum)
@@ -305,7 +308,7 @@ CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
 			END
 	END
 GO
-						       
+
 -- BR10 medewerker_beschikbaarheid kan niet worden aangepast als medewerker_beschikbaarheid(maand) is verstreken
 CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 	ON medewerker_beschikbaarheid
@@ -341,28 +344,31 @@ AS
 										WHERE FORMAT(i.maand_datum, 'yyyy-MM') < FORMAT(GETDATE(), 'yyyy-MM'))
 					OR
 						EXISTS(SELECT	'!'
-										FROM (deleted D INNER JOIN medewerker_ingepland_project mip ON d.id = mip.id) 
+										FROM (deleted D INNER JOIN medewerker_ingepland_project mip ON d.id = mip.id)
 										WHERE FORMAT(d.maand_datum, 'yyyy-MM')  < FORMAT(GETDATE(), 'yyyy-MM')))
-					BEGIN
-						THROW 50011, 'Medewerker uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
+					
+					THROW 50011, 'Medewerker uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
+					
 
 				IF (EXISTS(SELECT '!'
-									FROM inserted
+									FROM inserted i INNER JOIN medewerker_op_project mop ON i.id = mop.id
+										INNER JOIN project p ON mop.project_code = p.project_code
 									WHERE eind_datum < CURRENT_TIMESTAMP)
 				OR (EXISTS(	SELECT '!'
-										FROM deleted
+										FROM deleted d INNER JOIN medewerker_op_project mop ON d.id = mop.id
+										INNER JOIN project p ON mop.project_code = p.project_code
 										WHERE eind_datum < CURRENT_TIMESTAMP)))
-				THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
+					THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 			END
 	END
 GO
-                   
+
 --BR13 een database login user aanmaken en een rol toewijzen
 CREATE PROCEDURE sp_DatabaseUserToevoegen
 @login_naam VARCHAR(255),
 @wachtwoord VARCHAR(40)
 AS
-	SET NOCOUNT ON 
+	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
@@ -397,7 +403,7 @@ AS
 			END;
 		THROW
 	END CATCH
-GO	
+GO
 
 -- BR14 De beschikbaarheid van een medewerker kan maar wordt per maand opgegeven.
 CREATE PROCEDURE sp_invullenBeschikbareDagen
@@ -405,25 +411,24 @@ CREATE PROCEDURE sp_invullenBeschikbareDagen
 @maand DATE,
 @beschikbare_dagen INT
 AS BEGIN
-	SET NOCOUNT ON 
+	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		
+
 		IF EXISTS (SELECT '@'
 					FROM medewerker_beschikbaarheid
 					WHERE medewerker_code = @medewerker_code
 					and FORMAT(maand, 'yyyy-MM') = FORMAT(@maand, 'yyyy-MM'))
-						THROW 500016, 'Medewerkerbeschikbaarheid is voor de ingevulde maand al ingepland', 16;
+						THROW 50016, 'Medewerkerbeschikbaarheid is voor de ingevulde maand al ingepland', 16;
 
 		IF (FORMAT(@maand, 'yyyy-MM') < FORMAT(GETDATE(), 'yyyy-MM'))
-						THROW 500017, 'U kan geen medewerkerbeschikbaarheid in het verleden opgegeven', 16;
+						THROW 50017, 'U kan geen medewerkerbeschikbaarheid in het verleden opgegeven', 16;
 
 		INSERT INTO medewerker_beschikbaarheid(medewerker_code, maand, beschikbare_dagen)
 			VALUES	(@medewerker_code, @maand, @beschikbare_dagen);
@@ -440,3 +445,54 @@ AS BEGIN
 		THROW
 	END CATCH
 END
+GO
+
+-- BR15 Begin_datum van een project mag niet worden aangepast als een medewerker is
+-- ingepland in dezelfde maand of een medewerker is ingepland voor de nieuwe begin_datum.
+CREATE TRIGGER trg_UpdateBegindatumValtNaIngeplandMedewerker
+  ON project
+  AFTER UPDATE
+AS
+BEGIN
+	BEGIN TRY
+	select * from deleted
+		IF EXISTS(SELECT '@'
+					FROM deleted d
+					WHERE d.begin_datum < GETDATE())
+
+		THROW 500025, 'Begindatum mag niet worden aangepast als het project is gestart', 16
+
+		IF EXISTS(SELECT '@'
+					FROM inserted i
+					INNER JOIN medewerker_op_project mop ON i.project_code = mop.project_code
+					INNER JOIN medewerker_ingepland_project mip ON mop.id = mip.id
+					WHERE FORMAT(i.begin_datum, 'yyyy-MM') < FORMAT(mip.maand_datum, 'yyyy-MM'))
+
+		THROW 50023, 'Begindatum kan niet worden aangepast. Een medewerker is al ingepland voor de begindatum.', 16
+	END TRY
+	BEGIN CATCH
+		THROW
+	END CATCH
+END
+GO
+
+-- BR16 Einddatum voor een project mag alleen verlengt worden.
+CREATE TRIGGER trg_UpdateEinddatumAlleenVerlengen
+  ON project
+  AFTER UPDATE
+AS
+BEGIN
+	BEGIN TRY
+		IF EXISTS(SELECT '@'
+					FROM inserted i
+					INNER JOIN deleted d ON i.project_code = d.project_code
+					WHERE i.eind_datum < d.eind_datum)
+
+		THROW 50024, 'Nieuwe einddatum valt voor de oude einddatum.', 16
+
+	END TRY
+	BEGIN CATCH
+		THROW
+	END CATCH
+END
+GO

@@ -7,7 +7,6 @@ DROP PROCEDURE IF EXISTS sp_InsertProjectRolType
 DROP PROCEDURE IF EXISTS sp_InsertProject
 DROP PROCEDURE IF EXISTS sp_InsertProjectCategorie
 DROP PROCEDURE IF EXISTS sp_InsertMedewerkerOpProject
-DROP PROCEDURE IF EXISTS sp_invullenBeschikbareUren
 
 --insert procedure medeweker_rol
 GO
@@ -202,16 +201,13 @@ AS
 		 VALUES (@project_code, @medewerker_code, @project_rol)
 	END TRY
 	BEGIN CATCH
-		IF @TranCounter = 0
+			IF @TranCounter = 0
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION'
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
-				PRINT XACT_STATE()
-        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
 		THROW
 	END CATCH
