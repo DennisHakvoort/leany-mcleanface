@@ -7,6 +7,7 @@ DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_WijzigBeschikbareDagen
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerRol
 DROP PROCEDURE IF EXISTS sp_WijzigProject
+DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerOpProject
 
 --SP wijzigen categorieën
 GO
@@ -35,17 +36,15 @@ AS
 	BEGIN CATCH
 		IF @TranCounter = 0
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION'
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
-				PRINT XACT_STATE()
         IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
 		THROW
 	END CATCH
+
 GO
 
 --SP voor wijzigen projectrollen
@@ -69,12 +68,26 @@ AS
 	UPDATE project_rol_type
 	SET project_rol = @project_rol_nieuw
 	WHERE project_rol = @project_rol_oud
+ IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
 
---SP aanpassen medewerkerroltypes
-GO
+    GO
+			--SP aanpassen medewerker rol types
 CREATE PROCEDURE sp_WijzigMedewerkerRolType
-@medewerker_Rol_Oud   CHAR(40),
-@medewerker_Rol_Nieuw CHAR(40)
+@medewerker_Rol_Oud   VARCHAR(40),
+@medewerker_Rol_Nieuw VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -85,26 +98,24 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-	BEGIN
 		IF NOT EXISTS (SELECT medewerker_rol
 				   FROM medewerker_rol_type
 				   WHERE medewerker_rol = @medewerker_Rol_Oud)
-		THROW 50008, 'Medewerkerrol bestaat niet.', 16
-		END
+		THROW 50008, 'medewerker rol bestaat niet.', 16
 	UPDATE medewerker_rol_type
 	SET medewerker_rol = @medewerker_Rol_Nieuw
 	WHERE medewerker_rol = @medewerker_Rol_Oud
+    IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION'
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
-				PRINT XACT_STATE()
         IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
 		THROW
@@ -117,11 +128,10 @@ CREATE PROCEDURE sp_WijzigBeschikbareDagen
 @maand DATE,
 @beschikbare_dagen INT
 AS BEGIN
-	SET NOCOUNT ON 
+	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
@@ -148,12 +158,12 @@ AS BEGIN
 	END CATCH
 END
 
+  GO
 --SP het veranderen van een rol die een medewerker is toegekend.
-GO
 CREATE PROCEDURE sp_WijzigenMedewerkerRol
-@medewerker_code CHAR(5),
-@oude_rol        CHAR(40),
-@nieuwe_rol      CHAR(40)
+@medewerker_code VARCHAR(5),
+@oude_rol        VARCHAR(40),
+@nieuwe_rol      VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -164,28 +174,61 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-	BEGIN
 		IF NOT EXISTS (SELECT medewerker_code
 					   FROM medewerker_rol
 					   WHERE medewerker_code = @medewerker_code AND medewerker_rol = @oude_rol)
 		THROW 50015, 'Medewerker in combinatie met deze rol bestaat niet.', 16
-		END
 	UPDATE medewerker_rol
 	SET medewerker_rol = @nieuwe_rol
 	WHERE medewerker_code = @medewerker_code AND medewerker_rol = @oude_rol
   IF @TranCounter = 0 AND XACT_STATE() = 1
-    COMMIT TRANSACTION
+    COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION'
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
-				PRINT XACT_STATE()
+        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+
+  GO
+--Sp aanpassen medewerker op project
+CREATE PROCEDURE sp_WijzigenMedewerkerOpProject
+@project_code VARCHAR(20),
+@medewerker_code VARCHAR(5),
+@nieuwe_ProjectRol VARCHAR(40)
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF NOT EXISTS (SELECT *
+					   FROM medewerker_op_project
+				       WHERE project_code = @project_code AND medewerker_code = @medewerker_code)
+		THROW 50019, ' De medewerker met de opgegeven medewerker_code is niet aan dit project gekoppeld.', 16
+	UPDATE MEDEWERKER_OP_PROJECT
+			SET project_rol = @nieuwe_ProjectRol
+		WHERE project_code = @project_code AND medewerker_code = @medewerker_code
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
         IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
 		THROW
@@ -201,7 +244,7 @@ CREATE PROCEDURE sp_WijzigProject
 @project_naam VARCHAR(40),
 @verwachte_uren INT
 AS BEGIN
-	SET NOCOUNT ON 
+	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
@@ -214,9 +257,59 @@ AS BEGIN
 		IF NOT EXISTS (SELECT '@'
 					FROM project
 					WHERE project_code = @project_code)
-			
+
 				THROW 50027, 'Opgegeven project code bestaat niet', 16
-			
+
+		UPDATE project
+		SET categorie_naam = @categorie_naam,
+			begin_datum = @begin_datum,
+			eind_datum = @eind_datum,
+			project_naam = @project_naam,
+			verwachte_uren = @verwachte_uren
+		WHERE project_code = @project_code
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
+
+--SP wijzigen projecten
+GO
+CREATE PROCEDURE sp_WijzigProject
+@project_code VARCHAR(20),
+@categorie_naam VARCHAR(40),
+@begin_datum DATETIME,
+@eind_datum DATETIME,
+@project_naam VARCHAR(40),
+@verwachte_uren INT
+AS BEGIN
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+
+		IF NOT EXISTS (SELECT '@'
+					FROM project
+					WHERE project_code = @project_code)
+
+				THROW 50027, 'Opgegeven project code bestaat niet', 16
+
 		UPDATE project
 		SET categorie_naam = @categorie_naam,
 			begin_datum = @begin_datum,
