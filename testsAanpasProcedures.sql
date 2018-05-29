@@ -99,7 +99,6 @@ BEGIN TRANSACTION
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 		VALUES ('aa', 'anton', 'ameland');	
 	EXEC sp_WijzignBeschikbareDagen @medewerker_code = 'aa', @maand = @date, @beschikbare_dagen = 20;
-	select * from medewerker_beschikbaarheid
 ROLLBACK TRANSACTION
 GO
 
@@ -109,10 +108,10 @@ GO
 BEGIN TRANSACTION
 	INSERT INTO medewerker VALUES ('cod98', 'Gebruiker1', 'Achternaam1');
 	INSERT INTO medewerker_rol_type VALUES ('Android');
+	INSERT INTO medewerker_rol_type VALUES ('Tester');
 	INSERT INTO medewerker_rol VALUES ('cod98', 'Android');
+	INSERT INTO medewerker_rol VALUES ('cod98', 'Tester');
 	EXEC sp_VerwijderenMedewerkerRol 'cod98', 'Android'
-	SELECT * FROM medewerker_rol_type
-	SELECT * FROM medewerker_rol
 ROLLBACK TRANSACTION
 GO
 
@@ -124,11 +123,6 @@ BEGIN TRANSACTION
 	INSERT INTO medewerker VALUES ('cod17', 'Gebruiker2', 'Achternaam2');
 	INSERT INTO medewerker_rol_type VALUES ('Administrator');
 	INSERT INTO medewerker_rol VALUES ('cod17', 'Administrator');
-
 	EXEC sp_VerwijderenMedewerkerRol 'cod17', 'Leider'
-
-	DELETE FROM medewerker_rol WHERE medewerker_code = 'cod17'
-	DELETE FROM medewerker WHERE medewerker_code = 'cod17'
-	DELETE FROM medewerker_rol_type WHERE medewerker_rol = 'Administrator'
 ROLLBACK TRANSACTION
 GO
