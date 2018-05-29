@@ -185,7 +185,7 @@ AS
 					FROM medewerker
 					WHERE medewerker_code = @medewerker_code)
 		
-		THROW 50090, 'een medewerker met dit medewerker_code bestaat niet.', 16
+		THROW 50028, 'Een medewerker met dit medewerker_code bestaat niet.', 16
 
 		UPDATE medewerker
 		SET achternaam = @achternaam, voornaam = @voornaam
