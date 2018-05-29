@@ -17,18 +17,15 @@ AS
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-	BEGIN
 		IF NOT EXISTS (SELECT naam
 				   FROM project_categorie
 				   WHERE naam = @naamOud)
 			THROW 50009, 'Deze categorie bestaat niet', 16
-			END
 		UPDATE project_categorie
 		SET naam = @naamNieuw, parent =@parentNieuw
 		WHERE naam = @naamOud
@@ -58,18 +55,15 @@ AS
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-	BEGIN
 		IF NOT EXISTS (SELECT medewerker_rol
 				   FROM medewerker_rol_type
 				   WHERE medewerker_rol = @medewerker_Rol_Oud)
 		THROW 50008, 'medewerker rol bestaat niet.', 16
-		END
 	UPDATE medewerker_rol_type
 	SET medewerker_rol = @medewerker_Rol_Nieuw
 	WHERE medewerker_rol = @medewerker_Rol_Oud
@@ -101,18 +95,15 @@ AS
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-	BEGIN
 		IF NOT EXISTS (SELECT medewerker_code
 					   FROM medewerker_rol
 					   WHERE medewerker_code = @medewerker_code AND medewerker_rol = @oude_rol)
 		THROW 50015, 'Medewerker in combinatie met deze rol bestaat niet.', 16
-		END
 	UPDATE medewerker_rol
 	SET medewerker_rol = @nieuwe_rol
 	WHERE medewerker_code = @medewerker_code AND medewerker_rol = @oude_rol
@@ -135,27 +126,24 @@ GO
 
 --Sp aanpassen medewerker op project
 CREATE PROCEDURE sp_WijzigenMedewerkerOpProject
-@project_code CHAR(20),
-@medewerker_code CHAR(5),
-@nieuwe_ProjectRol CHAR(40)
+@project_code VARCHAR(20),
+@medewerker_code VARCHAR(5),
+@nieuwe_ProjectRol VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		BEGIN
 		IF NOT EXISTS (SELECT *
 					   FROM medewerker_op_project
 				       WHERE project_code = @project_code AND medewerker_code = @medewerker_code)
 		THROW 50019, 'Medewerker is nooit aan dit project gekoppeld', 16
-			END
-		UPDATE MEDEWERKER_OP_PROJECT
+	UPDATE MEDEWERKER_OP_PROJECT
 			SET project_rol = @nieuwe_ProjectRol
 		WHERE project_code = @project_code AND medewerker_code = @medewerker_code
 	END TRY
