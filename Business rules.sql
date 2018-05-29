@@ -439,3 +439,28 @@ AS BEGIN
 		THROW
 	END CATCH
 END
+GO
+
+--BR17 mandatory child op medewerker in medewerker_rol
+CREATE TRIGGER trg_MC_medewerker_rol
+ON medewerker
+AFTER INSERT, DELETE
+AS BEGIN	
+	IF(@@ROWCOUNT > 0)
+		BEGIN
+			IF EXISTS (SELECT '@'
+						FROM inserted i INNER JOIN medewerker_rol mr
+							ON i.medewerker_code = mr.medewerker_code
+						HAVING COUNT(*) < 1)
+				THROW 50066, 'Een medewerker moet een rol hebben.', 16
+
+			IF EXISTS (SELECT '@'
+						FROM medewerker_rol mr INNER JOIN deleted d
+							ON mr.medewerker_code = d.medewerker_code
+						HAVING COUNT(*) < 1)
+				THROW 50066, 'Medewerker rol kan niet worden verwijdert. Een medewerker moet een rol hebben.', 16
+
+		END
+END
+GO
+
