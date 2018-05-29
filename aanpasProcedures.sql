@@ -179,20 +179,19 @@ AS
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		BEGIN	
 		IF EXISTS (SELECT '!'
 				FROM medewerker m INNER JOIN medewerker_rol mr
 				ON m.medewerker_code = mr.medewerker_code INNER JOIN medewerker_rol_type mrt
 				ON mr.medewerker_rol = mrt.medewerker_rol
 				WHERE mrt.medewerker_rol = @medewerker_rol)
+												  
 		THROW 50097, 'een medewerker_rol_type in gebruik kan niet verwijdert worden.', 16
-		END
+
 		DELETE FROM medewerker_rol_type
 		WHERE medewerker_rol = @medewerker_rol
 	END TRY
