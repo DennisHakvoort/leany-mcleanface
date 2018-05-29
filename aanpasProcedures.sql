@@ -195,7 +195,7 @@ AS BEGIN
 					FROM project
 					WHERE project_code = @project_code)
 			
-				THROW 50066, 'Opgegeven project code bestaat niet', 16
+				THROW 50027, 'Opgegeven project code bestaat niet', 16
 			
 		UPDATE project
 		SET categorie_naam = @categorie_naam,
