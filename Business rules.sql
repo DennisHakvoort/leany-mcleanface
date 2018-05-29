@@ -47,7 +47,7 @@ GO
 --medewerker(medewerker_code) bestaat uit de eerste letter van de voornaam,
 --de eerste letter van de achternaam en
 --een volgnummer dat met één verhoogd wanneer de medewerker code al bestaat.
-ALTER PROCEDURE sp_MedewerkerToevoegen
+CREATE PROCEDURE sp_MedewerkerToevoegen
 @achternaam NVARCHAR(20),
 @voornaam NVARCHAR(20),
 @medewerker_code VARCHAR(5),
@@ -358,7 +358,7 @@ AS
 GO
 
 --BR13 een database login user aanmaken en een rol toewijzen
-ALTER PROCEDURE sp_DatabaseUserToevoegen
+CREATE PROCEDURE sp_DatabaseUserToevoegen
 @login_naam VARCHAR(255),
 @wachtwoord VARCHAR(40)
 AS
