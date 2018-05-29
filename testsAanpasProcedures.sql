@@ -107,7 +107,6 @@ GO
 BEGIN TRANSACTION
 	DECLARE @date DATETIME = (getdate() + 10);
 	DECLARE @einddatum DATETIME = (getdate() + 300);
-	select @date, @einddatum
 
 	INSERT INTO project_categorie (naam, parent)
 		VALUES ('werkschool', NULL);
@@ -115,7 +114,27 @@ BEGIN TRANSACTION
 		VALUES ('wiskunde', NULL);
 	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum)
 		VALUES ('PROJAH01', 'project AH', 'werkschool', GETDATE() + 30, GETDATE() +200);
-	select * from project
-	EXEC sp_aanpassenProject @project_code = 'PROJAH01', @categorie_naam = 'wiskunde', @begin_datum = @date
+
+	EXEC sp_WijzigProject @project_code = 'PROJAH01', @categorie_naam = 'wiskunde', @begin_datum = @date
+		,@eind_datum = @einddatum, @project_naam = 'project LIDL', @verwachte_uren = 90
+ROLLBACK TRANSACTION
+
+GO
+-- Test sp_aanpassenProject
+-- faal test
+-- Msg 50066, Level 16, State 16, Procedure sp_WijzigProject
+-- Opgegeven project code bestaat niet
+BEGIN TRANSACTION
+	DECLARE @date DATETIME = (getdate() + 10);
+	DECLARE @einddatum DATETIME = (getdate() + 300);
+
+	INSERT INTO project_categorie (naam, parent)
+		VALUES ('Biochemie', NULL);
+	INSERT INTO project_categorie (naam, parent)
+		VALUES ('Scheikunde', NULL);
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum)
+		VALUES ('PROJAH01', 'project LODL', 'Biochemie', GETDATE() + 30, GETDATE() +200);
+
+	EXEC sp_WijzigProject @project_code = 'PROJAH021', @categorie_naam = 'Scheikunde', @begin_datum = @date
 		,@eind_datum = @einddatum, @project_naam = 'project LIDL', @verwachte_uren = 90
 ROLLBACK TRANSACTION

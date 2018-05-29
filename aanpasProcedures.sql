@@ -5,7 +5,7 @@ DROP PROCEDURE IF EXISTS sp_WijzigCategorieen
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_WijzigBeschikbareDagen
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerRol
-DROP PROCEDURE IF EXISTS sp_aanpassenProject
+DROP PROCEDURE IF EXISTS sp_WijzigProject
 
 --SP wijzigen categorieën
 GO
@@ -172,7 +172,7 @@ AS
 
 --SP wijzigen projecten
 GO
-CREATE PROCEDURE sp_aanpassenProject
+CREATE PROCEDURE sp_WijzigProject
 @project_code VARCHAR(20),
 @categorie_naam VARCHAR(40),
 @begin_datum DATETIME,
@@ -190,6 +190,13 @@ AS BEGIN
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+
+		IF NOT EXISTS (SELECT '@'
+					FROM project
+					WHERE project_code = @project_code)
+			
+				THROW 50066, 'Opgegeven project code bestaat niet', 16
+			
 		UPDATE project
 		SET categorie_naam = @categorie_naam,
 			begin_datum = @begin_datum,
@@ -197,6 +204,9 @@ AS BEGIN
 			project_naam = @project_naam,
 			verwachte_uren = @verwachte_uren
 		WHERE project_code = @project_code
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 			IF @TranCounter = 0
