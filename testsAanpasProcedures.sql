@@ -99,7 +99,6 @@ BEGIN TRANSACTION
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 		VALUES ('aa', 'anton', 'ameland');	
 	EXEC sp_WijzignBeschikbareDagen @medewerker_code = 'aa', @maand = @date, @beschikbare_dagen = 20;
-	select * from medewerker_beschikbaarheid
 ROLLBACK TRANSACTION
 GO
 
