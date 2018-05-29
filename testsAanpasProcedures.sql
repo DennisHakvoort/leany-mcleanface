@@ -109,9 +109,6 @@ GO
 BEGIN TRANSACTION
 	INSERT INTO medewerker_rol_type VALUES ('CEO');
 	EXEC sp_VerwijderenMedewerkerRolType 'CEO'
-	SELECT * FROM medewerker_rol_type
-	SELECT * FROM medewerker_rol
-	DELETE FROM medewerker_rol_type WHERE medewerker_rol = 'CEO'
 ROLLBACK TRANSACTION
 GO
 
@@ -122,11 +119,6 @@ BEGIN TRANSACTION
 	INSERT INTO medewerker VALUES ('aa123', 'Samir', 'Amed');
 	INSERT INTO medewerker_rol_type VALUES ('Tester');
 	INSERT INTO medewerker_rol VALUES ('aa123', 'Tester');
-
 	EXEC sp_VerwijderenMedewerkerRolType 'Tester'
-
-	DELETE FROM medewerker_rol WHERE medewerker_code = 'aa123'
-	DELETE FROM medewerker WHERE medewerker_code = 'aa123'
-	DELETE FROM medewerker_rol_type WHERE medewerker_rol = 'Tester'
 ROLLBACK TRANSACTION
 GO
