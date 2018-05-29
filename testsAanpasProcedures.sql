@@ -107,7 +107,6 @@ GO
 BEGIN TRANSACTION
 INSERT INTO medewerker VALUES ('aa34F', 'Samir', 'WieDan')
 EXEC sp_WijzigenMedewerker  'aa34F', 'Fatima', 'Ahmeeeeeed';
-SELECT medewerker_code, voornaam, achternaam FROM medewerker WHERE medewerker_code = 'aa34F'
 ROLLBACK TRANSACTION
 
 --SP 9 Toevoegen SP aanpassen medewerker
