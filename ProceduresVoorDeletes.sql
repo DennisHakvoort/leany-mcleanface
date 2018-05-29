@@ -24,6 +24,8 @@ AS BEGIN
 			DELETE FROM project_rol_type
 			WHERE project_rol = @projectrol
 
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 			IF @TranCounter = 0
