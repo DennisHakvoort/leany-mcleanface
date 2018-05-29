@@ -12,7 +12,7 @@ EXEC sp_WijzigCategorieen 'Onderwijs', 'Cursus', NULL
 ROLLBACK TRANSACTION
 
 GO
---Insert niet toegestaane data
+--Insert niet toegestane data
 --Msg 50010, Level 16, State 16, Procedure sp_WijzigCategorieen, Line 20 [Batch Start Line 14]
 --Deze categorie bestaat niet
 BEGIN TRANSACTION
@@ -23,9 +23,27 @@ VALUES ('subsidie', NULL),
 EXEC sp_WijzigCategorieen 'bestaat niet', 'Cursus', NULL
 ROLLBACK TRANSACTION
 
+--Tests sp_wijzigProjectRol
+--wijzig een bestaande categorie
+--Succesvol
+BEGIN TRANSACTION
+INSERT INTO project_rol_type
+VALUES ('leider')
+EXEC sp_WijzigProjectRol 'leider', 'supreme-leader'
+ROLLBACK TRANSACTION
+
+--Probeer een niet bestaande categorie te wijzigen
+--Msg 50013, Level 16, State 16, Procedure sp_WijzigProjectRol, Line 19 [Batch Start Line 33]
+--Projectrol bestaat niet.
+BEGIN TRANSACTION
+INSERT INTO project_rol_type
+VALUES ('leider')
+EXEC sp_WijzigProjectRol 'Megchelaar', 'supreme-leader'
+ROLLBACK TRANSACTION
+
 GO
 --Tests sp_WijzigenMedewerkerRol
---Pas een bestaande medewerker rol aan.
+--Pas een bestaande medewerkerrol aan.
 --succesvol
 BEGIN TRANSACTION
 INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
@@ -40,7 +58,7 @@ EXEC sp_WijzigenMedewerkerRol 'HM', 'leider', 'Meister'
 ROLLBACK TRANSACTION
 
 GO
---pas een niet bestaande medewerker rol/medewerker code cobinatie aan.
+--pas een niet bestaande medewerker rol/medewerkercode cobinatie aan.
 --Msg 50015, Level 16, State 16, Procedure sp_WijzigenMedewerkerRol, Line 22 [Batch Start Line 37]
 --Medewerker in combinatie met deze rol bestaat niet.
 BEGIN TRANSACTION
@@ -68,7 +86,7 @@ ROLLBACK TRANSACTION
 GO
 --Probeer een niet bestaande rol te wijzigen.
 --Msg 50008, Level 16, State 16, Procedure sp_WijzigMedewerkerRolType, Line 21 [Batch Start Line 34]
---medewerker rol bestaat niet.
+--medewerkerrol bestaat niet.
 BEGIN TRANSACTION
 	INSERT INTO medewerker_rol_type
 	VALUES ('admin')
@@ -92,7 +110,7 @@ GO
 -- Test sp_wijzigbeschikbareDagen
 -- faal test
 -- Msg 500019, Level 16, State 16, Procedure sp_WijzignBeschikbareDagen, Line 22 [Batch Start Line 65]
--- Mederwerker is in de opgegeven maand nog niet ingepland
+-- Medewerker is in de opgegeven maand nog niet ingepland
 BEGIN TRANSACTION
 	DECLARE @date DATETIME = getdate()
 
@@ -103,7 +121,7 @@ ROLLBACK TRANSACTION
 
 GO
 -- Test sp_aanpassenProject
--- succes test
+-- succestest
 BEGIN TRANSACTION
 	DECLARE @date DATETIME = (getdate() + 10);
 	DECLARE @einddatum DATETIME = (getdate() + 300);
@@ -121,9 +139,9 @@ ROLLBACK TRANSACTION
 
 GO
 -- Test sp_aanpassenProject
--- faal test
+-- faaltest
 -- Msg 50066, Level 16, State 16, Procedure sp_WijzigProject
--- Opgegeven project code bestaat niet
+-- Opgegeven projectcode bestaat niet
 BEGIN TRANSACTION
 	DECLARE @date DATETIME = (getdate() + 10);
 	DECLARE @einddatum DATETIME = (getdate() + 300);
