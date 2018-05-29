@@ -186,7 +186,7 @@ AS
 				ON mr.medewerker_rol = mrt.medewerker_rol
 				WHERE mrt.medewerker_rol = @medewerker_rol)
 												  
-		THROW 50097, 'een medewerker_rol_type in gebruik kan niet verwijdert worden.', 16
+		THROW 50029, 'een medewerker_rol_type in gebruik kan niet verwijderd worden.', 16
 
 		DELETE FROM medewerker_rol_type
 		WHERE medewerker_rol = @medewerker_rol
