@@ -123,9 +123,8 @@ BEGIN TRY
 	INSERT INTO medewerker_op_project VALUES ('DEA12', 'cod95', 'CEO');
 	INSERT INTO medewerker_ingepland_project VALUES (IDENT_CURRENT('medewerker_op_project'), 300, 'jan 2019');
 
-	DECLARE @id int = IDENT_CURRENT('medewerker_op_project');
+	DECLARE @id int = IDENT_CURRENT('medewerker_op_project') + 1;
 	EXEC sp_VerwijderenMedewerkerIngeplandProject @id, 'jan 2019';
-	SELECT * FROM medewerker_ingepland_project WHERE id = IDENT_CURRENT('medewerker_op_project')
 END TRY
 	BEGIN CATCH
 		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
@@ -138,8 +137,7 @@ GO
 --Msg 50095, Level 16, State 16, Procedure sp_VerwijderenMedewerkerIngeplandProject, Line 19 [Batch Start Line 146]
 --Er bestaat geen medewerker_ingepland_project record met de opgegeven id
 BEGIN TRANSACTION
-	SELECT * FROM medewerker_ingepland_project
-	DECLARE @id int = IDENT_CURRENT('medewerker_op_project');
+	DECLARE @id int = IDENT_CURRENT('medewerker_op_project') + 1;
 	EXEC sp_VerwijderenMedewerkerIngeplandProject @id, 'feb 2018';
 ROLLBACK TRANSACTION
 GO
