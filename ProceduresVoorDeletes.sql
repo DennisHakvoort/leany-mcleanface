@@ -4,13 +4,12 @@ GO
 
 --Sp verwijderen project categorie.
 CREATE PROCEDURE sp_VerwijderenProjectCategorie
-@categorieNaam CHAR(40)
+@categorieNaam VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
@@ -20,16 +19,18 @@ AS
 		IF EXISTS (SELECT naam
 				   FROM project_categorie
 				   WHERE parent = @categorieNaam)
-		THROW 50021, 'Een categorie met subcategoriën kan niet verwijdert worden.', 16
+		THROW 50021, 'Een categorie met subcategoriën kan niet verwijderd worden.', 16
 	END
 	BEGIN
-		IF EXISTS (SELECT naam
+		IF EXISTS (SELECT c.naam
 				   FROM project_categorie c INNER JOIN project p ON c.naam = p.categorie_naam
-				   WHERE @categorieNaam = c.naam)
-		THROW 50022, 'Een categorie die gebruikt wordt door een project kan niet verwijdert worden.', 16
+				   WHERE c.naam = @categorieNaam  )
+		THROW 50022, 'Een categorie die gebruikt wordt door een project kan niet verwijderd worden.', 16
     END
 	DELETE FROM project_categorie
-	WHERE  @categorieNaam = naam
+	WHERE naam = @categorieNaam
+	IF @TranCounter = 0 AND XACT_STATE() = 1
+	COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0

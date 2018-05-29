@@ -11,7 +11,7 @@ ROLLBACK TRANSACTION
 
 --Een categorie die een subcategorie heeft proberen te verwijderen.
 --Msg 50021, Level 16, State 16, Procedure sp_VerwijderenProjectCategorie, Line 20 [Batch Start Line 12]
---Een categorie met subcategoriën kan niet verwijdert worden.
+--Een categorie met subcategoriën kan niet verwijderd worden.
 BEGIN TRANSACTION
  INSERT INTO project_categorie (naam, parent)
  VALUES ('subsidie', null),
@@ -21,7 +21,7 @@ ROLLBACK TRANSACTION
 
 --Probeer een categorie te verwijderen die nog toegekend is aan een project.
 --Msg 50022, Level 16, State 16, Procedure sp_VerwijderenProjectCategorie, Line 26 [Batch Start Line 22]
---Een categorie die gebruikt wordt door een project kan niet verwijdert worden.
+--Een categorie die gebruikt wordt door een project kan niet verwijderd worden.
 BEGIN TRANSACTION
  INSERT INTO project_categorie (naam, parent)
  VALUES ('subsidie', null)
