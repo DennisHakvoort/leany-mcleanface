@@ -1,4 +1,6 @@
 --BUSINESS RULES--
+--TODO: Commit transaction toevoegen
+--TODO: SELECT @@TRANCOUNTER weghalen
 
 USE LeanDb
 GO
@@ -45,7 +47,7 @@ GO
 --medewerker(medewerker_code) bestaat uit de eerste letter van de voornaam,
 --de eerste letter van de achternaam en
 --een volgnummer dat met één verhoogd wanneer de medewerker code al bestaat.
-CREATE PROCEDURE sp_MedewerkerToevoegen
+ALTER PROCEDURE sp_MedewerkerToevoegen
 @achternaam NVARCHAR(20),
 @voornaam NVARCHAR(20),
 @medewerker_code VARCHAR(5),
@@ -67,8 +69,7 @@ AS BEGIN
 
 		INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
 			VALUES(@medewerker_code, @achternaam, @voornaam);
-
-		EXEC sp_DatabaseUserToevoegen @login_naam = @medewerker_code, @passwoord = @wachtwoord
+		EXEC sp_DatabaseUserToevoegen @login_naam = @medewerker_code, @wachtwoord = @wachtwoord
 	END TRY
 	BEGIN CATCH
 			IF @TranCounter = 0
@@ -357,7 +358,7 @@ AS
 GO
 
 --BR13 een database login user aanmaken en een rol toewijzen
-CREATE PROCEDURE sp_DatabaseUserToevoegen
+ALTER PROCEDURE sp_DatabaseUserToevoegen
 @login_naam VARCHAR(255),
 @wachtwoord VARCHAR(40)
 AS
@@ -377,20 +378,21 @@ AS
 					 WHERE name = @login_naam)
 		THROW 50013, 'De naam moet uniek zijn.', 16
 
-    SELECT @sql = 'CREATE LOGIN ' + @login_naam + ' WITH PASSWORD ' + '= ''' + @wachtwoord + ''''
-		PRINT @sql
-		EXEC sys.sp_executesql @stmt = @sql
+    SELECT @sql = 'CREATE LOGIN ' + @login_naam + ' WITH PASSWORD ' + '= ''' + @wachtwoord + ''', DEFAULT_DATABASE = LeanDb; '
+									+ 'CREATE USER ' + @login_naam + ' FROM LOGIN ' + @login_naam + '; '
+									+ 'ALTER ROLE MEDEWERKER ADD MEMBER ' + @login_naam
+		print @sql
+		EXEC (@sql)
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION'
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
-
-				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
 				PRINT XACT_STATE()
         IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
