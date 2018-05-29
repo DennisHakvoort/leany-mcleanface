@@ -233,17 +233,14 @@ AS
 			END;
 		THROW
 	END CATCH
-
---SP wijzigen projecten
 GO
-CREATE PROCEDURE sp_WijzigProject
-@project_code VARCHAR(20),
-@categorie_naam VARCHAR(40),
-@begin_datum DATETIME,
-@eind_datum DATETIME,
-@project_naam VARCHAR(40),
-@verwachte_uren INT
-AS BEGIN
+
+--SP 9 Toevoegen SP aanpassen medewerker.
+CREATE PROCEDURE sp_WijzigenMedewerker
+@medewerker_code VARCHAR(5),
+@achternaam NVARCHAR(20),
+@voornaam NVARCHAR(20)
+AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
@@ -253,25 +250,17 @@ AS BEGIN
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+					FROM medewerker
+					WHERE medewerker_code = @medewerker_code)
+		
+		THROW 50028, 'Een medewerker met dit medewerker_code bestaat niet.', 16
 
-		IF NOT EXISTS (SELECT '@'
-					FROM project
-					WHERE project_code = @project_code)
+		UPDATE medewerker
+		SET achternaam = @achternaam, voornaam = @voornaam
+		WHERE medewerker_code = @medewerker_code
 
-				THROW 50027, 'Opgegeven project code bestaat niet', 16
-
-		UPDATE project
-		SET categorie_naam = @categorie_naam,
-			begin_datum = @begin_datum,
-			eind_datum = @eind_datum,
-			project_naam = @project_naam,
-			verwachte_uren = @verwachte_uren
-		WHERE project_code = @project_code
-
-		IF @TranCounter = 0 AND XACT_STATE() = 1
-			COMMIT TRANSACTION;
 	END TRY
-	BEGIN CATCH
+		BEGIN CATCH
 			IF @TranCounter = 0
 			BEGIN
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
@@ -282,7 +271,6 @@ AS BEGIN
 			END;
 		THROW
 	END CATCH
-END
 
 --SP wijzigen projecten
 GO
