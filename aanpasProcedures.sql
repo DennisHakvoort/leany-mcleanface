@@ -185,13 +185,12 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		BEGIN	
 		IF NOT EXISTS (SELECT '!'
 				FROM medewerker_ingepland_project mip INNER JOIN medewerker_op_project mop
 				ON mip.id = mop.id
 				WHERE mip.id = @id AND mip.maand_datum = @maand_datum)
-		THROW 50095, 'Er bestaat geen medewerker_ingepland_project record met de opgegeven id', 16
-		END
+												  
+		THROW 50031, 'Er bestaat geen medewerker_ingepland_project record met de opgegeven id', 16
 		DELETE FROM medewerker_ingepland_project
 		WHERE id = @id AND maand_datum = @maand_datum
 	END TRY
