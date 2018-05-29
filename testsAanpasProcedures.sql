@@ -111,7 +111,7 @@ ROLLBACK TRANSACTION
 
 --SP 9 Toevoegen SP aanpassen medewerker
 --Faal test
---Msg 50090, 'een medewerker met dit medewerker_code bestaat niet.', 16
+--Msg 50028, 'een medewerker met dit medewerker_code bestaat niet.', 16
 BEGIN TRANSACTION
 EXEC sp_WijzigenMedewerker 'a1122', 'Fatima', 'Ahmed';
 ROLLBACK TRANSACTION
