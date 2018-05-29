@@ -30,10 +30,12 @@ DROP TRIGGER IF EXISTS trg_GeenHoofdCategorieMetSubsVerwijderen
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Op_Project
 DROP TRIGGER IF EXISTS trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 DROP TRIGGER IF EXISTS trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
+DROP TRIGGER IF EXISTS trg_MandatoryChMedewerkerrol
 DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
 DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
 DROP PROCEDURE IF EXISTS sp_DatabaseUserToevoegen
-DROP PROCEDURE IF EXISTS  sp_InsertMedewerkerIngepland
+DROP PROCEDURE IF EXISTS sp_InsertMedewerkerIngepland
+DROP PROCEDURE IF EXISTS sp_invullenBeschikbareDagen
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 23 dagen. 23 dagen staan gelijk aan (23*8) 184 uren 
 --BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
@@ -298,9 +300,9 @@ CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
 						EXISTS(	SELECT  '!'
 										FROM deleted D INNER JOIN PROJECT P ON D.project_code = P.project_code
 										WHERE P.eind_datum < CURRENT_TIMESTAMP))
-					BEGIN
+					
 						THROW 50005, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
-					END
+					
 			END
 	END
 GO
@@ -320,9 +322,9 @@ CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 						EXISTS(SELECT	'!'
 										FROM (deleted D INNER JOIN medewerker_beschikbaarheid mb ON d.maand = mb.maand) INNER JOIN medewerker m ON mb.medewerker_code = m.medewerker_code
 										WHERE d.maand < CURRENT_TIMESTAMP))
-					BEGIN
+					
 						THROW 50010, 'Verstreken maand kan niet meer aangepast worden.', 16
-					END
+					
 			END
 	END
 GO
@@ -342,16 +344,19 @@ AS
 						EXISTS(SELECT	'!'
 										FROM (deleted D INNER JOIN medewerker_ingepland_project mip ON d.id = mip.id)
 										WHERE FORMAT(d.maand_datum, 'yyyy-MM')  < FORMAT(GETDATE(), 'yyyy-MM')))
-					BEGIN
-						THROW 50011, 'Medewerker uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
+					
+					THROW 50011, 'Medewerker uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
+					
 
 				IF (EXISTS(SELECT '!'
-									FROM inserted
+									FROM inserted i INNER JOIN medewerker_op_project mop ON i.id = mop.id
+										INNER JOIN project p ON mop.project_code = p.project_code
 									WHERE eind_datum < CURRENT_TIMESTAMP)
 				OR (EXISTS(	SELECT '!'
-										FROM deleted
+										FROM deleted d INNER JOIN medewerker_op_project mop ON d.id = mop.id
+										INNER JOIN project p ON mop.project_code = p.project_code
 										WHERE eind_datum < CURRENT_TIMESTAMP)))
-				THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
+					THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 			END
 	END
 GO
@@ -442,7 +447,7 @@ END
 GO
 
 --BR17 mandatory child op medewerker in medewerker_rol
-CREATE TRIGGER trg_MC_medewerker_rol
+CREATE TRIGGER trg_MandatoryChMedewerkerrol
 ON medewerker
 AFTER INSERT, DELETE
 AS BEGIN	
@@ -455,8 +460,8 @@ AS BEGIN
 				THROW 50066, 'Een medewerker moet een rol hebben.', 16
 
 			IF EXISTS (SELECT '@'
-						FROM medewerker_rol mr INNER JOIN deleted d
-							ON mr.medewerker_code = d.medewerker_code
+						FROM deleted d RIGHT JOIN medewerker_rol mr
+							ON d.medewerker_code = mr.medewerker_code
 						HAVING COUNT(*) < 1)
 				THROW 50066, 'Medewerker rol kan niet worden verwijdert. Een medewerker moet een rol hebben.', 16
 
