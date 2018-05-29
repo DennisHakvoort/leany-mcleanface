@@ -179,13 +179,11 @@ AS
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-	
 		if NOT EXISTS (SELECT '!'
 					FROM medewerker
 					WHERE medewerker_code = @medewerker_code)
