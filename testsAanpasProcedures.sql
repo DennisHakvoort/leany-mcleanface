@@ -91,7 +91,7 @@ ROLLBACK TRANSACTION
 
 --Probeer een niet bestaande medewerker/ project combinatie aan te passen
 --Msg 50019, Level 16, State 16, Procedure sp_WijzigenMedewerkerOpProject, Line 21 [Batch Start Line 92]
---Medewerker is nooit aan dit project gekoppeld
+-- De medewerker met de opgegeven medewerker_code is niet aan dit project gekoppeld.
 BEGIN TRANSACTION
  INSERT INTO project_categorie (naam, parent)
  VALUES ('subsidie', NULL)

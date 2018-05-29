@@ -9,9 +9,9 @@ DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerOpProject
 
 GO
 CREATE PROCEDURE sp_WijzigCategorieen
-@naamOud   CHAR(40),
-@naamNieuw CHAR(40),
-@parentNieuw CHAR(40)
+@naamOud   VARCHAR(40),
+@naamNieuw VARCHAR(40),
+@parentNieuw VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -48,8 +48,8 @@ AS
 GO
 			--SP aanpassen medewerker rol types
 CREATE PROCEDURE sp_WijzigMedewerkerRolType
-@medewerker_Rol_Oud   CHAR(40),
-@medewerker_Rol_Nieuw CHAR(40)
+@medewerker_Rol_Oud   VARCHAR(40),
+@medewerker_Rol_Nieuw VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -87,9 +87,9 @@ GO
 
 --SP het veranderen van een rol die een medewerker is toegekend.
 CREATE PROCEDURE sp_WijzigenMedewerkerRol
-@medewerker_code CHAR(5),
-@oude_rol        CHAR(40),
-@nieuwe_rol      CHAR(40)
+@medewerker_code VARCHAR(5),
+@oude_rol        VARCHAR(40),
+@nieuwe_rol      VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -142,7 +142,7 @@ AS
 		IF NOT EXISTS (SELECT *
 					   FROM medewerker_op_project
 				       WHERE project_code = @project_code AND medewerker_code = @medewerker_code)
-		THROW 50019, 'Medewerker is nooit aan dit project gekoppeld', 16
+		THROW 50019, ' De medewerker met de opgegeven medewerker_code is niet aan dit project gekoppeld.', 16
 	UPDATE MEDEWERKER_OP_PROJECT
 			SET project_rol = @nieuwe_ProjectRol
 		WHERE project_code = @project_code AND medewerker_code = @medewerker_code
