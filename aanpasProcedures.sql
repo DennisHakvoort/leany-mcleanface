@@ -185,13 +185,11 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		BEGIN	
 		IF NOT EXISTS (SELECT '!'
 				FROM medewerker m INNER JOIN medewerker_rol mr
 				ON m.medewerker_code = mr.medewerker_code
 				WHERE mr.medewerker_rol = @medewerker_rol AND mr.medewerker_code = @medewerker_code)
 		THROW 50096, 'deze medewerker heeft niet de ingevoerde medewerker_rol.', 16
-		END
 		DELETE FROM medewerker_rol
 		WHERE medewerker_code = @medewerker_code
 	END TRY
