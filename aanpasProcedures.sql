@@ -8,9 +8,9 @@ DROP PROCEDURE IF EXISTS sp_WijzigProjectRol
 
 GO
 CREATE PROCEDURE sp_WijzigCategorieen
-@naamOud   CHAR(40),
-@naamNieuw CHAR(40),
-@parentNieuw CHAR(40)
+@naamOud   VARCHAR(40),
+@naamNieuw VARCHAR(40),
+@parentNieuw VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -48,8 +48,8 @@ GO
 
 --SP voor wijzigen project rollen
 CREATE PROCEDURE sp_WijzigProjectRol
-@project_rol_oud    CHAR(40),
-@project_rol_nieuw  CHAR(40)
+@project_rol_oud    VARCHAR(40),
+@project_rol_nieuw  VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
