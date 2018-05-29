@@ -146,6 +146,8 @@ AS
 	UPDATE MEDEWERKER_OP_PROJECT
 			SET project_rol = @nieuwe_ProjectRol
 		WHERE project_code = @project_code AND medewerker_code = @medewerker_code
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
