@@ -191,7 +191,7 @@ AS
 		THROW 50090, 'een medewerker met dit medewerker_code bestaat niet.', 16
 
 		UPDATE medewerker
-		SET medewerker_code = @medewerker_code, achternaam = @achternaam, voornaam = @voornaam
+		SET achternaam = @achternaam, voornaam = @voornaam
 		WHERE medewerker_code = @medewerker_code
 
 	END TRY
