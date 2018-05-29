@@ -77,12 +77,12 @@ INSERT INTO medewerker_beschikbaarheid VALUES
 
 --Views om projectbezetting in te zien
 
---Onderstaande view geeft weer hoeveel uren een medewerker beschikbaar is en hoeveel uren een medewerker is ingepland per jaar. 
+--Onderstaande view geeft weer hoeveel dagen een medewerker beschikbaar is en hoeveel uren een medewerker is ingepland per jaar. 
 --Hiermee wordt ook een percentage berekent dat aangeeft hoeveel procent van de beschikbare tijd gebruikt wordt.
 GO
 CREATE VIEW vw_Totaal_Gepland_Beschikbaar_Jaar
 AS
-SELECT		mb.medewerker_code, mip.jaar AS jaar, SUM(mb.beschikbaar_uren) AS totaal_beschikbaar_jaar, medewerker_uren AS totaal_ingepland_jaar, (CAST(mip.medewerker_uren AS FLOAT) / NULLIF(SUM(mb.beschikbaar_uren), 0) * 100) AS percentage_ingepland_beschikbaar
+SELECT		mb.medewerker_code, mip.jaar AS jaar, SUM(mb.beschikbare_dagen) * 8 /*werkuren in dag*/ AS totaal_beschikbaar_jaar, medewerker_uren AS totaal_ingepland_jaar, (CAST(mip.medewerker_uren AS FLOAT) / NULLIF(SUM(mb.beschikbare_dagen) * 8, 0) * 100) AS percentage_ingepland_beschikbaar
 FROM		medewerker_beschikbaarheid mb
 			RIGHT JOIN (SELECT		mo.medewerker_code, YEAR(mi.maand_datum) as jaar, SUM(mi.medewerker_uren) as medewerker_uren
 						FROM		medewerker_ingepland_project mi 
@@ -105,3 +105,17 @@ FROM		project p
 			RIGHT JOIN vw_Totaal_Gepland_Beschikbaar_Jaar vtgbj ON vtgbj.jaar = YEAR(mip.maand_datum) AND vtgbj.medewerker_code = mop.medewerker_code
 GROUP BY	mop.medewerker_code, YEAR(mip.maand_datum), p.project_code, p.project_naam, vtgbj.totaal_ingepland_jaar, vtgbj.totaal_beschikbaar_jaar, vtgbj.percentage_ingepland_beschikbaar
 GO
+
+--View voor vergelijken van geplande uren en geschatte benodigde uren voor een project
+CREATE VIEW vw_Actief_Project_Percentage_Gedekte_Uren
+AS
+SELECT		p.project_code, p.project_naam, p.begin_datum, p.eind_datum, p.verwachte_uren, SUM(mip.medewerker_uren) AS geplande_uren_project, (NULLIF(CAST(SUM(mip.medewerker_uren) AS FLOAT), 0) / NULLIF(p.verwachte_uren, 0) * 100) AS percentage_gepland
+FROM		project p
+			INNER JOIN medewerker_op_project mop ON mop.project_code = p.project_code
+			INNER JOIN medewerker_ingepland_project mip ON mip.id = mop.id
+WHERE		p.eind_datum >= GETDATE()
+GROUP BY	p.project_code, p.project_naam, p.begin_datum, p.eind_datum, p.verwachte_uren
+
+--project SNHd2018 SNHdYSNofxr heeft 1132 verwacht en 660 gepland
+--klopt vergeleken met query hieronder
+select SUM(medewerker_uren) from medewerker_ingepland_project mip INNER JOIN medewerker_op_project mop ON mip.id = mop.id WHERE project_code = 'SNHd2018' GROUP BY project_code
