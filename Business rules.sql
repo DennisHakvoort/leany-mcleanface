@@ -500,16 +500,10 @@ GO
 --BR17 mandatory child op medewerker in medewerker_rol
 CREATE TRIGGER trg_MandatoryChMedewerkerrol
 ON medewerker
-AFTER INSERT, DELETE
+AFTER DELETE
 AS BEGIN	
 	IF(@@ROWCOUNT > 0)
 		BEGIN
-			IF EXISTS (SELECT '@'
-						FROM inserted i INNER JOIN medewerker_rol mr
-							ON i.medewerker_code = mr.medewerker_code
-						HAVING COUNT(*) < 1)
-				THROW 50066, 'Een medewerker moet een rol hebben.', 16
-
 			IF EXISTS (SELECT '@'
 						FROM deleted d RIGHT JOIN medewerker_rol mr
 							ON d.medewerker_code = mr.medewerker_code
