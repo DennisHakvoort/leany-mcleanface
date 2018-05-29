@@ -19,7 +19,7 @@ AS
 		IF EXISTS (SELECT naam
 				   FROM project_categorie
 				   WHERE parent = @categorieNaam)
-		THROW 50021, 'Een categorie met subcategoriën kan niet verwijderd worden.', 16
+		THROW 50021, 'Een categorie met subcategorieën kan niet verwijderd worden.', 16
 	END
 	BEGIN
 		IF EXISTS (SELECT c.naam
