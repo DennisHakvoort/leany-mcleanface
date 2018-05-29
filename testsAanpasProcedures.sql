@@ -113,8 +113,8 @@ ROLLBACK TRANSACTION
 GO
 
 --Een medewerker_rol_type die al aan een medewerker gekoppeld is kan niet verwijderd worden
---Msg 50097, Level 16, State 16, Procedure sp_VerwijderenMedewerkerRolType, Line 20 [Batch Start Line 118]
---een medewerker_rol_type in gebruik kan niet verwijdert worden.
+--Msg 50029, Level 16, State 16, Procedure sp_VerwijderenMedewerkerRolType, Line 20 [Batch Start Line 118]
+--een medewerker_rol_type in gebruik kan niet verwijderd worden.
 BEGIN TRANSACTION
 	INSERT INTO medewerker VALUES ('aa123', 'Samir', 'Amed');
 	INSERT INTO medewerker_rol_type VALUES ('Tester');
