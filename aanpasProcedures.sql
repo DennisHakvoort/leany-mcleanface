@@ -168,7 +168,7 @@ AS
 GO
 
 --SP 17 Toevoegen SP verwijderen medewerker_rol_type
-CREATE PROCEDURE sp_VerwijderenMedewerkerRolType
+ALTER PROCEDURE sp_VerwijderenMedewerkerRolType
 @medewerker_rol VARCHAR(40)
 AS
 	SET NOCOUNT ON
@@ -190,19 +190,19 @@ AS
 
 		DELETE FROM medewerker_rol_type
 		WHERE medewerker_rol = @medewerker_rol
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
-		BEGIN CATCH
-			IF @TranCounter = 0
-				BEGIN
-					PRINT'ROLLBACK TRANSACTION'
-					IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
-				END;
-			ELSE
-				BEGIN
-					PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
-					PRINT XACT_STATE()
-			IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
-				END;
-				THROW
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
 	END CATCH
 GO
