@@ -31,6 +31,8 @@ DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Op_Project
 DROP TRIGGER IF EXISTS trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 DROP TRIGGER IF EXISTS trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
 DROP TRIGGER IF EXISTS trg_MandatoryChMedewerkerrol
+DROP TRIGGER IF EXISTS trg_UpdateBegindatumValtNaIngeplandMedewerker
+DROP TRIGGER IF EXISTS trg_UpdateEinddatumAlleenVerlengen
 DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
 DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
 DROP PROCEDURE IF EXISTS sp_DatabaseUserToevoegen
@@ -413,7 +415,6 @@ AS BEGIN
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
@@ -424,10 +425,10 @@ AS BEGIN
 					FROM medewerker_beschikbaarheid
 					WHERE medewerker_code = @medewerker_code
 					and FORMAT(maand, 'yyyy-MM') = FORMAT(@maand, 'yyyy-MM'))
-						THROW 500016, 'Medewerkerbeschikbaarheid is voor de ingevulde maand al ingepland', 16;
+						THROW 50016, 'Medewerkerbeschikbaarheid is voor de ingevulde maand al ingepland', 16;
 
 		IF (FORMAT(@maand, 'yyyy-MM') < FORMAT(GETDATE(), 'yyyy-MM'))
-						THROW 500017, 'U kan geen medewerkerbeschikbaarheid in het verleden opgegeven', 16;
+						THROW 50017, 'U kan geen medewerkerbeschikbaarheid in het verleden opgegeven', 16;
 
 		INSERT INTO medewerker_beschikbaarheid(medewerker_code, maand, beschikbare_dagen)
 			VALUES	(@medewerker_code, @maand, @beschikbare_dagen);
@@ -441,6 +442,56 @@ AS BEGIN
 			BEGIN
 				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
+		THROW
+	END CATCH
+END
+GO
+
+-- BR15 Begin_datum van een project mag niet worden aangepast als een medewerker is
+-- ingepland in dezelfde maand of een medewerker is ingepland voor de nieuwe begin_datum.
+CREATE TRIGGER trg_UpdateBegindatumValtNaIngeplandMedewerker
+  ON project
+  AFTER UPDATE
+AS
+BEGIN
+	BEGIN TRY
+	select * from deleted
+		IF EXISTS(SELECT '@'
+					FROM deleted d
+					WHERE d.begin_datum < GETDATE())
+
+		THROW 500025, 'Begindatum mag niet worden aangepast als het project is gestart', 16
+
+		IF EXISTS(SELECT '@'
+					FROM inserted i
+					INNER JOIN medewerker_op_project mop ON i.project_code = mop.project_code
+					INNER JOIN medewerker_ingepland_project mip ON mop.id = mip.id
+					WHERE FORMAT(i.begin_datum, 'yyyy-MM') < FORMAT(mip.maand_datum, 'yyyy-MM'))
+
+		THROW 50023, 'Begindatum kan niet worden aangepast. Een medewerker is al ingepland voor de begindatum.', 16
+	END TRY
+	BEGIN CATCH
+		THROW
+	END CATCH
+END
+GO
+
+-- BR16 Einddatum voor een project mag alleen verlengt worden.
+CREATE TRIGGER trg_UpdateEinddatumAlleenVerlengen
+  ON project
+  AFTER UPDATE
+AS
+BEGIN
+	BEGIN TRY
+		IF EXISTS(SELECT '@'
+					FROM inserted i
+					INNER JOIN deleted d ON i.project_code = d.project_code
+					WHERE i.eind_datum < d.eind_datum)
+
+		THROW 50024, 'Nieuwe einddatum valt voor de oude einddatum.', 16
+
+	END TRY
+	BEGIN CATCH
 		THROW
 	END CATCH
 END
@@ -468,4 +519,3 @@ AS BEGIN
 		END
 END
 GO
-
