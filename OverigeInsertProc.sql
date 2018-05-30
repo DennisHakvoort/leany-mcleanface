@@ -1,6 +1,3 @@
-USE LeanDb
-GO
-
 DROP PROCEDURE IF EXISTS SP_insertMedewerkerRol
 DROP PROCEDURE IF EXISTS sp_InsertMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_InsertProjectRolType

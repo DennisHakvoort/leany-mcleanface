@@ -1,5 +1,4 @@
-USE LeanDb
-GO
+
 
 DROP VIEW IF EXISTS vw_Bezetting
 DROP VIEW IF EXISTS vw_Totaal_Gepland_Beschikbaar_Jaar
@@ -74,3 +73,5 @@ FROM		project p
 			INNER JOIN medewerker_ingepland_project mip ON mip.id = mop.id
 WHERE		p.eind_datum >= GETDATE()
 GROUP BY	p.project_code, p.project_naam, p.begin_datum, p.eind_datum, p.verwachte_uren
+
+GO
