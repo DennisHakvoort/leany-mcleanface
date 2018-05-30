@@ -8,6 +8,7 @@ DROP PROCEDURE IF EXISTS sp_WijzigBeschikbareDagen
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerRol
 DROP PROCEDURE IF EXISTS sp_WijzigProject
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerOpProject
+DROP PROCEDURE IF EXISTS sp_WijzigenMedewerker
 
 --SP wijzigen categorieën
 GO
@@ -250,6 +251,7 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+		IF EXISTS (SELECT '@'
 					FROM medewerker
 					WHERE medewerker_code = @medewerker_code)
 		

@@ -12,7 +12,7 @@ EXEC sp_WijzigCategorieen 'Onderwijs', 'Cursus', NULL
 ROLLBACK TRANSACTION
 
 GO
---Insert niet toegestane data
+--Probeer een niet bestaande categorie te wijzigen
 --Msg 50010, Level 16, State 16, Procedure sp_WijzigCategorieen, Line 20 [Batch Start Line 14]
 --Deze categorie bestaat niet
 BEGIN TRANSACTION
@@ -24,7 +24,7 @@ EXEC sp_WijzigCategorieen 'bestaat niet', 'Cursus', NULL
 ROLLBACK TRANSACTION
 
 --Tests sp_wijzigProjectRol
---wijzig een bestaande categorie
+--wijzig een bestaande rol
 --Succesvol
 BEGIN TRANSACTION
 INSERT INTO project_rol_type
@@ -32,7 +32,7 @@ VALUES ('leider')
 EXEC sp_WijzigProjectRol 'leider', 'supreme-leader'
 ROLLBACK TRANSACTION
 
---Probeer een niet bestaande categorie te wijzigen
+--Probeer een niet bestaande rol te wijzigen
 --Msg 50013, Level 16, State 16, Procedure sp_WijzigProjectRol, Line 19 [Batch Start Line 33]
 --Projectrol bestaat niet.
 BEGIN TRANSACTION
@@ -43,7 +43,7 @@ ROLLBACK TRANSACTION
 
 GO
 --Tests sp_WijzigenMedewerkerRol
---Pas een bestaande medewerkerrol aan.
+--Verander de rol van een medewerker
 --succesvol
 BEGIN TRANSACTION
 INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
