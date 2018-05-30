@@ -405,7 +405,7 @@ AS
 	END CATCH
 GO
 
--- BR14 De beschikbaarheid van een medewerker kan maar wordt per maand opgegeven.
+-- BR14 De beschikbaarheid van een medewerker kan maar 1x per maand opgegeven.
 CREATE PROCEDURE sp_invullenBeschikbareDagen
 @medewerker_code VARCHAR(5),
 @maand DATE,
@@ -508,9 +508,7 @@ AS BEGIN
 						FROM deleted d RIGHT JOIN medewerker_rol mr
 							ON d.medewerker_code = mr.medewerker_code
 						HAVING COUNT(*) < 1)
-				THROW 50032, 'Medewerker rol kan niet worden verwijdert. Een medewerker moet een rol hebben.', 16
-		
-				select * from deleted
+				THROW 50032, 'Medewerkerrol kan niet worden verwijderd. Een medewerker moet een rol hebben.', 16
 		END
 END
 GO

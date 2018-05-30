@@ -957,14 +957,14 @@ BEGIN TRANSACTION
 	INSERT INTO medewerker_rol_type (medewerker_rol)
 		VALUES ('Queen');
 	INSERT INTO medewerker_rol_type (medewerker_rol)
-		VALUES ('Neeuq');
+		VALUES ('Empress');
 	INSERT INTO medewerker_rol (medewerker_code, medewerker_rol)
 		VALUES ('EAM99', 'Queen');
 	INSERT INTO medewerker_rol (medewerker_code, medewerker_rol)
-		VALUES ('EAM99', 'Neeuq');
+		VALUES ('EAM99', 'Empress');
 
 	DELETE FROM medewerker_rol
-	WHERE medewerker_code = 'EAM99' AND medewerker_rol = 'Neeuq'
+	WHERE medewerker_code = 'EAM99' AND medewerker_rol = 'Empress'
 ROLLBACK TRANSACTION
 
 -- BR17 Een medewerker heeft een mandatory child in medewerker_rol
