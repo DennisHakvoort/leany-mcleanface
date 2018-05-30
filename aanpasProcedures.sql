@@ -337,10 +337,8 @@ AS
 		BEGIN TRANSACTION;
 	BEGIN TRY	
     IF EXISTS (SELECT '!'
-				FROM medewerker m INNER JOIN medewerker_rol mr
-				ON m.medewerker_code = mr.medewerker_code INNER JOIN medewerker_rol_type mrt
-				ON mr.medewerker_rol = mrt.medewerker_rol
-				WHERE mrt.medewerker_rol = @medewerker_rol)
+				FROM medewerker_rol
+				WHERE medewerker_rol = @medewerker_rol)
 												  
     THROW 50029, 'een medewerker_rol_type in gebruik kan niet verwijderd worden.', 16
 
