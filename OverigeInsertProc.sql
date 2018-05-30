@@ -201,16 +201,13 @@ AS
 		 VALUES (@project_code, @medewerker_code, @project_rol)
 	END TRY
 	BEGIN CATCH
-		IF @TranCounter = 0
+			IF @TranCounter = 0
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION'
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
-				PRINT XACT_STATE()
-        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
 		THROW
 	END CATCH
