@@ -376,14 +376,13 @@ AS
 		BEGIN TRANSACTION;
 
 	BEGIN TRY
-		declare @sql NVARCHAR(255)
-		IF EXISTS (select '!'
+		DECLARE @sql NVARCHAR(255)
+		IF EXISTS (SELECT '!'
 					 FROM [sys].[server_principals]
-					 WHERE name = @login_naam)
+					 WHERE [name] = @login_naam)
 		THROW 50013, 'De naam moet uniek zijn.', 16
 
     SELECT @sql = 'CREATE LOGIN ' + @login_naam + ' WITH PASSWORD ' + '= ''' + @wachtwoord + ''''
-		PRINT @sql
 		EXEC sys.sp_executesql @stmt = @sql
 	END TRY
 	BEGIN CATCH

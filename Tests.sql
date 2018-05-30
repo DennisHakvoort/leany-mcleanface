@@ -660,14 +660,14 @@ ROLLBACK TRANSACTION
 --BR 13 voeg een database user toe
 --success
 BEGIN TRANSACTION
-EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @wachtwoord = 'TEST'
+EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @wachtwoord = 'Test1234'
 ROLLBACK TRANSACTION
 
 --BR 13 Mislukte poging
 -- een medewerker dat bestaat kan je niet nogmaals erin zetten.
 BEGIN TRANSACTION
-EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @wachtwoord = 'TEST'
-EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @wachtwoord = 'TEST'
+EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @wachtwoord = 'Test1234'
+EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @wachtwoord = 'Test1234'
 ROLLBACK TRANSACTION
 GO
 
