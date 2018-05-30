@@ -116,7 +116,32 @@ BEGIN TRANSACTION
 
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 		VALUES ('aa', 'anton', 'ameland');	
-	EXEC sp_WijzigBeschikbareDagen @medewerker_code = 'aa', @maand = @date, @beschikbare_dagen = 20;
+  EXEC sp_WijzigBeschikbareDagen @medewerker_code = 'aa', @maand = @date, @beschikbare_dagen = 20;
+ROLLBACK TRANSACTION
+GO
+
+--Test sp_VerwijderenMedewerkerRolType
+--Verwijder een medewerker_rol_type die niet in gebruik is
+--Succes test
+BEGIN TRANSACTION
+	INSERT INTO medewerker_rol_type VALUES ('CEO');
+	EXEC sp_VerwijderenMedewerkerRolType 'CEO'
+ROLLBACK TRANSACTION
+GO
+
+--Een medewerker_rol_type die al aan een medewerker gekoppeld is kan niet verwijderd worden
+--Msg 50029, Level 16, State 16, Procedure sp_VerwijderenMedewerkerRolType, Line 20 [Batch Start Line 118]
+--een medewerker_rol_type in gebruik kan niet verwijderd worden.
+BEGIN TRANSACTION
+	BEGIN TRY
+		INSERT INTO medewerker VALUES ('aa123', 'Samir', 'Amed');
+		INSERT INTO medewerker_rol_type VALUES ('Tester');
+		INSERT INTO medewerker_rol VALUES ('aa123', 'Tester');
+		EXEC sp_VerwijderenMedewerkerRolType 'Tester'
+	END TRY
+	BEGIN CATCH
+		SELECT 'test succesvol' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
+	END CATCH
 ROLLBACK TRANSACTION
 GO
 
@@ -209,4 +234,3 @@ BEGIN TRANSACTION
  VALUES ('BB', 'HB', 'meister')
  EXEC sp_WijzigenMedewerkerOpProject 'Bk', 'HB', 'leider'
 ROLLBACK TRANSACTION
-
