@@ -6,12 +6,13 @@ DROP PROCEDURE IF EXISTS sp_WijzigProjectRol
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_WijzigBeschikbareDagen
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerRol
+DROP PROCEDURE IF EXISTS sp_VerwijderenMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_WijzigProject
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerOpProject
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerker
 
---SP wijzigen categorieën
 GO
+--SP wijzigen categorieën
 CREATE PROCEDURE sp_WijzigCategorieen
 @naamOud   VARCHAR(40),
 @naamNieuw VARCHAR(40),
@@ -45,7 +46,6 @@ AS
 			END;
 		THROW
 	END CATCH
-
 GO
 
 --SP voor wijzigen projectrollen
@@ -83,9 +83,9 @@ AS
 			END;
 		THROW
 	END CATCH
-
-    GO
-			--SP aanpassen medewerker rol types
+  GO
+	
+ --SP aanpassen medewerker rol types
 CREATE PROCEDURE sp_WijzigMedewerkerRolType
 @medewerker_Rol_Oud   VARCHAR(40),
 @medewerker_Rol_Nieuw VARCHAR(40)
@@ -121,9 +121,9 @@ AS
 			END;
 		THROW
 	END CATCH
-
--- update beschikbare dagen van een medewerker
 GO
+
+--update beschikbare dagen van een medewerker
 CREATE PROCEDURE sp_WijzigBeschikbareDagen
 @medewerker_code VARCHAR(5),
 @maand DATE,
@@ -158,8 +158,8 @@ AS BEGIN
 		THROW
 	END CATCH
 END
-
-  GO
+GO
+                                                                                      
 --SP het veranderen van een rol die een medewerker is toegekend.
 CREATE PROCEDURE sp_WijzigenMedewerkerRol
 @medewerker_code VARCHAR(5),
@@ -196,8 +196,8 @@ AS
 			END;
 		THROW
 	END CATCH
-
-  GO
+GO
+                                                                                      
 --Sp aanpassen medewerker op project
 CREATE PROCEDURE sp_WijzigenMedewerkerOpProject
 @project_code VARCHAR(20),
@@ -273,9 +273,9 @@ AS
 			END;
 		THROW
 	END CATCH
-
---SP wijzigen projecten
 GO
+                                                                                                                                                                                                                                 
+--SP wijzigen projecten
 CREATE PROCEDURE sp_WijzigProject
 @project_code VARCHAR(20),
 @categorie_naam VARCHAR(40),
@@ -322,4 +322,42 @@ AS BEGIN
 			END;
 		THROW
 	END CATCH
-END
+GO
+ 
+--SP 17 Toevoegen SP verwijderen medewerker_rol_type
+CREATE PROCEDURE sp_VerwijderenMedewerkerRolType
+@medewerker_rol VARCHAR(40)
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY	
+    IF EXISTS (SELECT '!'
+				FROM medewerker_rol
+				WHERE medewerker_rol = @medewerker_rol)
+												  
+    THROW 50029, 'een medewerker_rol_type in gebruik kan niet verwijderd worden.', 16
+
+		DELETE FROM medewerker_rol_type
+		WHERE medewerker_rol = @medewerker_rol   
+                                                                                                                                                          
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+GO                                                                          
