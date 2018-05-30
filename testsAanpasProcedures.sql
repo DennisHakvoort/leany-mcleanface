@@ -108,8 +108,8 @@ GO
 --Succes test
 BEGIN TRANSACTION
 BEGIN TRY
-	IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
-	DBCC CHECKIDENT ('medewerker_op_project', RESEED,1);
+	DECLARE @maand_beschikbaar DATETIME = (getdate() + 40);
+	
 	INSERT INTO medewerker VALUES ('cod95', 'Gebruiker7', 'Achternaam7');
 	INSERT INTO medewerker_beschikbaarheid VALUES ('cod95', 'jan 2019', 12);
 	INSERT INTO medewerker_rol_type VALUES ('DeaTeacher');
@@ -118,23 +118,22 @@ BEGIN TRY
 	INSERT INTO project_categorie VALUES ('DEA_project', 'HAN Arnhem');
 	INSERT INTO categorie_tag VALUES ('school');
 	INSERT INTO tag_van_categorie VALUES ('DEA_project', 'school');
-	INSERT INTO project VALUES ('DEA12', 'DEA_project', '11 jan 2019', '11 dec 2019', 'DEA_project_2018', 320);
+	INSERT INTO project VALUES ('DEA12', 'DEA_project', GETDATE() + 30 , GETDATE() + 200, 'DEA_project_2018', 320);
 	INSERT INTO project_rol_type VALUES ('CEO');
 	INSERT INTO medewerker_op_project VALUES ('DEA12', 'cod95', 'CEO');
-	INSERT INTO medewerker_ingepland_project VALUES (IDENT_CURRENT('medewerker_op_project'), 300, 'jan 2019');
+	INSERT INTO medewerker_ingepland_project VALUES (IDENT_CURRENT('medewerker_op_project'), 300, @maand_beschikbaar);
 
 	DECLARE @id int = IDENT_CURRENT('medewerker_op_project') + 1;
-	EXEC sp_VerwijderenMedewerkerIngeplandProject @id, 'jan 2019';
+	EXEC sp_VerwijderenMedewerkerIngeplandProject @id, @maand_beschikbaar;
 END TRY
 	BEGIN CATCH
-		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
 	END CATCH
 ROLLBACK TRANSACTION
 GO
 
 --Een medewerker_ingepland_project verwijderen die niet bestaat
 --Faal test
---Msg 50095, Level 16, State 16, Procedure sp_VerwijderenMedewerkerIngeplandProject, Line 19 [Batch Start Line 146]
+--Msg 50031, Level 16, State 16, Procedure sp_VerwijderenMedewerkerIngeplandProject, Line 21 [Batch Start Line 137]
 --Er bestaat geen medewerker_ingepland_project record met de opgegeven id
 BEGIN TRANSACTION
 	DECLARE @id int = IDENT_CURRENT('medewerker_op_project') + 1;
