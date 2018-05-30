@@ -69,7 +69,7 @@ AS BEGIN
 				FROM medewerker
 				WHERE medewerker_code = @medewerker_code)
 			THROW 50014, 'Medewerker code is al in gebruik', 16
-      IF (exists(	SELECT '!'
+		IF (exists(	SELECT '!'
                   FROM medewerker_rol_type
                   WHERE medewerker_rol = @rol))
         BEGIN
@@ -91,10 +91,9 @@ AS BEGIN
             IF @TranCounter = 0 AND XACT_STATE() = 1
               COMMIT TRANSACTION;
             END
+			END
         ELSE
-        BEGIN
           THROW 50020, 'Dit is geen bestaande rol', 16
-        END
 	END TRY
 	BEGIN CATCH
 			IF @TranCounter = 0
@@ -221,7 +220,7 @@ AS BEGIN
 		THROW
 	END CATCH
 END
-
+GO
 --BR7 project(eind_datum) moet na project(begin_datum) vallen.
 ALTER TABLE project WITH CHECK
 	ADD CONSTRAINT CK_EINDDATUM_NA_BEGINDATUM CHECK (eind_datum > begin_datum)
@@ -380,7 +379,6 @@ AS
 					THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 			END
 	END
-END
 GO
 
 -- BR14 De beschikbaarheid van een medewerker kan maar wordt per maand opgegeven.

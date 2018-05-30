@@ -68,7 +68,9 @@ GO
 --BR 3 voeg een database user toe
 --[S00016][50013] De naam moet uniek zijn.
 BEGIN TRANSACTION
+INSERT INTO medewerker_rol_type VALUES ('test')
 EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
+DELETE FROM medewerker_rol WHERE medewerker_code = 'aa'
 DELETE FROM medewerker WHERE medewerker_code = 'aa'
 EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
 ROLLBACK TRANSACTION
