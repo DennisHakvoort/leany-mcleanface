@@ -382,7 +382,7 @@ AS
 									+ 'CREATE USER ' + @login_naam + ' FROM LOGIN ' + @login_naam + '; '
 									+ 'ALTER ROLE MEDEWERKER ADD MEMBER ' + @login_naam
 		print @sql
-		EXEC (@sql)
+		EXEC sys.sp_executesql @stmt = @sql
 		IF @TranCounter = 0 AND XACT_STATE() = 1
 			COMMIT TRANSACTION;
 	END TRY
