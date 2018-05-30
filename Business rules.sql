@@ -69,7 +69,19 @@ AS BEGIN
 
 		INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
 			VALUES(@medewerker_code, @achternaam, @voornaam);
-		EXEC sp_DatabaseUserToevoegen @login_naam = @medewerker_code, @wachtwoord = @wachtwoord
+
+				declare @sql NVARCHAR(255)
+		IF EXISTS (select '!'
+					 FROM [sys].[server_principals]
+					 WHERE name = @medewerker_code)
+		THROW 50013, 'De naam moet uniek zijn.', 16
+
+    SELECT @sql = 'CREATE LOGIN ' + @medewerker_code + ' WITH PASSWORD ' + '= ''' + @wachtwoord + ''', DEFAULT_DATABASE = LeanDb; '
+									+ 'CREATE USER ' + @medewerker_code + ' FROM LOGIN ' + @medewerker_code + '; '
+									+ 'ALTER ROLE MEDEWERKER ADD MEMBER ' + @medewerker_code
+		EXEC sys.sp_executesql @stmt = @sql
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 			IF @TranCounter = 0
@@ -355,49 +367,6 @@ AS
 				THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 			END
 	END
-GO
-
---BR13 een database login user aanmaken en een rol toewijzen
-CREATE PROCEDURE sp_DatabaseUserToevoegen
-@login_naam VARCHAR(255),
-@wachtwoord VARCHAR(40)
-AS
-	SET NOCOUNT ON
-	SET XACT_ABORT OFF
-	DECLARE @TranCounter INT;
-	SET @TranCounter = @@TRANCOUNT;
-	IF @TranCounter > 0
-		SAVE TRANSACTION ProcedureSave;
-	ELSE
-		BEGIN TRANSACTION;
-
-	BEGIN TRY
-		declare @sql NVARCHAR(255)
-		IF EXISTS (select '!'
-					 FROM [sys].[server_principals]
-					 WHERE name = @login_naam)
-		THROW 50013, 'De naam moet uniek zijn.', 16
-
-    SELECT @sql = 'CREATE LOGIN ' + @login_naam + ' WITH PASSWORD ' + '= ''' + @wachtwoord + ''', DEFAULT_DATABASE = LeanDb; '
-									+ 'CREATE USER ' + @login_naam + ' FROM LOGIN ' + @login_naam + '; '
-									+ 'ALTER ROLE MEDEWERKER ADD MEMBER ' + @login_naam
-		print @sql
-		EXEC sys.sp_executesql @stmt = @sql
-		IF @TranCounter = 0 AND XACT_STATE() = 1
-			COMMIT TRANSACTION;
-	END TRY
-	BEGIN CATCH
-		IF @TranCounter = 0
-			BEGIN
-				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
-			END;
-		ELSE
-			BEGIN
-				PRINT XACT_STATE()
-        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
-			END;
-		THROW
-	END CATCH
 GO
 
 -- BR14 De beschikbaarheid van een medewerker kan maar wordt per maand opgegeven.

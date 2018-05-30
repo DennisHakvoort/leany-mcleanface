@@ -45,12 +45,20 @@ ROLLBACK TRANSACTION
 GO
 
 --BR3
---Faal test
+--[S00016][500014] Medewerker code is al in gebruik
 BEGIN TRANSACTION --werken allemaal
 EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123'
 EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123'
 ROLLBACK TRANSACTION
 GO
+
+--BR 3 voeg een database user toe
+--[S00016][50013] De naam moet uniek zijn.
+BEGIN TRANSACTION
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123'
+DELETE FROM medewerker WHERE medewerker_code = 'aa'
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123'
+ROLLBACK TRANSACTION
 
 --Test BR4
 --Insert een een tijd schatting van een persoon die uren beschikbaar heeft in de desbetreffende maand
@@ -644,24 +652,6 @@ INSERT INTO medewerker_op_project VALUES ('proj1049', 'HFQWE', 'tester')
 INSERT INTO medewerker_ingepland_project VALUES ((SELECT IDENT_CURRENT('medewerker_op_project')), 30, 'jun 2017')
 DELETE FROM medewerker_ingepland_project WHERE id = (SELECT IDENT_CURRENT('medewerker_op_project'))
 ROLLBACK TRANSACTION
-
---BR 13 voeg een database user toe
---success
-BEGIN TRANSACTION
-EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @passwoord = 'TEST'
-ROLLBACK TRANSACTION
-
-EXEC sp_DatabaseUserToevoegen @login_naam = teataccount, @passwoord = 'TEST'
-
-DROP LOGIN teataccount
---BR 13 Mislukte poging
--- een medewerker dat bestaat kan je niet nogmaals erin zetten.
-BEGIN TRANSACTION
-EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @passwoord = 'TEST'
-EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @passwoord = 'TEST'
-ROLLBACK TRANSACTION
-ROLLBACK TRANSACTION
-GO
 
 -- BR10 medewerker_beschikbaarheid kan niet worden aangepast als medewerker_beschikbaarheid(maand) is verstreken.
 -- Succesvol insert nieuwe medewerker_beschikbaarheid datum (moet nieuwer dan huidige datum zijn).
