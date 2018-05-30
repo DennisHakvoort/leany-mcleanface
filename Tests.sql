@@ -37,20 +37,32 @@ INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2018', -80);
 ROLLBACK TRANSACTION
 GO
 
+
+
 --BR3
 --Succes test
 BEGIN TRANSACTION --werken allemaal
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aaaa', @wachtwoord = 'wachtwoord123'
+INSERT INTO medewerker_rol_type VALUES ('test')
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aaaa', @wachtwoord = 'wachtwoord123', @rol = 'test'
 ROLLBACK TRANSACTION
 GO
 
 --BR3
---Faal test
+--[50014] Medewerker code is al in gebruik
 BEGIN TRANSACTION --werken allemaal
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123'
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123'
+INSERT INTO medewerker_rol_type VALUES ('test')
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123', @rol = 'test'
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123', @rol = 'test'
 ROLLBACK TRANSACTION
 GO
+
+
+--[S00016][50020] Dit is geen bestaande rol
+BEGIN TRANSACTION --werken allemaal
+EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'wachtwoord123', @rol = 'test'
+ROLLBACK TRANSACTION
+GO
+
 
 --Test BR4
 --Insert een een tijd schatting van een persoon die uren beschikbaar heeft in de desbetreffende maand
@@ -648,18 +660,14 @@ ROLLBACK TRANSACTION
 --BR 13 voeg een database user toe
 --success
 BEGIN TRANSACTION
-EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @passwoord = 'TEST'
+EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @wachtwoord = 'Test1234'
 ROLLBACK TRANSACTION
 
-EXEC sp_DatabaseUserToevoegen @login_naam = teataccount, @passwoord = 'TEST'
-
-DROP LOGIN teataccount
 --BR 13 Mislukte poging
 -- een medewerker dat bestaat kan je niet nogmaals erin zetten.
 BEGIN TRANSACTION
-EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @passwoord = 'TEST'
-EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @passwoord = 'TEST'
-ROLLBACK TRANSACTION
+EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @wachtwoord = 'Test1234'
+EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @wachtwoord = 'Test1234'
 ROLLBACK TRANSACTION
 GO
 
@@ -796,7 +804,7 @@ GO
 --BR 13 voeg een database user toe
 --success
 BEGIN TRANSACTION
-EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @ = 'TEST'
+EXEC sp_DatabaseUserToevoegen @login_naam = aaaa, @wachtwoord = 'TEST'
 ROLLBACK TRANSACTION
 GO
 
@@ -822,11 +830,12 @@ ROLLBACK TRANSACTION
 GO
 
 -- BR14 De beschikbaarheid van een medewerker kan maar wordt per maand opgegeven.
--- succes test
+-- succes test invullen beschikbaarheid van de medewerker
 BEGIN TRANSACTION
-DECLARE @date DATETIME = GETDATE();
-INSERT INTO medewerker VALUES ('JD', 'Jan', 'Dieter')
-EXEC sp_invullenBeschikbareDagen @medewerker_code = 'JD', @maand = @date, @beschikbare_dagen = 20
+	DECLARE @date DATETIME = GETDATE();
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('BR', 'Boris', 'Brilmans')
+	EXEC sp_invullenBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
 ROLLBACK TRANSACTION
 GO
 
@@ -835,9 +844,10 @@ GO
 BEGIN TRANSACTION
 	BEGIN TRY
 		DECLARE @date DATETIME = GETDATE();
-		INSERT INTO medewerker VALUES ('JD', 'Jan', 'Dieter')
-		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'JD', @maand = @date, @beschikbare_dagen = 20
-		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'JD', @maand = @date, @beschikbare_dagen = 20
+		INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+			VALUES ('BRN', 'Borido', 'Borisen')
+		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
+		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
 	END TRY
 	BEGIN CATCH
 		SELECT 'test mislukt' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
@@ -845,47 +855,104 @@ BEGIN TRANSACTION
 ROLLBACK TRANSACTION
 GO
 
---Mislukking
---[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+-- BR15 Begin_datum van een project mag niet worden aangepast als een medewerker is ingepland in dezelfde maand of een medewerker is ingepland voor de nieuwe begin_datum.
+-- succes test
 BEGIN TRANSACTION
-INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest',0)
-INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
-INSERT INTO project_rol_type VALUES ('tester')
-INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
-WAITFOR DELAY '00:00:01'
-INSERT INTO medewerker_ingepland_project VALUES ((select IDENT_CURRENT('medewerker_op_project')), 10, 'feb 2019')
+	DECLARE @date DATE = GETDATE()
+	DECLARE @einddatum DATE = GETDATE() +300
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('KB01', 'Kean', 'Bergmans')
+	INSERT INTO project_categorie (naam, parent)
+		VALUES ('school', NULL)
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
+		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
+	INSERT INTO project_rol_type (project_rol)
+		VALUES ('notulist')
+	INSERT INTO medewerker_op_project (medewerker_code, project_code, project_rol)
+		VALUES ('KB01', 'projo0321', 'notulist')
+	INSERT INTO medewerker_ingepland_project (id, maand_datum, medewerker_uren)
+		VALUES (IDENT_CURRENT('medewerker_op_project'), (@date), 10)
 ROLLBACK TRANSACTION
 GO
 
---Mislukking
---[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+-- BR15 Begin_datum van een project mag niet worden aangepast als een medewerker is ingepland in dezelfde maand of een medewerker is ingepland voor de nieuwe begin_datum.
+-- faal test
+-- Msg 50025, Level 16, State 16, Procedure trg_UpdateBegindatumValtNaIngeplandMedewerker, Line 15 [Batch Start Line 873]
+-- Begindatum mag niet worden aangepast als het project is gestart
 BEGIN TRANSACTION
-IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
-DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
-INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest',  0)
-INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
-INSERT INTO project_rol_type VALUES ('tester')
-INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
-INSERT INTO medewerker_ingepland_project VALUES ((select IDENT_CURRENT('medewerker_op_project')), 10, 'feb 2019')
-UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
-WAITFOR DELAY '00:00:01'
-UPDATE medewerker_ingepland_project SET medewerker_uren = 10 WHERE id = (select IDENT_CURRENT('medewerker_op_project'))
+	DECLARE @date DATE = GETDATE() -100
+	DECLARE @einddatum DATE = GETDATE() +300
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('WB02', 'Wouter', 'Bosh')
+	INSERT INTO project_categorie (naam, parent)
+		VALUES ('school', NULL)
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
+		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
+	UPDATE PROJECT
+	SET begin_datum = GETDATE() +20
+	WHERE project_code = 'projo0321'
 ROLLBACK TRANSACTION
 GO
 
---Mislukking
---[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+-- BR15 Begin_datum van een project mag niet worden aangepast als een medewerker is ingepland in dezelfde maand of een medewerker is ingepland voor de nieuwe begin_datum.
+-- faal test
+-- Msg 50023, Level 16, State 16, Procedure trg_UpdateBegindatumValtNaIngeplandMedewerker, Line 23 [Batch Start Line 892]
+-- Begindatum kan niet worden aangepast. Een medewerker is al ingepland voor de begindatum.
 BEGIN TRANSACTION
-INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', '12 feb 2019', 'testerdetest', 0)
-INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
-INSERT INTO project_rol_type VALUES ('tester')
-INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
-INSERT INTO medewerker_ingepland_project VALUES ((select IDENT_CURRENT('medewerker_op_project')), 10, 'feb 2019')
-UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
-WAITFOR DELAY '00:00:01'
-DELETE FROM medewerker_ingepland_project WHERE id = (select IDENT_CURRENT('medewerker_op_project'))
+	DECLARE @date DATE = GETDATE() +100
+	DECLARE @einddatum DATE = GETDATE() +300
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('RZK1', 'Rudolf', 'Bergmans')
+	INSERT INTO project_categorie (naam, parent)
+		VALUES ('school', NULL)
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
+		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
+	INSERT INTO project_rol_type (project_rol)
+		VALUES ('notulist')
+	INSERT INTO medewerker_op_project (medewerker_code, project_code, project_rol)
+		VALUES ('RZK1', 'projo0321', 'notulist')
+	INSERT INTO medewerker_ingepland_project (id, maand_datum, medewerker_uren)
+		VALUES (IDENT_CURRENT('medewerker_op_project'), (@date), 10)
+
+	UPDATE PROJECT
+	SET begin_datum = GETDATE() +20
+	WHERE project_code = 'projo0321'
 ROLLBACK TRANSACTION
 GO
+
+-- BR16 Einddatum voor een project mag alleen verlengt worden.
+-- succes test
+BEGIN TRANSACTION
+	DECLARE @date DATE = GETDATE() +100
+	DECLARE @einddatum DATE = GETDATE() +300
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('BB10', 'Berend', 'Botje')
+	INSERT INTO project_categorie (naam, parent)
+		VALUES ('school', NULL)
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
+		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
+
+	UPDATE PROJECT
+	SET eind_datum = GETDATE() +400
+	WHERE project_code = 'projo0321'
+ROLLBACK TRANSACTION
+GO
+
+-- BR16 Einddatum voor een project mag alleen verlengt worden.
+-- faal test
+-- Msg 50024, Level 16, State 16, Procedure trg_UpdateEinddatumAlleenVerlengen, Line 14 [Batch Start Line 931]
+-- Nieuwe eind datum valt voor de oude eind datum.
+BEGIN TRANSACTION
+	DECLARE @date DATE = GETDATE() +100
+	DECLARE @einddatum DATE = GETDATE() +300
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('MM99', 'Meep', 'Meepster')
+	INSERT INTO project_categorie (naam, parent)
+		VALUES ('school', NULL)
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
+		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
+
+	UPDATE PROJECT
+	SET eind_datum = GETDATE() +200
+	WHERE project_code = 'projo0321'
+ROLLBACK TRANSACTION
