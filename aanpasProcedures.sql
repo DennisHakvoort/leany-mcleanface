@@ -172,7 +172,7 @@ AS
 GO
 
 --SP 15 Toevoegen SP verwijderen medewerker_ingepland_project
-CREATE PROCEDURE sp_VerwijderenMedewerkerIngeplandProject
+ALTER PROCEDURE sp_VerwijderenMedewerkerIngeplandProject
 @id INT,
 @maand_datum DATETIME												  
 AS
@@ -191,21 +191,22 @@ AS
 				WHERE mip.id = @id AND mip.maand_datum = @maand_datum)
 												  
 		THROW 50031, 'Er bestaat geen medewerker_ingepland_project record met de opgegeven id', 16
+
 		DELETE FROM medewerker_ingepland_project
 		WHERE id = @id AND maand_datum = @maand_datum
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
-		BEGIN CATCH
-			IF @TranCounter = 0
-				BEGIN
-					PRINT'ROLLBACK TRANSACTION'
-					IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
-				END;
-			ELSE
-				BEGIN
-					PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
-					PRINT XACT_STATE()
-			IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
-				END;
-				THROW
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
 	END CATCH
 GO
