@@ -250,7 +250,7 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-                                                                                      
+        	IF NOT EXISTS (SELECT '!'                                                                
 					FROM medewerker
 					WHERE medewerker_code = @medewerker_code)
 		
