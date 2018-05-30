@@ -92,8 +92,8 @@ BEGIN TRANSACTION
 	VALUES ('admin')
 	EXEC sp_WijzigMedewerkerRolType 'geen admin', 'super-user'
 ROLLBACK TRANSACTION
-
 GO
+
 -- Test sp_wijzigbeschikbareDagen
 -- Succes test
 BEGIN TRANSACTION
@@ -105,8 +105,8 @@ BEGIN TRANSACTION
 		VALUES ('aa', @date, 10)
 	EXEC sp_WijzigBeschikbareDagen @medewerker_code = 'aa', @maand = @date, @beschikbare_dagen = 20;
 ROLLBACK TRANSACTION
-
 GO
+
 -- Test sp_wijzigbeschikbareDagen
 -- faal test
 -- Msg 500019, Level 16, State 16, Procedure sp_WijzignBeschikbareDagen, Line 22 [Batch Start Line 65]
@@ -117,6 +117,44 @@ BEGIN TRANSACTION
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 		VALUES ('aa', 'anton', 'ameland');	
   EXEC sp_WijzigBeschikbareDagen @medewerker_code = 'aa', @maand = @date, @beschikbare_dagen = 20;
+ROLLBACK TRANSACTION
+GO
+
+--Test sp_VerwijderenMedewerkerIngeplandProject
+--Verwijder een medewerker_ingepland_project record
+--Succes test
+BEGIN TRANSACTION
+BEGIN TRY
+	DECLARE @maand_beschikbaar DATETIME = (getdate() + 40);
+	
+	INSERT INTO medewerker VALUES ('cod95', 'Gebruiker7', 'Achternaam7');
+	INSERT INTO medewerker_beschikbaarheid VALUES ('cod95', 'jan 2019', 12);
+	INSERT INTO medewerker_rol_type VALUES ('DeaTeacher');
+	INSERT INTO medewerker_rol VALUES ('cod95', 'DeaTeacher');
+	INSERT INTO project_categorie VALUES ('HAN Arnhem', null);
+	INSERT INTO project_categorie VALUES ('DEA_project', 'HAN Arnhem');
+	INSERT INTO categorie_tag VALUES ('school');
+	INSERT INTO tag_van_categorie VALUES ('DEA_project', 'school');
+	INSERT INTO project VALUES ('DEA12', 'DEA_project', GETDATE() + 30 , GETDATE() + 200, 'DEA_project_2018', 320);
+	INSERT INTO project_rol_type VALUES ('CEO');
+	INSERT INTO medewerker_op_project VALUES ('DEA12', 'cod95', 'CEO');
+	INSERT INTO medewerker_ingepland_project VALUES (IDENT_CURRENT('medewerker_op_project'), 300, @maand_beschikbaar);
+
+	DECLARE @id int = IDENT_CURRENT('medewerker_op_project') + 1;
+	EXEC sp_VerwijderenMedewerkerIngeplandProject @id, @maand_beschikbaar;
+END TRY
+	BEGIN CATCH
+  END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Een medewerker_ingepland_project verwijderen die niet bestaat
+--Faal test
+--Msg 50031, Level 16, State 16, Procedure sp_VerwijderenMedewerkerIngeplandProject, Line 21 [Batch Start Line 137]
+--Er bestaat geen medewerker_ingepland_project record met de opgegeven id
+BEGIN TRANSACTION
+	DECLARE @id int = IDENT_CURRENT('medewerker_op_project') + 1;
+	EXEC sp_VerwijderenMedewerkerIngeplandProject @id, 'feb 2018';
 ROLLBACK TRANSACTION
 GO
 
@@ -140,7 +178,6 @@ BEGIN TRANSACTION
 		EXEC sp_VerwijderenMedewerkerRolType 'Tester'
 	END TRY
 	BEGIN CATCH
-		SELECT 'test succesvol' as 'resultaat', ERROR_MESSAGE() as 'error message', ERROR_NUMBER() AS 'error number', ERROR_SEVERITY() as 'error severity'
 	END CATCH
 ROLLBACK TRANSACTION
 GO
@@ -158,8 +195,8 @@ ROLLBACK TRANSACTION
 BEGIN TRANSACTION
 EXEC sp_WijzigenMedewerker 'a1122', 'Fatima', 'Ahmed';
 ROLLBACK TRANSACTION
-
 GO
+
 -- Test sp_aanpassenProject
 -- succestest
 BEGIN TRANSACTION
@@ -176,8 +213,8 @@ BEGIN TRANSACTION
 	EXEC sp_WijzigProject @project_code = 'PROJAH01', @categorie_naam = 'wiskunde', @begin_datum = @date
 		,@eind_datum = @einddatum, @project_naam = 'project LIDL', @verwachte_uren = 90
 ROLLBACK TRANSACTION
-
 GO
+
 -- Test sp_aanpassenProject
 -- faaltest
 -- Msg 50066, Level 16, State 16, Procedure sp_WijzigProject
@@ -196,6 +233,7 @@ BEGIN TRANSACTION
 	EXEC sp_WijzigProject @project_code = 'PROJAH021', @categorie_naam = 'Scheikunde', @begin_datum = @date
 		,@eind_datum = @einddatum, @project_naam = 'project LIDL', @verwachte_uren = 90
 ROLLBACK TRANSACTION
+GO
 
 --Tests sp_WijzigenMedewerkerOpProject
 --Probeer een bestaande medewerker met project te wijzigen
@@ -215,6 +253,7 @@ BEGIN TRANSACTION
  VALUES ('BB', 'HB', 'meister')
  EXEC sp_WijzigenMedewerkerOpProject 'BB', 'HB', 'leider'
 ROLLBACK TRANSACTION
+GO
 
 --Probeer een niet bestaande medewerker/ project combinatie aan te passen
 --Msg 50019, Level 16, State 16, Procedure sp_WijzigenMedewerkerOpProject, Line 21 [Batch Start Line 92]
@@ -234,3 +273,4 @@ BEGIN TRANSACTION
  VALUES ('BB', 'HB', 'meister')
  EXEC sp_WijzigenMedewerkerOpProject 'Bk', 'HB', 'leider'
 ROLLBACK TRANSACTION
+GO
