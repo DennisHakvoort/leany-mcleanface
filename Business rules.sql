@@ -38,7 +38,6 @@ DROP PROCEDURE IF EXISTS sp_DatabaseUserToevoegen
 DROP PROCEDURE IF EXISTS sp_InsertMedewerkerIngepland
 DROP PROCEDURE IF EXISTS sp_invullenBeschikbareDagen
 
-
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 23 dagen. 23 dagen staan gelijk aan (23*8) 184 uren 
 --BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
 ALTER TABLE medewerker_beschikbaarheid
@@ -53,7 +52,8 @@ CREATE PROCEDURE sp_MedewerkerToevoegen
 @achternaam NVARCHAR(20),
 @voornaam NVARCHAR(20),
 @medewerker_code VARCHAR(5),
-@wachtwoord VARCHAR(40)
+@wachtwoord VARCHAR(40),
+@rol varchar(40)
 AS BEGIN
 	SET NOCOUNT ON 
 	SET XACT_ABORT OFF
@@ -67,12 +67,22 @@ AS BEGIN
 		IF EXISTS (SELECT '@'
 				FROM medewerker
 				WHERE medewerker_code = @medewerker_code)
-			THROW 500014, 'Medewerker code is al in gebruik', 16
+			THROW 50014, 'Medewerker code is al in gebruik', 16
 
-		INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
-			VALUES(@medewerker_code, @achternaam, @voornaam);
+		IF (exists(	SELECT '!'
+								FROM medewerker_rol_type
+								WHERE medewerker_rol = @rol))
+			BEGIN
+				INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
+					VALUES(@medewerker_code, @achternaam, @voornaam);
+				INSERT INTO medewerker_rol VALUES (@medewerker_code, @rol)
 
-		EXEC sp_DatabaseUserToevoegen @login_naam = @medewerker_code, @passwoord = @wachtwoord
+				EXEC sp_DatabaseUserToevoegen @login_naam = @medewerker_code, @wachtwoord = @wachtwoord
+			END
+		ELSE
+			BEGIN
+				THROW 50020, 'Dit is geen bestaande rol', 16
+			END
 	END TRY
 	BEGIN CATCH
 			IF @TranCounter = 0
@@ -345,11 +355,8 @@ AS
 					OR
 						EXISTS(SELECT	'!'
 										FROM (deleted D INNER JOIN medewerker_ingepland_project mip ON d.id = mip.id)
-										WHERE FORMAT(d.maand_datum, 'yyyy-MM')  < FORMAT(GETDATE(), 'yyyy-MM')))
-					
+										WHERE FORMAT(d.maand_datum, 'yyyy-MM')  < FORMAT(GETDATE(), 'yyyy-MM')))					
 					THROW 50011, 'Medewerker uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
-					
-
 				IF (EXISTS(SELECT '!'
 									FROM inserted i INNER JOIN medewerker_op_project mop ON i.id = mop.id
 										INNER JOIN project p ON mop.project_code = p.project_code
@@ -361,6 +368,7 @@ AS
 					THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 			END
 	END
+END
 GO
 
 --BR13 een database login user aanmaken en een rol toewijzen
@@ -378,14 +386,13 @@ AS
 		BEGIN TRANSACTION;
 
 	BEGIN TRY
-		declare @sql NVARCHAR(255)
-		IF EXISTS (select '!'
+		DECLARE @sql NVARCHAR(255)
+		IF EXISTS (SELECT '!'
 					 FROM [sys].[server_principals]
-					 WHERE name = @login_naam)
+					 WHERE [name] = @login_naam)
 		THROW 50013, 'De naam moet uniek zijn.', 16
 
     SELECT @sql = 'CREATE LOGIN ' + @login_naam + ' WITH PASSWORD ' + '= ''' + @wachtwoord + ''''
-		PRINT @sql
 		EXEC sys.sp_executesql @stmt = @sql
 	END TRY
 	BEGIN CATCH
