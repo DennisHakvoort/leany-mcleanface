@@ -84,7 +84,7 @@ BEGIN TRANSACTION
 ROLLBACK TRANSACTION
 
 GO
---Probeer een niet bestaande rol te wijzigen.
+--Probeer een niet bestaande medewerkerrol type te wijzigen.
 --Msg 50008, Level 16, State 16, Procedure sp_WijzigMedewerkerRolType, Line 21 [Batch Start Line 34]
 --medewerkerrol bestaat niet.
 BEGIN TRANSACTION
@@ -97,7 +97,7 @@ GO
 -- Test sp_wijzigbeschikbareDagen
 -- Succes test
 BEGIN TRANSACTION
-	DECLARE @date DATETIME = getdate()
+	DECLARE @date DATETIME = getdate() +30
 
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 		VALUES ('aa', 'anton', 'ameland');

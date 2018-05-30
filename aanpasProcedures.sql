@@ -241,7 +241,7 @@ CREATE PROCEDURE sp_WijzigenMedewerker
 @medewerker_code VARCHAR(5),
 @achternaam NVARCHAR(20),
 @voornaam NVARCHAR(20)
-AS
+AS BEGIN
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
@@ -251,7 +251,7 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		IF EXISTS (SELECT '@'
+		IF NOT EXISTS (SELECT '@'
 					FROM medewerker
 					WHERE medewerker_code = @medewerker_code)
 		
@@ -273,6 +273,7 @@ AS
 			END;
 		THROW
 	END CATCH
+END
 GO
                                                                                                                                                                                                                                  
 --SP wijzigen projecten
@@ -322,6 +323,7 @@ AS BEGIN
 			END;
 		THROW
 	END CATCH
+END
 GO
  
 --SP 17 Toevoegen SP verwijderen medewerker_rol_type

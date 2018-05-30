@@ -462,7 +462,7 @@ CREATE TRIGGER trg_UpdateBegindatumValtNaIngeplandMedewerker
 AS
 BEGIN
 	BEGIN TRY
-	select * from deleted
+
 		IF EXISTS(SELECT '@'
 					FROM deleted d
 					WHERE d.begin_datum < GETDATE())
