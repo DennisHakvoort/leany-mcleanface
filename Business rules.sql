@@ -497,9 +497,9 @@ BEGIN
 END
 GO
 
---BR17 mandatory child op medewerker in medewerker_rol
+--BR17 Een medewerker heeft een mandatory child in medewerker_rol
 CREATE TRIGGER trg_MandatoryChMedewerkerrol
-ON medewerker
+ON medewerker_rol
 AFTER DELETE
 AS BEGIN	
 	IF(@@ROWCOUNT > 0)
@@ -508,8 +508,9 @@ AS BEGIN
 						FROM deleted d RIGHT JOIN medewerker_rol mr
 							ON d.medewerker_code = mr.medewerker_code
 						HAVING COUNT(*) < 1)
-				THROW 50066, 'Medewerker rol kan niet worden verwijdert. Een medewerker moet een rol hebben.', 16
-
+				THROW 50032, 'Medewerker rol kan niet worden verwijdert. Een medewerker moet een rol hebben.', 16
+		
+				select * from deleted
 		END
 END
 GO
