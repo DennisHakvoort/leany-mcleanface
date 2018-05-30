@@ -172,7 +172,7 @@ AS
 GO
 
 --SP 15 Toevoegen SP verwijderen medewerker_ingepland_project
-ALTER PROCEDURE sp_VerwijderenMedewerkerIngeplandProject
+CREATE PROCEDURE sp_VerwijderenMedewerkerIngeplandProject
 @id INT,
 @maand_datum DATETIME												  
 AS
