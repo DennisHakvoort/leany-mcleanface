@@ -168,7 +168,7 @@ AS
 GO
 
 --SP 17 Toevoegen SP verwijderen medewerker_rol_type
-ALTER PROCEDURE sp_VerwijderenMedewerkerRolType
+CREATE PROCEDURE sp_VerwijderenMedewerkerRolType
 @medewerker_rol VARCHAR(40)
 AS
 	SET NOCOUNT ON
