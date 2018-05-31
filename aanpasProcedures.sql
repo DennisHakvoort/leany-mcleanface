@@ -186,29 +186,29 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		BEGIN	
 		IF NOT EXISTS (SELECT '!'
 				FROM medewerker_ingepland_project mip INNER JOIN medewerker_op_project mop
 				ON mip.id = mop.id
 				WHERE mip.id = @id)
-		THROW 50080, 'Er bestaat geen medewerker_ingepland_project record met de opgegeven id', 16
-		END
+												  
+		THROW 50034, 'Er bestaat geen medewerker_ingepland_project record met de opgegeven id.', 16
+												  
 		UPDATE medewerker_ingepland_project
 		SET medewerker_uren = @medewerker_uren
 		WHERE id = @id AND maand_datum = @maand_datum
+	
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
-		BEGIN CATCH
-			IF @TranCounter = 0
-				BEGIN
-					PRINT'ROLLBACK TRANSACTION'
-					IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
-				END;
-			ELSE
-				BEGIN
-					PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
-					PRINT XACT_STATE()
-			IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
-				END;
-				THROW
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
 	END CATCH
 GO
