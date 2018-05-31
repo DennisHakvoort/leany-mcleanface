@@ -369,7 +369,7 @@ AS
 					THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 			END
 	END
-END
+
 GO
 
 --BR13 een database login user aanmaken en een rol toewijzen

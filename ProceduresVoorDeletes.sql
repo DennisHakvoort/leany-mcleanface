@@ -3,6 +3,8 @@ GO
 --Procedures voor het verwijderen van data.
 DROP PROCEDURE IF EXISTS sp_VerwijderenProjectCategorie
 DROP PROCEDURE IF EXISTS sp_verwijderenProjectrol
+DROP PROCEDURE IF EXISTS sp_VerwijderenMedewerkerIngeplandProject
+DROP PROCEDURE IF EXISTS sp_VerwijderenMedewerkerRolType
 GO
 
 --Sp verwijderen project categorie.
@@ -87,3 +89,83 @@ AS BEGIN
 		THROW
 	END CATCH
 END
+GO
+
+--SP 15 Toevoegen SP verwijderen medewerker_ingepland_project
+CREATE PROCEDURE sp_VerwijderenMedewerkerIngeplandProject
+@id INT,
+@maand_datum DATETIME			
+AS BEGIN
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF NOT EXISTS (SELECT '!'
+				FROM medewerker_ingepland_project mip INNER JOIN medewerker_op_project mop
+				ON mip.id = mop.id
+				WHERE mip.id = @id AND mip.maand_datum = @maand_datum)
+												  
+		THROW 50031, 'Er bestaat geen medewerker_ingepland_project record met de opgegeven id', 16
+
+		DELETE FROM medewerker_ingepland_project
+		WHERE id = @id AND maand_datum = @maand_datum
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
+GO
+                                                                               
+--SP 17 Toevoegen SP verwijderen medewerker_rol_type
+CREATE PROCEDURE sp_VerwijderenMedewerkerRolType
+@medewerker_rol VARCHAR(40)
+AS BEGIN
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY	
+		IF EXISTS (SELECT '!'
+					FROM medewerker_rol
+					WHERE medewerker_rol = @medewerker_rol)
+		THROW 50029, 'een medewerker_rol_type in gebruik kan niet verwijderd worden.', 16;
+
+		DELETE FROM medewerker_rol_type
+		WHERE medewerker_rol = @medewerker_rol;
+                                                                                                                                                          
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
+GO   
