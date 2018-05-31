@@ -335,6 +335,7 @@ CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
 			BEGIN
 				/*
 				Zorgt ervoor dat er geen medewerkers meer worden toegevoegd aan/verwijderd van een project.
+				dat is verlopen.
 				*/
 				IF (EXISTS(	SELECT	'!'
 							FROM	inserted i 
@@ -357,12 +358,21 @@ CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 	BEGIN
 		IF(@@ROWCOUNT > 0)
 			BEGIN
-				IF	(EXISTS(SELECT '!'
-							FROM (inserted I INNER JOIN medewerker_beschikbaarheid mb ON i.maand = mb.maand) INNER JOIN medewerker m ON mb.medewerker_code = m.medewerker_code
-							WHERE i.maand < CURRENT_TIMESTAMP)
+			/*
+			In onderstaande selectqueries wordt nagegaan of de maand in kwestie
+			niet al verstreken is. Dan kan de beschikbaarheid namelijk niet meer worden aangepast,
+			en wordt er een error geworpen.
+			*/
+				IF	(EXISTS(SELECT	'!'
+							FROM	inserted i
+									INNER JOIN medewerker_beschikbaarheid mb ON i.maand = mb.maand 
+									INNER JOIN medewerker m ON mb.medewerker_code = m.medewerker_code
+							WHERE	i.maand < CURRENT_TIMESTAMP)
 					OR	EXISTS( SELECT	'!'
-								FROM (deleted D INNER JOIN medewerker_beschikbaarheid mb ON d.maand = mb.maand) INNER JOIN medewerker m ON mb.medewerker_code = m.medewerker_code
-								WHERE d.maand < CURRENT_TIMESTAMP))
+								FROM	deleted d 
+										INNER JOIN medewerker_beschikbaarheid mb ON d.maand = mb.maand 
+										INNER JOIN medewerker m ON mb.medewerker_code = m.medewerker_code
+								WHERE	d.maand < CURRENT_TIMESTAMP))
 						THROW 50010, 'Verstreken maand kan niet meer aangepast worden.', 16
 			END
 	END
@@ -376,22 +386,26 @@ AS
 	BEGIN
 		IF(@@ROWCOUNT > 0)
 			BEGIN
-				IF	(EXISTS(SELECT '!'
-										FROM (inserted I INNER JOIN medewerker_ingepland_project mip ON i.id = mip.id)
-										WHERE FORMAT(i.maand_datum, 'yyyy-MM') < FORMAT(GETDATE(), 'yyyy-MM'))
+				IF	(EXISTS(SELECT	'!'
+							FROM	inserted i 
+									INNER JOIN medewerker_ingepland_project mip ON i.id = mip.id
+							WHERE	FORMAT(i.maand_datum, 'yyyy-MM') < FORMAT(GETDATE(), 'yyyy-MM'))
 					OR
-						EXISTS(SELECT	'!'
-										FROM (deleted D INNER JOIN medewerker_ingepland_project mip ON d.id = mip.id)
-										WHERE FORMAT(d.maand_datum, 'yyyy-MM')  < FORMAT(GETDATE(), 'yyyy-MM')))
+						EXISTS( SELECT	'!'
+								FROM	deleted d 
+										INNER JOIN medewerker_ingepland_project mip ON d.id = mip.id
+								WHERE	FORMAT(d.maand_datum, 'yyyy-MM')  < FORMAT(GETDATE(), 'yyyy-MM')))
 					THROW 50011, 'Medewerker uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
-				IF (EXISTS(SELECT '!'
-									FROM inserted i INNER JOIN medewerker_op_project mop ON i.id = mop.id
-										INNER JOIN project p ON mop.project_code = p.project_code
-									WHERE eind_datum < CURRENT_TIMESTAMP)
+				IF (EXISTS( SELECT	'!'
+							FROM	inserted i 
+									INNER JOIN medewerker_op_project mop ON i.id = mop.id
+									INNER JOIN project p ON mop.project_code = p.project_code
+							WHERE	eind_datum < CURRENT_TIMESTAMP)
 				OR (EXISTS(	SELECT '!'
-										FROM deleted d INNER JOIN medewerker_op_project mop ON d.id = mop.id
-										INNER JOIN project p ON mop.project_code = p.project_code
-										WHERE eind_datum < CURRENT_TIMESTAMP)))
+							FROM	deleted d 
+									INNER JOIN medewerker_op_project mop ON d.id = mop.id
+									INNER JOIN project p ON mop.project_code = p.project_code
+							WHERE	eind_datum < CURRENT_TIMESTAMP)))
 					THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 			END
 	END
