@@ -30,10 +30,14 @@ AS
 		IF NOT EXISTS (SELECT naam
 				       FROM project_categorie
 				       WHERE naam = @naamOud)
-			THROW 50009, 'Deze categorie bestaat niet', 16
+			THROW 50009, 'Deze categorie bestaat niet', 16;
+
 		UPDATE project_categorie
 		SET naam = @naamNieuw, parent =@parentNieuw
-		WHERE naam = @naamOud
+		WHERE naam = @naamOud;
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
@@ -65,12 +69,14 @@ AS
   	IF NOT EXISTS (SELECT project_rol
 				   FROM project_rol_type
 				   WHERE project_rol = @project_rol_oud)
-	THROW 50013, 'Project rol bestaat niet.', 16
+		THROW 50013, 'Project rol bestaat niet.', 16;
+	
 	UPDATE project_rol_type
 	SET project_rol = @project_rol_nieuw
-	WHERE project_rol = @project_rol_oud
- IF @TranCounter = 0 AND XACT_STATE() = 1
-			COMMIT TRANSACTION;
+	WHERE project_rol = @project_rol_oud;
+
+	IF @TranCounter = 0 AND XACT_STATE() = 1
+		COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
@@ -102,12 +108,14 @@ AS
 		IF NOT EXISTS (SELECT medewerker_rol
 				   FROM medewerker_rol_type
 				   WHERE medewerker_rol = @medewerker_Rol_Oud)
-		THROW 50008, 'medewerker rol bestaat niet.', 16
+		THROW 50008, 'medewerker rol bestaat niet.', 16;
+
 	UPDATE medewerker_rol_type
 	SET medewerker_rol = @medewerker_Rol_Nieuw
-	WHERE medewerker_rol = @medewerker_Rol_Oud
+	WHERE medewerker_rol = @medewerker_Rol_Oud;
+
     IF @TranCounter = 0 AND XACT_STATE() = 1
-			COMMIT TRANSACTION;
+		COMMIT TRANSACTION;
 
 	END TRY
 	BEGIN CATCH
@@ -138,13 +146,18 @@ AS BEGIN
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+
+		IF NOT EXISTS (SELECT '@'
+						FROM medewerker_beschikbaarheid
+						WHERE medewerker_code = @medewerker_code and (FORMAT(maand, 'yyyy-MM')) = (FORMAT(@maand, 'yyyy-MM')))
+			THROW 50019, 'Mederwerker is in de opgegeven maand nog niet ingepland', 16;
+
 		UPDATE medewerker_beschikbaarheid
 		SET beschikbare_dagen = @beschikbare_dagen
-		WHERE medewerker_code = @medewerker_code and (FORMAT(maand, 'yyyy-MM')) = (FORMAT(@maand, 'yyyy-MM'))
+		WHERE medewerker_code = @medewerker_code and (FORMAT(maand, 'yyyy-MM')) = (FORMAT(@maand, 'yyyy-MM'));
 
-		IF @@ROWCOUNT = 0
-		THROW 50019, 'Mederwerker is in de opgegeven maand nog niet ingepland', 16;
-
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 			IF @TranCounter = 0
@@ -178,12 +191,14 @@ AS
 		IF NOT EXISTS (SELECT medewerker_code
 					   FROM medewerker_rol
 					   WHERE medewerker_code = @medewerker_code AND medewerker_rol = @oude_rol)
-		THROW 50015, 'Medewerker in combinatie met deze rol bestaat niet.', 16
-	UPDATE medewerker_rol
-	SET medewerker_rol = @nieuwe_rol
-	WHERE medewerker_code = @medewerker_code AND medewerker_rol = @oude_rol
-  IF @TranCounter = 0 AND XACT_STATE() = 1
-    COMMIT TRANSACTION;
+			THROW 50015, 'Medewerker in combinatie met deze rol bestaat niet.', 16;
+
+		UPDATE medewerker_rol
+		SET medewerker_rol = @nieuwe_rol
+		WHERE medewerker_code = @medewerker_code AND medewerker_rol = @oude_rol;
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
@@ -216,10 +231,12 @@ AS
 		IF NOT EXISTS (SELECT *
 					   FROM medewerker_op_project
 				       WHERE project_code = @project_code AND medewerker_code = @medewerker_code)
-		THROW 50019, ' De medewerker met de opgegeven medewerker_code is niet aan dit project gekoppeld.', 16
-	UPDATE MEDEWERKER_OP_PROJECT
-			SET project_rol = @nieuwe_ProjectRol
-		WHERE project_code = @project_code AND medewerker_code = @medewerker_code
+			THROW 50019, ' De medewerker met de opgegeven medewerker_code is niet aan dit project gekoppeld.', 16;
+
+		UPDATE MEDEWERKER_OP_PROJECT
+		SET project_rol = @nieuwe_ProjectRol
+		WHERE project_code = @project_code AND medewerker_code = @medewerker_code;
+
 		IF @TranCounter = 0 AND XACT_STATE() = 1
 			COMMIT TRANSACTION;
 	END TRY
@@ -255,12 +272,14 @@ AS BEGIN
 					FROM medewerker
 					WHERE medewerker_code = @medewerker_code)
 		
-		THROW 50028, 'Een medewerker met dit medewerker_code bestaat niet.', 16
+		THROW 50028, 'Een medewerker met dit medewerker_code bestaat niet.', 16;
 
 		UPDATE medewerker
 		SET achternaam = @achternaam, voornaam = @voornaam
-		WHERE medewerker_code = @medewerker_code
+		WHERE medewerker_code = @medewerker_code;
 
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 		BEGIN CATCH
 			IF @TranCounter = 0
@@ -307,7 +326,7 @@ AS BEGIN
 			eind_datum = @eind_datum,
 			project_naam = @project_naam,
 			verwachte_uren = @verwachte_uren
-		WHERE project_code = @project_code
+		WHERE project_code = @project_code;
 
 		IF @TranCounter = 0 AND XACT_STATE() = 1
 			COMMIT TRANSACTION;
@@ -339,14 +358,13 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY	
-    IF EXISTS (SELECT '!'
-				FROM medewerker_rol
-				WHERE medewerker_rol = @medewerker_rol)
-												  
-    THROW 50029, 'een medewerker_rol_type in gebruik kan niet verwijderd worden.', 16
+		IF EXISTS (SELECT '!'
+					FROM medewerker_rol
+					WHERE medewerker_rol = @medewerker_rol)
+		THROW 50029, 'een medewerker_rol_type in gebruik kan niet verwijderd worden.', 16;
 
 		DELETE FROM medewerker_rol_type
-		WHERE medewerker_rol = @medewerker_rol   
+		WHERE medewerker_rol = @medewerker_rol;
                                                                                                                                                           
 		IF @TranCounter = 0 AND XACT_STATE() = 1
 			COMMIT TRANSACTION;
