@@ -1,5 +1,8 @@
+USE LeanDb
+GO
 --Procedures voor het verwijderen van data.
 DROP PROCEDURE IF EXISTS sp_VerwijderenProjectCategorie
+DROP PROCEDURE IF EXISTS sp_verwijderenProjectrol
 GO
 
 --Sp verwijderen project categorie.
@@ -19,7 +22,7 @@ AS
 		IF EXISTS (SELECT naam
 				   FROM project_categorie
 				   WHERE parent = @categorieNaam)
-		THROW 50021, 'Een categorie met subcategorieën kan niet verwijderd worden.', 16
+		THROW 50021, 'Een categorie met subcategorieÃ«n kan niet verwijderd worden.', 16
 	END
 	BEGIN
 		IF EXISTS (SELECT c.naam
@@ -45,4 +48,42 @@ AS
         IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
 		THROW
+END CATCH
+GO
+
+--Sp verwijderen projectrol
+CREATE PROCEDURE sp_verwijderenProjectrol
+@projectrol VARCHAR(40)
+AS BEGIN
+	SET NOCOUNT ON 
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF EXISTS (SELECT '@'
+					FROM medewerker_op_project
+					WHERE project_rol = @projectrol)
+			THROW 50026, 'Projectrol kan niet worden verwijderd, omdat het nog in gebruik is.', 16
+
+			DELETE FROM project_rol_type
+			WHERE project_rol = @projectrol
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
 	END CATCH
+END
