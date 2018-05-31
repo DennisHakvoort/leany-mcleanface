@@ -369,7 +369,7 @@ AS
 					THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 			END
 	END
-END
+
 GO
 
 --BR13 een database login user aanmaken en een rol toewijzen
@@ -463,7 +463,7 @@ CREATE TRIGGER trg_UpdateBegindatumValtNaIngeplandMedewerker
 AS
 BEGIN
 	BEGIN TRY
-	select * from deleted
+
 		IF EXISTS(SELECT '@'
 					FROM deleted d
 					WHERE d.begin_datum < GETDATE())
