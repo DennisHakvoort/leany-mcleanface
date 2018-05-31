@@ -66,8 +66,6 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-			EXECUTE sp_checkProjectRechten @projectcode = @project_code
-
   	IF NOT EXISTS (SELECT project_rol
 				   FROM project_rol_type
 				   WHERE project_rol = @project_rol_oud)
@@ -297,7 +295,6 @@ AS
 			END;
 		THROW
 	END CATCH
-END
 GO
 
 --SP 9 Toevoegen SP aanpassen medewerker.
@@ -390,4 +387,5 @@ AS BEGIN
 			END;
 		THROW
 	END CATCH
+END
 GO

@@ -436,7 +436,8 @@ BEGIN
 
 		IF EXISTS(SELECT '@'
 					FROM deleted d
-					WHERE d.begin_datum < GETDATE())
+					WHERE d.begin_datum < GETDATE() AND d.begin_datum NOT IN (SELECT i.begin_datum
+																																		FROM inserted i WHERE i.project_code = d.project_code))
 
 		THROW 500025, 'Begindatum mag niet worden aangepast als het project is gestart', 16
 
