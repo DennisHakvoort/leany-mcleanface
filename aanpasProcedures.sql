@@ -68,7 +68,7 @@ AS
   	IF NOT EXISTS (SELECT project_rol
 				   FROM project_rol_type
 				   WHERE project_rol = @project_rol_oud)
-		THROW 50013, 'Project rol bestaat niet.', 16;
+		THROW 50013, 'Projectrol bestaat niet.', 16;
 	
 	UPDATE project_rol_type
 	SET project_rol = @project_rol_nieuw
@@ -107,7 +107,7 @@ AS
 		IF NOT EXISTS (SELECT medewerker_rol
 				   FROM medewerker_rol_type
 				   WHERE medewerker_rol = @medewerker_Rol_Oud)
-		THROW 50008, 'medewerker rol bestaat niet.', 16;
+		THROW 50008, 'medewerkerrol bestaat niet.', 16;
 
 	UPDATE medewerker_rol_type
 	SET medewerker_rol = @medewerker_Rol_Nieuw
@@ -317,7 +317,7 @@ AS BEGIN
 					FROM project
 					WHERE project_code = @project_code)
 
-				THROW 50027, 'Opgegeven project code bestaat niet', 16
+				THROW 50027, 'Opgegeven projectcode bestaat niet', 16
 
 		UPDATE project
 		SET categorie_naam = @categorie_naam,

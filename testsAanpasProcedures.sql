@@ -84,7 +84,7 @@ BEGIN TRANSACTION
 ROLLBACK TRANSACTION
 
 GO
---Probeer een niet bestaande medewerkerrol type te wijzigen.
+--Probeer een niet-bestaand medewerkerroltype te wijzigen.
 --Msg 50008, Level 16, State 16, Procedure sp_WijzigMedewerkerRolType, Line 21 [Batch Start Line 34]
 --medewerkerrol bestaat niet.
 BEGIN TRANSACTION
