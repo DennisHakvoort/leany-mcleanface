@@ -12,7 +12,7 @@
 --Drop en creëer rollen.
 DROP ROLE IF EXISTS MEDEWERKER
 DROP ROLE IF EXISTS SUPERUSER
-GO
+-- GO
 
 CREATE ROLE MEDEWERKER
 CREATE ROLE SUPERUSER
@@ -23,6 +23,7 @@ GRANT SELECT ON vw_Bezetting TO MEDEWERKER
 GRANT SELECT ON vw_Totaal_Gepland_Beschikbaar_Jaar TO MEDEWERKER
 GRANT SELECT ON vw_Project_Overzicht_Bezetting TO MEDEWERKER
 GRANT SELECT ON vw_Actief_Project_Percentage_Gedekte_Uren TO MEDEWERKER
+GRANT EXECUTE on sp_checkProjectRechten TO MEDEWERKER
 
 --SUERUSER rollen, hij kan alle views en stored procedures uitvoeren. Ook kan hij alle tables bekijken.
 --SELECT VIEWS
@@ -49,8 +50,6 @@ GRANT EXECUTE ON sp_InsertMedewerkerIngepland TO SUPERUSER
 GRANT EXECUTE ON sp_ProjecturenInplannen TO SUPERUSER
 GRANT EXECUTE ON sp_invullenBeschikbareDagen TO SUPERUSER
 
---CREATE USERS
-REVOKE ALTER ANY USER TO SUPERUSER
 
 
 

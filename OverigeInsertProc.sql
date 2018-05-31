@@ -1,6 +1,3 @@
-USE LeanDb
-GO
-
 DROP PROCEDURE IF EXISTS SP_insertMedewerkerRol
 DROP PROCEDURE IF EXISTS sp_InsertMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_InsertProjectRolType
@@ -197,6 +194,8 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+			EXECUTE sp_checkProjectRechten @projectcode = @project_code
+
 		 INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
 		 VALUES (@project_code, @medewerker_code, @project_rol)
 	END TRY
