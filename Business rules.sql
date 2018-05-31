@@ -6,6 +6,9 @@ USE LeanDb
 GO
 
 --PROCEDURE OM CONSTRAINTS TE DROPPEN ALS DEZE BESTAAN
+/*
+Deze procedure verwijdert opgegeven constraints van tabellen. 
+*/
 DROP PROCEDURE IF EXISTS sp_DropConstraint
 GO
 CREATE PROCEDURE sp_DropConstraint
@@ -13,11 +16,12 @@ CREATE PROCEDURE sp_DropConstraint
 	@table_name VARCHAR(255) = NULL
 	AS
 	BEGIN TRY
-		declare @sql NVARCHAR(255)
-    SELECT @sql = 'ALTER TABLE ' + @table_name + ' DROP CONSTRAINT ' + @Constraint_name;
-		EXEC sys.sp_executesql @stmt = @sql
+		DECLARE @sql NVARCHAR(255)
+    SELECT @sql = 'ALTER TABLE ' + @table_name + ' DROP CONSTRAINT ' + @Constraint_name; /*Zet een query in mekaar om de taak uit te voeren*/
+		EXEC sys.sp_executesql @stmt = @sql --statement wordt geëxecute
 	END TRY
 	BEGIN CATCH
+		--Print in plaats van raiserror, om ervoor te zorgen dat het script gewoon doorgaat. 
 		PRINT 'Het volgende constraint is niet gedropt, waarschijnlijk omdat deze niet bestond: ' + @Constraint_name
 	END CATCH
 GO
@@ -39,6 +43,7 @@ DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
 DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
 DROP PROCEDURE IF EXISTS sp_InsertMedewerkerIngepland
 DROP PROCEDURE IF EXISTS sp_invullenBeschikbareDagen
+DROP PROCEDURE IF EXISTS sp_checkProjectRechten
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 23 dagen. 23 dagen staan gelijk aan (23*8) 184 uren 
 --BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
@@ -67,24 +72,29 @@ AS BEGIN
 		BEGIN TRANSACTION;
 	BEGIN TRY
 		IF EXISTS (SELECT '@'
-				FROM medewerker
-				WHERE medewerker_code = @medewerker_code)
-			THROW 50014, 'Medewerker code is al in gebruik', 16
-		IF (exists(	SELECT '!'
-                  FROM medewerker_rol_type
-                  WHERE medewerker_rol = @rol))
+				   FROM medewerker
+				   WHERE medewerker_code = @medewerker_code)--Gaat na of medewerkercode voorkomt
+			THROW 50014, 'Medewerkercode is al in gebruik', 16
+		IF (EXISTS(SELECT '!'
+                   FROM medewerker_rol_type
+                   WHERE medewerker_rol = @rol))
         BEGIN
-          INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
+          INSERT INTO medewerker(medewerker_code, achternaam, voornaam)--Voegt de medewerker toe
             VALUES(@medewerker_code, @achternaam, @voornaam);
-          INSERT INTO medewerker_rol VALUES (@medewerker_code, @rol)
+          INSERT INTO medewerker_rol 
+			VALUES (@medewerker_code, @rol)--Geeft meteen rol aan medewerker (mandatory child)
 
           DECLARE @sql NVARCHAR(255)
-          IF EXISTS (select '!'
-                 FROM [sys].[server_principals]
-                 WHERE name = @medewerker_code)
+          IF EXISTS (SELECT '!'
+					 FROM [sys].[server_principals]
+					 WHERE [name] = @medewerker_code) --Gaat na of de naam uniek is
             THROW 50013, 'De naam moet uniek zijn.', 16
           ELSE
             BEGIN
+			/*
+			Hier wordt een login gemaakt voor de nieuwe medewerker. Deze krijgt automatisch de rol 'medewerker', wat voorkomt
+			dat medewerkers gegevens kunnen aanpassen. Ze kunnen alleen views inzien.
+			*/
             SELECT @sql = 'CREATE LOGIN ' + @medewerker_code + ' WITH PASSWORD ' + '= ''' + @wachtwoord + ''', DEFAULT_DATABASE = LeanDb; '
                           + 'CREATE USER ' + @medewerker_code + ' FROM LOGIN ' + @medewerker_code + '; '
                           + 'ALTER ROLE MEDEWERKER ADD MEMBER ' + @medewerker_code
@@ -110,7 +120,7 @@ AS BEGIN
 END
 GO
 
---BR4 Als een medewerker in een maand geen beschikbare uren ter beschikking heeft kan hij/zij niet hetzelfde maand in een project ingedeeld worden
+--BR4 Als een medewerker in een maand geen beschikbare uren ter beschikking heeft kan hij/zij niet diezelfde maand in een project ingedeeld worden
 CREATE PROCEDURE sp_InsertMedewerkerIngepland
 @ID INT,
 @medewerker_uren INT,
@@ -126,33 +136,33 @@ AS
 		BEGIN TRANSACTION;
 
 	BEGIN TRY
-		 IF EXISTS (SELECT *
-				FROM MEDEWERKER_OP_PROJECT m LEFT OUTER JOIN MEDEWERKER_INGEPLAND_PROJECT i ON m.ID = i.ID
-							     LEFT OUTER JOIN MEDEWERKER_BESCHIKBAARHEID b ON m.MEDEWERKER_CODE = b.MEDEWERKER_CODE
-				WHERE @id = m.ID AND (b.beschikbare_dagen = 0 OR b.beschikbare_dagen IS NULL))
+			--Onderstaande query gaat na of er sprake is van een gebrek aan beschikbaarheid in de betreffende maand.
+		 IF EXISTS (SELECT	'!'
+					FROM	medewerker_op_project m 
+							LEFT OUTER JOIN medewerker_ingepland_project i ON m.ID = i.ID
+							LEFT OUTER JOIN medewerker_beschikbaarheid b ON m.medewerker_code = b.medewerker_code
+					WHERE	@id = m.id AND (b.beschikbare_dagen = 0 OR b.beschikbare_dagen IS NULL) AND b.maand = @maand_datum)
 			BEGIN
-				;THROW 50006, 'Medewerker heeft geen beschikbare uren en kan dus niet ingepland worden', 16
+				;THROW 50006, 'Medewerker heeft geen beschikbare dagen in deze maand en kan dus niet ingepland worden', 16
 			END
 		ELSE
 			BEGIN
-				INSERT INTO MEDEWERKER_INGEPLAND_PROJECT (id, MEDEWERKER_UREN, MAAND_DATUM)
-				VALUES (@id, @medewerker_Uren, @maand_datum)
+				--Voegt de geplande uren toe
+				INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
+				VALUES (@id, @medewerker_uren, @maand_datum)
 						IF @TranCounter = 0 AND XACT_STATE() = 10
 							BEGIN
-								PRINT'COMMITTING'
 								COMMIT TRANSACTION;
 							END
-		END
+			END
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION'
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
 				PRINT XACT_STATE()
         IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
@@ -181,25 +191,24 @@ AS BEGIN
 
 	BEGIN TRY
 		EXECUTE sp_checkProjectRechten @projectcode = @project_code
-		IF (@medewerker_uren < 0)
-			
+		IF (@medewerker_uren < 0) --Medewerkeruren kunnen niet negatief zijn.
 				THROW 500012, 'Invalide invoerwaarde - negatieve uren', 16
-			
-	DECLARE @id int; -- id representeert de combinatie van een medewerker en project. Wordt uit de tabel medewerker_op_project
-		SET @id = (SELECT id
-					FROM	medewerker_op_project
-					where	medewerker_code = @medewerker_code
-						AND	project_code = @project_code)
+	DECLARE @id INT; -- id representeert de combinatie van een medewerker en project. Wordt uit de tabel medewerker_op_project opgehaald.
+		SET @id = (SELECT	id
+				   FROM		medewerker_op_project
+				   WHERE	medewerker_code = @medewerker_code AND	
+							project_code = @project_code)
 
-		IF EXISTS (	SELECT	1
-					FROM	medewerker_ingepland_project mip
-						INNER JOIN medewerker_op_project mop ON mip.id = mop.id
-						INNER JOIN project p on mop.project_code = p.project_code
-					WHERE	mop.medewerker_code = @medewerker_code
-						AND	FORMAT(mip.maand_datum, 'yyyy-MM') = FORMAT(GETDATE(), 'yyyy-MM') --format naar yyyy-MM zodat het vergeleken kan worden
-					GROUP BY medewerker_code
-					HAVING	SUM(mip.medewerker_uren) + @medewerker_uren <= 184) -- 184 is het maximum aantal uren per maand voor een medewerker
+		IF EXISTS (	SELECT		1 --Onderstaande query telt het maandelijkse aantal uren op en vergelijkt het met maximum.
+					FROM		medewerker_ingepland_project mip
+								INNER JOIN medewerker_op_project mop ON mip.id = mop.id
+								INNER JOIN project p on mop.project_code = p.project_code
+					WHERE		mop.medewerker_code = @medewerker_code AND	
+								FORMAT(mip.maand_datum, 'yyyy-MM') = FORMAT(GETDATE(), 'yyyy-MM') --format naar yyyy-MM zodat het vergeleken kan worden
+					GROUP BY	medewerker_code
+					HAVING		SUM(mip.medewerker_uren) + @medewerker_uren <= 184) -- 184 is het maximum aantal uren per maand voor een medewerker
 			BEGIN
+				--Medewerkeruren worden toegevoegd.
 				INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
 					VALUES	(@id, @medewerker_uren, @maand_datum);
 			END
