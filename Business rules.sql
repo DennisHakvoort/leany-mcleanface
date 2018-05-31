@@ -243,16 +243,15 @@ CREATE TRIGGER trg_SubCategorieHeeftHoofdCategorie
  AFTER INSERT, UPDATE
 AS
 BEGIN
-BEGIN TRY
-  IF NOT EXISTS ((SELECT parent
-			  FROM inserted
-			  WHERE EXISTS (SELECT naam
-							   FROM PROJECT_CATEGORIE
-							   WHERE naam = inserted.PARENT
-							   )
-							   OR parent IS NULL
-							   ))
-	THROW 50003, 'Deze subcategorie heeft geen geldige hoofdcategorie', 16
+BEGIN TRY -- dubbele negation
+  IF NOT EXISTS ((SELECT	parent --  als een parent wordt geselecteerd is de ingevulde waarde geldig.
+				  FROM		inserted -- als één van de twee voorwaardes true resulteert wordt de parent van inserted geselecteerd
+				  WHERE		EXISTS (SELECT	naam -- eerste voorwaarde
+									FROM	project_categorie
+									WHERE	naam = inserted.parent) -- checkt of de opgegeven parent daadwerkelijk bestaat
+							OR --tweede voorwaarde
+							parent IS NULL)) --als de parent NULL is betekend het dat de categorie een hoofdcategorie is  
+	THROW 50003, 'Deze subcategorie heeft geen geldige hoofdcategorie', 16 -- wordt gegooid als geen parent wordt geselecteerd uit de eerste select
   END TRY
   BEGIN CATCH
     THROW
@@ -266,11 +265,15 @@ CREATE TRIGGER trg_GeenHoofdCategorieMetSubsVerwijderen
 AS
 BEGIN
 BEGIN TRY
-  IF EXISTS ((SELECT naam
-			 FROM deleted
-			 WHERE parent IS NULL AND naam IN (SELECT parent
-											  FROM project_categorie
-											  )))
+/*
+Hieronder wordt bekeken of er categorieën zijn
+die de gedeletete categorie(ën) als hoofdcategorie hebben.
+Is dit het geval, wordt er een error geworpen.
+*/
+  IF EXISTS ((SELECT	naam
+			  FROM		deleted
+			  WHERE		naam IN (SELECT parent
+								 FROM	project_categorie)))
 		THROW 50002, 'Kan geen categorie met met subcategories verwijderen', 16
   END TRY
   BEGIN CATCH
@@ -288,12 +291,14 @@ AFTER INSERT, UPDATE, DELETE
 	BEGIN
 		IF(@@ROWCOUNT > 0)
 			BEGIN
-				IF (EXISTS(SELECT '!'
-									FROM inserted
-									WHERE eind_datum < CURRENT_TIMESTAMP)
+				--Hier wordt nagegaan of er een project is toegevoegd/aangepast/verwijderd
+				--nadat de eind_datum van het project is verstreken. Dit kan niet.
+				IF (EXISTS( SELECT '!'
+							FROM inserted
+							WHERE eind_datum < CURRENT_TIMESTAMP)
 				OR (EXISTS(	SELECT '!'
-										FROM deleted
-										WHERE eind_datum < CURRENT_TIMESTAMP)))
+							FROM deleted
+							WHERE eind_datum < CURRENT_TIMESTAMP)))
 				THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 			END
 	END
@@ -306,15 +311,16 @@ CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Ingepland
 	BEGIN
 		IF (@@ROWCOUNT > 0)
 			BEGIN
+				--Hier wordt nagekeken of er niks wordt aangepast aan geplande uren van projecten die al verstreken zijn.
 				IF (EXISTS(	SELECT '!'
-										FROM (inserted I INNER JOIN medewerker_op_project MIP ON I.id = MIP.id) INNER JOIN project P on MIP.project_code = P.project_code
-										WHERE P.eind_datum < CURRENT_TIMESTAMP)
+							FROM (inserted I INNER JOIN medewerker_op_project MIP ON I.id = MIP.id) INNER JOIN project P on MIP.project_code = P.project_code
+							WHERE P.eind_datum < CURRENT_TIMESTAMP)
 					OR
 						EXISTS( SELECT '!'
-										FROM (deleted D INNER JOIN medewerker_op_project MIP ON D.id = MIP.id) INNER JOIN project P on MIP.project_code = P.project_code
-										WHERE P.eind_datum < CURRENT_TIMESTAMP))
+								FROM (deleted D INNER JOIN medewerker_op_project MIP ON D.id = MIP.id) INNER JOIN project P on MIP.project_code = P.project_code
+								WHERE P.eind_datum < CURRENT_TIMESTAMP))
 					BEGIN
-						THROW 50004, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
+						;THROW 50004, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 					END
 			END
 	END
@@ -327,16 +333,18 @@ CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
 	BEGIN
 		IF(@@ROWCOUNT > 0)
 			BEGIN
-				IF (EXISTS(	SELECT '!'
-										FROM inserted I INNER JOIN PROJECT P ON I.project_code = P.project_code
-										WHERE P.eind_datum < CURRENT_TIMESTAMP)
-					OR
-						EXISTS(	SELECT  '!'
-										FROM deleted D INNER JOIN PROJECT P ON D.project_code = P.project_code
-										WHERE P.eind_datum < CURRENT_TIMESTAMP))
-
+				/*
+				Zorgt ervoor dat er geen medewerkers meer worden toegevoegd aan/verwijderd van een project.
+				*/
+				IF (EXISTS(	SELECT	'!'
+							FROM	inserted i 
+									INNER JOIN project p ON i.project_code = p.project_code
+							WHERE	p.eind_datum < CURRENT_TIMESTAMP)
+					OR	EXISTS(	SELECT  '!'
+								FROM	deleted d
+										INNER JOIN project p ON d.project_code = p.project_code
+								WHERE	p.eind_datum < CURRENT_TIMESTAMP))
 						THROW 50005, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
-
 			END
 	END
 GO
@@ -350,15 +358,12 @@ CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 		IF(@@ROWCOUNT > 0)
 			BEGIN
 				IF	(EXISTS(SELECT '!'
-										FROM (inserted I INNER JOIN medewerker_beschikbaarheid mb ON i.maand = mb.maand) INNER JOIN medewerker m ON mb.medewerker_code = m.medewerker_code
-										WHERE i.maand < CURRENT_TIMESTAMP)
-					OR
-						EXISTS(SELECT	'!'
-										FROM (deleted D INNER JOIN medewerker_beschikbaarheid mb ON d.maand = mb.maand) INNER JOIN medewerker m ON mb.medewerker_code = m.medewerker_code
-										WHERE d.maand < CURRENT_TIMESTAMP))
-
+							FROM (inserted I INNER JOIN medewerker_beschikbaarheid mb ON i.maand = mb.maand) INNER JOIN medewerker m ON mb.medewerker_code = m.medewerker_code
+							WHERE i.maand < CURRENT_TIMESTAMP)
+					OR	EXISTS( SELECT	'!'
+								FROM (deleted D INNER JOIN medewerker_beschikbaarheid mb ON d.maand = mb.maand) INNER JOIN medewerker m ON mb.medewerker_code = m.medewerker_code
+								WHERE d.maand < CURRENT_TIMESTAMP))
 						THROW 50010, 'Verstreken maand kan niet meer aangepast worden.', 16
-
 			END
 	END
 GO
@@ -443,12 +448,13 @@ AS
 BEGIN
 	BEGIN TRY
 
-		IF EXISTS(SELECT '@'
-					FROM deleted d
-					WHERE d.begin_datum < GETDATE())
-
-		THROW 500025, 'Begindatum mag niet worden aangepast als het project is gestart', 16
-
+		IF EXISTS(SELECT	'@'
+				  FROM		deleted d
+				  WHERE		d.begin_datum < GETDATE() AND
+							d.begin_datum NOT IN (SELECT	i.begin_datum 
+												  FROM		inserted i 
+												  WHERE		i.project_code = d.project_code))
+		THROW 50025, 'Begindatum mag niet worden aangepast als het project is gestart', 16
 		IF EXISTS(SELECT '@'
 					FROM inserted i
 					INNER JOIN medewerker_op_project mop ON i.project_code = mop.project_code
