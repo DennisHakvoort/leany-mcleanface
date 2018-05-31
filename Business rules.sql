@@ -77,7 +77,7 @@ AS BEGIN
             VALUES(@medewerker_code, @achternaam, @voornaam);
           INSERT INTO medewerker_rol VALUES (@medewerker_code, @rol)
 
-          declare @sql NVARCHAR(255)
+          DECLARE @sql NVARCHAR(255)
           IF EXISTS (select '!'
                  FROM [sys].[server_principals]
                  WHERE name = @medewerker_code)
