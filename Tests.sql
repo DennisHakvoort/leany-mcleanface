@@ -850,17 +850,17 @@ BEGIN TRANSACTION
 	DECLARE @date DATE = GETDATE()
 	DECLARE @einddatum DATE = GETDATE() +300
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
-		VALUES ('KB01', 'Kean', 'Bergmans')
+		VALUES ('KB01', 'Kean', 'Bergmans');
 	INSERT INTO project_categorie (naam, parent)
-		VALUES ('school', NULL)
+		VALUES ('school', NULL);
 	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
 		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
 	INSERT INTO project_rol_type (project_rol)
-		VALUES ('notulist')
+		VALUES ('notulist');
 	INSERT INTO medewerker_op_project (medewerker_code, project_code, project_rol)
-		VALUES ('KB01', 'projo0321', 'notulist')
+		VALUES ('KB01', 'projo0321', 'notulist');
 	INSERT INTO medewerker_ingepland_project (id, maand_datum, medewerker_uren)
-		VALUES (IDENT_CURRENT('medewerker_op_project'), (@date), 10)
+		VALUES (IDENT_CURRENT('medewerker_op_project'), (@date), 10);
 ROLLBACK TRANSACTION
 GO
 
@@ -872,11 +872,11 @@ BEGIN TRANSACTION
 	DECLARE @date DATE = GETDATE() -100
 	DECLARE @einddatum DATE = GETDATE() +300
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
-		VALUES ('WB02', 'Wouter', 'Bosh')
+		VALUES ('WB02', 'Wouter', 'Bosh');
 	INSERT INTO project_categorie (naam, parent)
-		VALUES ('school', NULL)
+		VALUES ('school', NULL);
 	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
-		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
+		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10);
 	UPDATE PROJECT
 	SET begin_datum = GETDATE() +20
 	WHERE project_code = 'projo0321'
@@ -891,17 +891,17 @@ BEGIN TRANSACTION
 	DECLARE @date DATE = GETDATE() +100
 	DECLARE @einddatum DATE = GETDATE() +300
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
-		VALUES ('RZK1', 'Rudolf', 'Bergmans')
+		VALUES ('RZK1', 'Rudolf', 'Bergmans');
 	INSERT INTO project_categorie (naam, parent)
-		VALUES ('school', NULL)
+		VALUES ('school', NULL);
 	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
 		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
 	INSERT INTO project_rol_type (project_rol)
-		VALUES ('notulist')
+		VALUES ('notulist');
 	INSERT INTO medewerker_op_project (medewerker_code, project_code, project_rol)
-		VALUES ('RZK1', 'projo0321', 'notulist')
+		VALUES ('RZK1', 'projo0321', 'notulist');
 	INSERT INTO medewerker_ingepland_project (id, maand_datum, medewerker_uren)
-		VALUES (IDENT_CURRENT('medewerker_op_project'), (@date), 10)
+		VALUES (IDENT_CURRENT('medewerker_op_project'), (@date), 10);
 
 	UPDATE PROJECT
 	SET begin_datum = GETDATE() +20
@@ -915,11 +915,11 @@ BEGIN TRANSACTION
 	DECLARE @date DATE = GETDATE() +100
 	DECLARE @einddatum DATE = GETDATE() +300
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
-		VALUES ('BB10', 'Berend', 'Botje')
+		VALUES ('BB10', 'Berend', 'Botje');
 	INSERT INTO project_categorie (naam, parent)
-		VALUES ('school', NULL)
+		VALUES ('school', NULL);
 	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
-		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
+		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10);
 
 	UPDATE PROJECT
 	SET eind_datum = GETDATE() +400
@@ -935,15 +935,47 @@ BEGIN TRANSACTION
 	DECLARE @date DATE = GETDATE() +100
 	DECLARE @einddatum DATE = GETDATE() +300
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
-		VALUES ('MM99', 'Meep', 'Meepster')
+		VALUES ('MM99', 'Meep', 'Meepster');
 	INSERT INTO project_categorie (naam, parent)
-		VALUES ('school', NULL)
+		VALUES ('school', NULL);
 	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
-		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
+		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10);
 
 	UPDATE PROJECT
 	SET eind_datum = GETDATE() +200
 	WHERE project_code = 'projo0321'
+ROLLBACK TRANSACTION
+
+-- BR17 Een medewerker heeft een mandatory child in medewerker_rol
+-- succes test
+BEGIN TRANSACTION
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('EAM99', 'Elizabeth', 'Alexandra Mary');
+	INSERT INTO medewerker_rol_type (medewerker_rol)
+		VALUES ('Queen');
+	INSERT INTO medewerker_rol_type (medewerker_rol)
+		VALUES ('Empress');
+	INSERT INTO medewerker_rol (medewerker_code, medewerker_rol)
+		VALUES ('EAM99', 'Queen');
+	INSERT INTO medewerker_rol (medewerker_code, medewerker_rol)
+		VALUES ('EAM99', 'Empress');
+
+	DELETE FROM medewerker_rol
+	WHERE medewerker_code = 'EAM99' AND medewerker_rol = 'Empress'
+ROLLBACK TRANSACTION
+
+-- BR17 Een medewerker heeft een mandatory child in medewerker_rol
+-- faal test
+BEGIN TRANSACTION
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('JL37', 'Johan', 'Lunde');
+	INSERT INTO medewerker_rol_type (medewerker_rol)
+		VALUES ('Bishop');
+	INSERT INTO medewerker_rol (medewerker_code, medewerker_rol)
+		VALUES ('JL37', 'Bishop');
+
+	DELETE FROM medewerker_rol
+	WHERE medewerker_code = 'JL37' AND medewerker_rol = 'Bishop'
 ROLLBACK TRANSACTION
 
 --BR18
