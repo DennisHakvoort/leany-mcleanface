@@ -32,6 +32,7 @@ DROP TRIGGER IF EXISTS trg_GeenHoofdCategorieMetSubsVerwijderen
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Op_Project
 DROP TRIGGER IF EXISTS trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 DROP TRIGGER IF EXISTS trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
+DROP TRIGGER IF EXISTS trg_MandatoryChMedewerkerrol
 DROP TRIGGER IF EXISTS trg_UpdateBegindatumValtNaIngeplandMedewerker
 DROP TRIGGER IF EXISTS trg_UpdateEinddatumAlleenVerlengen
 DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
@@ -323,9 +324,9 @@ CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
 						EXISTS(	SELECT  '!'
 										FROM deleted D INNER JOIN PROJECT P ON D.project_code = P.project_code
 										WHERE P.eind_datum < CURRENT_TIMESTAMP))
-					BEGIN
+
 						THROW 50005, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
-					END
+
 			END
 	END
 GO
@@ -345,9 +346,9 @@ CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 						EXISTS(SELECT	'!'
 										FROM (deleted D INNER JOIN medewerker_beschikbaarheid mb ON d.maand = mb.maand) INNER JOIN medewerker m ON mb.medewerker_code = m.medewerker_code
 										WHERE d.maand < CURRENT_TIMESTAMP))
-					BEGIN
+
 						THROW 50010, 'Verstreken maand kan niet meer aangepast worden.', 16
-					END
+
 			END
 	END
 GO
@@ -381,7 +382,7 @@ AS
 	END
 GO
 
--- BR14 De beschikbaarheid van een medewerker kan maar wordt per maand opgegeven.
+-- BR14 De beschikbaarheid van een medewerker kan maar 1x per maand opgegeven.
 CREATE PROCEDURE sp_invullenBeschikbareDagen
 @medewerker_code VARCHAR(5),
 @maand DATE,
@@ -431,7 +432,7 @@ CREATE TRIGGER trg_UpdateBegindatumValtNaIngeplandMedewerker
 AS
 BEGIN
 	BEGIN TRY
-	select * from deleted
+
 		IF EXISTS(SELECT '@'
 					FROM deleted d
 					WHERE d.begin_datum < GETDATE())
@@ -470,5 +471,21 @@ BEGIN
 	BEGIN CATCH
 		THROW
 	END CATCH
+END
+GO
+
+--BR17 Een medewerker heeft een mandatory child in medewerker_rol
+CREATE TRIGGER trg_MandatoryChMedewerkerrol
+ON medewerker_rol
+AFTER DELETE
+AS BEGIN
+	IF(@@ROWCOUNT > 0)
+		BEGIN
+			IF EXISTS (SELECT '@'
+						FROM deleted d RIGHT JOIN medewerker_rol mr
+							ON d.medewerker_code = mr.medewerker_code
+						HAVING COUNT(*) < 1)
+				THROW 50032, 'Medewerkerrol kan niet worden verwijderd. Een medewerker moet een rol hebben.', 16
+		END
 END
 GO
