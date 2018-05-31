@@ -120,6 +120,74 @@ BEGIN TRANSACTION
 ROLLBACK TRANSACTION
 GO
 
+--Test sp_VerwijderenMedewerkerRol
+--Verwijder een medewerker_rol die gekoppeld is aan een medewerker
+--Succes test
+BEGIN TRANSACTION
+	INSERT INTO medewerker VALUES ('cod98', 'Gebruiker1', 'Achternaam1');
+	INSERT INTO medewerker_rol_type VALUES ('Android');
+	INSERT INTO medewerker_rol_type VALUES ('Tester');
+	INSERT INTO medewerker_rol VALUES ('cod98', 'Android');
+	INSERT INTO medewerker_rol VALUES ('cod98', 'Tester');
+	EXEC sp_VerwijderenMedewerkerRol 'cod98', 'Android'
+ROLLBACK TRANSACTION
+GO
+
+--Een medewerker_rol die niet gekoppeld is aan de opgegeven medewerker_code kan niet verwijderd worden
+--Faal test
+--Msg 50096, Level 16, State 16, Procedure sp_VerwijderenMedewerkerRol, Line 20 [Batch Start Line 147]
+--deze medewerker heeft niet de ingevoerde medewerker_rol.
+BEGIN TRANSACTION
+	INSERT INTO medewerker VALUES ('cod17', 'Gebruiker2', 'Achternaam2');
+	INSERT INTO medewerker_rol_type VALUES ('Administrator');
+	INSERT INTO medewerker_rol VALUES ('cod17', 'Administrator');
+	EXEC sp_VerwijderenMedewerkerRol 'cod17', 'Leider'
+ROLLBACK TRANSACTION
+GO
+
+--Test sp_WijzigenMedewerkerIngeplandProject
+--Wijzig een medewerker_ingepland_project maand of ingedeelde uren
+--Succes test
+BEGIN TRANSACTION
+BEGIN TRY
+	DECLARE @maand_beschikbaar DATETIME = (GETDATE() + 40);
+
+	INSERT INTO medewerker VALUES ('cod95', 'Gebruiker7', 'Achternaam7');
+	INSERT INTO medewerker_beschikbaarheid VALUES ('cod95', @maand_beschikbaar, 12);
+	INSERT INTO medewerker_rol_type VALUES ('DeaTeacher');
+	INSERT INTO medewerker_rol VALUES ('cod95', 'DeaTeacher');
+	INSERT INTO project_categorie VALUES ('HAN Arnhem', null);
+	INSERT INTO project_categorie VALUES ('DEA_project', 'HAN Arnhem');
+	INSERT INTO categorie_tag VALUES ('school');
+	INSERT INTO tag_van_categorie VALUES ('DEA_project', 'school');
+	INSERT INTO project VALUES ('DEA12', 'DEA_project', GETDATE() + 30, GETDATE() + 200, 'DEA_project_2018', 320);
+	INSERT INTO project_rol_type VALUES ('CEO');
+	INSERT INTO medewerker_op_project VALUES ('DEA12', 'cod95', 'CEO');
+	INSERT INTO medewerker_ingepland_project VALUES (IDENT_CURRENT('medewerker_op_project'), 300, @maand_beschikbaar);
+	
+	DECLARE @id int = IDENT_CURRENT('medewerker_op_project') + 1;
+	EXEC sp_WijzigenMedewerkerIngeplandProject @id, 50, @maand_beschikbaar;
+END TRY
+	BEGIN CATCH
+	END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Een medewerker_ingepland_project wijzigen die niet bestaat
+--Faal test
+--Msg 50034, Level 16, State 16, Procedure sp_WijzigenMedewerkerIngeplandProject, Line 23 [Batch Start Line 137]
+--Er bestaat geen medewerker_ingepland_project record met de opgegeven id.
+BEGIN TRANSACTION
+BEGIN TRY
+	DECLARE @id int = IDENT_CURRENT('medewerker_op_project') + 1;
+	DECLARE @maand_beschikbaar DATETIME = (GETDATE() + 10);
+	EXEC sp_WijzigenMedewerkerIngeplandProject @id, 200, @maand_beschikbaar;
+END TRY
+	BEGIN CATCH
+	END CATCH
+ROLLBACK TRANSACTION
+GO
+
 --SP 9 Toevoegen SP aanpassen medewerker.
 --Succes test
 BEGIN TRANSACTION
