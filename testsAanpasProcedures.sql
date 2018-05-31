@@ -12,7 +12,7 @@ EXEC sp_WijzigCategorieen 'Onderwijs', 'Cursus', NULL
 ROLLBACK TRANSACTION
 
 GO
---Insert niet toegestane data
+--Probeer een niet bestaande categorie te wijzigen
 --Msg 50010, Level 16, State 16, Procedure sp_WijzigCategorieen, Line 20 [Batch Start Line 14]
 --Deze categorie bestaat niet
 BEGIN TRANSACTION
@@ -24,7 +24,7 @@ EXEC sp_WijzigCategorieen 'bestaat niet', 'Cursus', NULL
 ROLLBACK TRANSACTION
 
 --Tests sp_wijzigProjectRol
---wijzig een bestaande categorie
+--wijzig een bestaande rol
 --Succesvol
 BEGIN TRANSACTION
 INSERT INTO project_rol_type
@@ -32,7 +32,7 @@ VALUES ('leider')
 EXEC sp_WijzigProjectRol 'leider', 'supreme-leader'
 ROLLBACK TRANSACTION
 
---Probeer een niet bestaande categorie te wijzigen
+--Probeer een niet bestaande rol te wijzigen
 --Msg 50013, Level 16, State 16, Procedure sp_WijzigProjectRol, Line 19 [Batch Start Line 33]
 --Projectrol bestaat niet.
 BEGIN TRANSACTION
@@ -43,7 +43,7 @@ ROLLBACK TRANSACTION
 
 GO
 --Tests sp_WijzigenMedewerkerRol
---Pas een bestaande medewerkerrol aan.
+--Verander de rol van een medewerker
 --succesvol
 BEGIN TRANSACTION
 INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
@@ -84,7 +84,7 @@ BEGIN TRANSACTION
 ROLLBACK TRANSACTION
 
 GO
---Probeer een niet bestaande rol te wijzigen.
+--Probeer een niet-bestaand medewerkerroltype te wijzigen.
 --Msg 50008, Level 16, State 16, Procedure sp_WijzigMedewerkerRolType, Line 21 [Batch Start Line 34]
 --medewerkerrol bestaat niet.
 BEGIN TRANSACTION
@@ -97,7 +97,7 @@ GO
 -- Test sp_wijzigbeschikbareDagen
 -- Succes test
 BEGIN TRANSACTION
-	DECLARE @date DATETIME = getdate()
+	DECLARE @date DATETIME = getdate() +30
 
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 		VALUES ('aa', 'anton', 'ameland');
@@ -145,63 +145,44 @@ BEGIN TRANSACTION
 ROLLBACK TRANSACTION
 GO
 
---Test sp_VerwijderenMedewerkerIngeplandProject
---Verwijder een medewerker_ingepland_project record
+--Test sp_WijzigenMedewerkerIngeplandProject
+--Wijzig een medewerker_ingepland_project maand of ingedeelde uren
 --Succes test
 BEGIN TRANSACTION
 BEGIN TRY
-	DECLARE @maand_beschikbaar DATETIME = (getdate() + 40);
-	
+	DECLARE @maand_beschikbaar DATETIME = (GETDATE() + 40);
+
 	INSERT INTO medewerker VALUES ('cod95', 'Gebruiker7', 'Achternaam7');
-	INSERT INTO medewerker_beschikbaarheid VALUES ('cod95', 'jan 2019', 12);
+	INSERT INTO medewerker_beschikbaarheid VALUES ('cod95', @maand_beschikbaar, 12);
 	INSERT INTO medewerker_rol_type VALUES ('DeaTeacher');
 	INSERT INTO medewerker_rol VALUES ('cod95', 'DeaTeacher');
 	INSERT INTO project_categorie VALUES ('HAN Arnhem', null);
 	INSERT INTO project_categorie VALUES ('DEA_project', 'HAN Arnhem');
 	INSERT INTO categorie_tag VALUES ('school');
 	INSERT INTO tag_van_categorie VALUES ('DEA_project', 'school');
-	INSERT INTO project VALUES ('DEA12', 'DEA_project', GETDATE() + 30 , GETDATE() + 200, 'DEA_project_2018', 320);
+	INSERT INTO project VALUES ('DEA12', 'DEA_project', GETDATE() + 30, GETDATE() + 200, 'DEA_project_2018', 320);
 	INSERT INTO project_rol_type VALUES ('CEO');
 	INSERT INTO medewerker_op_project VALUES ('DEA12', 'cod95', 'CEO');
 	INSERT INTO medewerker_ingepland_project VALUES (IDENT_CURRENT('medewerker_op_project'), 300, @maand_beschikbaar);
-
+	
 	DECLARE @id int = IDENT_CURRENT('medewerker_op_project') + 1;
-	EXEC sp_VerwijderenMedewerkerIngeplandProject @id, @maand_beschikbaar;
+	EXEC sp_WijzigenMedewerkerIngeplandProject @id, 50, @maand_beschikbaar;
 END TRY
 	BEGIN CATCH
-  END CATCH
+	END CATCH
 ROLLBACK TRANSACTION
 GO
 
---Een medewerker_ingepland_project verwijderen die niet bestaat
+--Een medewerker_ingepland_project wijzigen die niet bestaat
 --Faal test
---Msg 50031, Level 16, State 16, Procedure sp_VerwijderenMedewerkerIngeplandProject, Line 21 [Batch Start Line 137]
---Er bestaat geen medewerker_ingepland_project record met de opgegeven id
+--Msg 50034, Level 16, State 16, Procedure sp_WijzigenMedewerkerIngeplandProject, Line 23 [Batch Start Line 137]
+--Er bestaat geen medewerker_ingepland_project record met de opgegeven id.
 BEGIN TRANSACTION
+BEGIN TRY
 	DECLARE @id int = IDENT_CURRENT('medewerker_op_project') + 1;
-	EXEC sp_VerwijderenMedewerkerIngeplandProject @id, 'feb 2018';
-ROLLBACK TRANSACTION
-GO
-
---Test sp_VerwijderenMedewerkerRolType
---Verwijder een medewerker_rol_type die niet in gebruik is
---Succes test
-BEGIN TRANSACTION
-	INSERT INTO medewerker_rol_type VALUES ('CEO');
-	EXEC sp_VerwijderenMedewerkerRolType 'CEO'
-ROLLBACK TRANSACTION
-GO
-
---Een medewerker_rol_type die al aan een medewerker gekoppeld is kan niet verwijderd worden
---Msg 50029, Level 16, State 16, Procedure sp_VerwijderenMedewerkerRolType, Line 20 [Batch Start Line 118]
---een medewerker_rol_type in gebruik kan niet verwijderd worden.
-BEGIN TRANSACTION
-	BEGIN TRY
-		INSERT INTO medewerker VALUES ('aa123', 'Samir', 'Amed');
-		INSERT INTO medewerker_rol_type VALUES ('Tester');
-		INSERT INTO medewerker_rol VALUES ('aa123', 'Tester');
-		EXEC sp_VerwijderenMedewerkerRolType 'Tester'
-	END TRY
+	DECLARE @maand_beschikbaar DATETIME = (GETDATE() + 10);
+	EXEC sp_WijzigenMedewerkerIngeplandProject @id, 200, @maand_beschikbaar;
+END TRY
 	BEGIN CATCH
 	END CATCH
 ROLLBACK TRANSACTION
