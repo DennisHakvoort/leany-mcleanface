@@ -6,6 +6,7 @@ DROP PROCEDURE IF EXISTS sp_WijzigProjectRol
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_WijzigBeschikbareDagen
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerRol
+DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerIngeplandProject
 DROP PROCEDURE IF EXISTS sp_WijzigProject
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerOpProject
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerker
@@ -252,6 +253,49 @@ AS
 	END CATCH
 GO
 
+--SP 8 Toevoegen SP aanpassen medewerker_ingepland_project
+CREATE PROCEDURE sp_WijzigenMedewerkerIngeplandProject
+@id INT,
+@medewerker_uren INT,
+@maand_datum DATETIME
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF NOT EXISTS (SELECT '!'
+				FROM medewerker_ingepland_project mip INNER JOIN medewerker_op_project mop
+				ON mip.id = mop.id
+				WHERE mip.id = @id)
+												  
+		THROW 50034, 'Er bestaat geen medewerker_ingepland_project record met de opgegeven id.', 16
+												  
+		UPDATE medewerker_ingepland_project
+		SET medewerker_uren = @medewerker_uren
+		WHERE id = @id AND maand_datum = @maand_datum
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+		BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
+GO
+
 --SP 9 Toevoegen SP aanpassen medewerker.
 CREATE PROCEDURE sp_WijzigenMedewerker
 @medewerker_code VARCHAR(5),
@@ -293,7 +337,7 @@ AS BEGIN
 	END CATCH
 END
 GO
-                                                                                                                                                                                                                                 
+                                                                                      
 --SP wijzigen projecten
 CREATE PROCEDURE sp_WijzigProject
 @project_code VARCHAR(20),
@@ -341,5 +385,4 @@ AS BEGIN
 			END;
 		THROW
 	END CATCH
-END
-GO                                                                                                                                               
+GO
