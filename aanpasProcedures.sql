@@ -371,14 +371,29 @@ GO
 --SP 16 Toevoegen SP verwijderen medewerker_rol
 CREATE PROCEDURE sp_VerwijderenMedewerkerRol
 @medewerker_code VARCHAR(5),
-@medewerker_rol VARCHAR(40)                                                                                      
+@medewerker_rol VARCHAR(40)
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY												  
 	IF NOT EXISTS (SELECT '!'
 				FROM medewerker m INNER JOIN medewerker_rol mr
 				ON m.medewerker_code = mr.medewerker_code
 				WHERE mr.medewerker_rol = @medewerker_rol AND mr.medewerker_code = @medewerker_code)
+												  
 		THROW 50030, 'deze medewerker heeft niet de ingevoerde medewerker_rol.', 16
+												  
 		DELETE FROM medewerker_rol
 		WHERE medewerker_code = @medewerker_code
+												  
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;												  
 	END TRY
 		BEGIN CATCH
 			IF @TranCounter = 0
