@@ -61,6 +61,8 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+			EXECUTE sp_checkProjectRechten @projectcode = @project_code
+
   	IF NOT EXISTS (SELECT project_rol
 				   FROM project_rol_type
 				   WHERE project_rol = @project_rol_oud)
@@ -212,6 +214,8 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+			EXECUTE sp_checkProjectRechten @projectcode = @project_code
+
 		IF NOT EXISTS (SELECT *
 					   FROM medewerker_op_project
 				       WHERE project_code = @project_code AND medewerker_code = @medewerker_code)
@@ -292,6 +296,7 @@ AS BEGIN
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+		EXECUTE sp_checkProjectRechten @projectcode = @project_code
 
 		IF NOT EXISTS (SELECT '@'
 					FROM project

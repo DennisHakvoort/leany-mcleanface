@@ -945,3 +945,44 @@ BEGIN TRANSACTION
 	SET eind_datum = GETDATE() +200
 	WHERE project_code = 'projo0321'
 ROLLBACK TRANSACTION
+
+--BR18
+--Success omdat hij projectleider is
+BEGIN TRANSACTION
+INSERT INTO medewerker_rol_type VALUES ('Medewerker')
+EXECUTE sp_MedewerkerToevoegen @achternaam = 'Peterson', @voornaam = 'Johnson', @medewerker_code = 'jope', @wachtwoord = 'wachtwoord', @rol = 'Medewerker';
+INSERT INTO project_rol_type VALUES ('Projectleider')
+INSERT INTO project_categorie VALUES ('cat', NULL)
+INSERT INTO project VALUES ('test', 'cat', 'jan 2019', 'feb 2020', 'testproject', 12)
+INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol) VALUES ('test', 'jope', 'Projectleider')
+EXECUTE AS USER = 'jope'
+EXECUTE sp_checkProjectRechten @projectcode = 'test'
+REVERT
+ROLLBACK TRANSACTION
+
+--Succes omdat hij superuser is.
+BEGIN TRANSACTION
+INSERT INTO medewerker_rol_type VALUES ('Superuser')
+EXECUTE sp_MedewerkerToevoegen @achternaam = 'Peterson', @voornaam = 'Johnson', @medewerker_code = 'jope', @wachtwoord = 'wachtwoord', @rol = 'Superuser';
+INSERT INTO project_rol_type VALUES ('Programmeuse')
+INSERT INTO project_categorie VALUES ('cat', NULL)
+INSERT INTO project VALUES ('test', 'cat', 'jan 2019', 'feb 2020', 'testproject', 12)
+INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol) VALUES ('test', 'jope', 'Programmeuse')
+EXECUTE AS USER = 'jope'
+EXECUTE sp_checkProjectRechten @projectcode = 'test'
+REVERT
+ROLLBACK TRANSACTION
+
+--Faal omdat hij geen projectleider of superuser is.
+--[S00016][50033] De huidige gebruiker heeft de rechten niet om dit project aan te passen
+BEGIN TRANSACTION
+INSERT INTO medewerker_rol_type VALUES ('Medewerker')
+EXECUTE sp_MedewerkerToevoegen @achternaam = 'Peterson', @voornaam = 'Johnson', @medewerker_code = 'jope', @wachtwoord = 'wachtwoord', @rol = 'Medewerker';
+INSERT INTO project_rol_type VALUES ('Programmeuse')
+INSERT INTO project_categorie VALUES ('cat', NULL)
+INSERT INTO project VALUES ('test', 'cat', 'jan 2019', 'feb 2020', 'testproject', 12)
+INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol) VALUES ('test', 'jope', 'Programmeuse')
+EXECUTE AS USER = 'jope'
+EXECUTE sp_checkProjectRechten @projectcode = 'test'
+REVERT
+ROLLBACK TRANSACTION

@@ -179,6 +179,7 @@ AS BEGIN
 		BEGIN TRANSACTION;
 
 	BEGIN TRY
+		EXECUTE sp_checkProjectRechten @projectcode = @project_code
 		IF (@medewerker_uren < 0)
 			
 				THROW 500012, 'Invalide invoerwaarde - negatieve uren', 16
@@ -471,4 +472,24 @@ BEGIN
 		THROW
 	END CATCH
 END
+GO
+
+--BR18 Een project kan alleen worden aangepast door zijn projectleider of de superuser.
+CREATE PROCEDURE sp_checkProjectRechten
+  @projectcode VARCHAR(40)
+ AS
+ BEGIN
+  IF(EXISTS(SELECT '!'
+            FROM medewerker_op_project
+            WHERE project_rol = 'Projectleider' AND medewerker_code = CURRENT_USER AND project_code = @projectcode)
+    OR
+     EXISTS(SELECT '!'
+            FROM medewerker_rol
+            WHERE medewerker_rol = 'Superuser' AND medewerker_code = CURRENT_USER)
+		OR CURRENT_USER = 'dbo'
+  )
+  RETURN
+  ELSE
+  THROW 50033, 'De huidige gebruiker heeft de rechten niet om dit project aan te passen', 16;
+ END
 GO

@@ -194,6 +194,8 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+			EXECUTE sp_checkProjectRechten @projectcode = @project_code
+
 		 INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
 		 VALUES (@project_code, @medewerker_code, @project_rol)
 	END TRY
