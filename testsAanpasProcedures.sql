@@ -121,7 +121,7 @@ ROLLBACK TRANSACTION
 GO
 
 --Test sp_VerwijderenMedewerkerRol
---Verwijder een medewerker_rol die gekoppelt is aan een medewerker
+--Verwijder een medewerker_rol die gekoppeld is aan een medewerker
 --Succes test
 BEGIN TRANSACTION
 	INSERT INTO medewerker VALUES ('cod98', 'Gebruiker1', 'Achternaam1');
