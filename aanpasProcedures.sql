@@ -6,12 +6,13 @@ DROP PROCEDURE IF EXISTS sp_WijzigProjectRol
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_WijzigBeschikbareDagen
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerRol
+DROP PROCEDURE IF EXISTS sp_VerwijderenMedewerkerIngeplandProject
 DROP PROCEDURE IF EXISTS sp_VerwijderenMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_WijzigProject
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerOpProject
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerker
-
 GO
+
 --SP wijzigen categorieën
 CREATE PROCEDURE sp_WijzigCategorieen
 @naamOud   VARCHAR(40),
@@ -211,8 +212,8 @@ AS
 			END;
 		THROW
 	END CATCH
-GO
-                                                                                      
+GO									  
+                                                                       
 --Sp aanpassen medewerker op project
 CREATE PROCEDURE sp_WijzigenMedewerkerOpProject
 @project_code VARCHAR(20),
@@ -268,9 +269,9 @@ AS BEGIN
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		IF NOT EXISTS (SELECT '@'
-					FROM medewerker
-					WHERE medewerker_code = @medewerker_code)
+         	IF NOT EXISTS (SELECT '!'                                                                
+							FROM medewerker
+							WHERE medewerker_code = @medewerker_code)
 		
 		THROW 50028, 'Een medewerker met dit medewerker_code bestaat niet.', 16;
 
@@ -332,7 +333,47 @@ AS BEGIN
 			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
-			IF @TranCounter = 0
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+GO
+                                                                               
+--SP 15 Toevoegen SP verwijderen medewerker_ingepland_project
+CREATE PROCEDURE sp_VerwijderenMedewerkerIngeplandProject
+@id INT,
+@maand_datum DATETIME			
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF NOT EXISTS (SELECT '!'
+				FROM medewerker_ingepland_project mip INNER JOIN medewerker_op_project mop
+				ON mip.id = mop.id
+				WHERE mip.id = @id AND mip.maand_datum = @maand_datum)
+												  
+		THROW 50031, 'Er bestaat geen medewerker_ingepland_project record met de opgegeven id', 16
+
+		DELETE FROM medewerker_ingepland_project
+		WHERE id = @id AND maand_datum = @maand_datum
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
 			BEGIN
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
@@ -344,7 +385,7 @@ AS BEGIN
 	END CATCH
 END
 GO
- 
+                                                                               
 --SP 17 Toevoegen SP verwijderen medewerker_rol_type
 CREATE PROCEDURE sp_VerwijderenMedewerkerRolType
 @medewerker_rol VARCHAR(40)
