@@ -1,4 +1,6 @@
 --BUSINESS RULES--
+--TODO: Commit transaction toevoegen
+--TODO: SELECT @@TRANCOUNTER weghalen
 
 USE LeanDb
 GO
@@ -35,7 +37,6 @@ DROP TRIGGER IF EXISTS trg_UpdateBegindatumValtNaIngeplandMedewerker
 DROP TRIGGER IF EXISTS trg_UpdateEinddatumAlleenVerlengen
 DROP PROCEDURE IF EXISTS sp_MedewerkerToevoegen
 DROP PROCEDURE IF EXISTS sp_ProjecturenInplannen
-DROP PROCEDURE IF EXISTS sp_DatabaseUserToevoegen
 DROP PROCEDURE IF EXISTS sp_InsertMedewerkerIngepland
 DROP PROCEDURE IF EXISTS sp_invullenBeschikbareDagen
 
@@ -69,21 +70,31 @@ AS BEGIN
 				FROM medewerker
 				WHERE medewerker_code = @medewerker_code)
 			THROW 50014, 'Medewerker code is al in gebruik', 16
-
 		IF (exists(	SELECT '!'
-								FROM medewerker_rol_type
-								WHERE medewerker_rol = @rol))
-			BEGIN
-				INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
-					VALUES(@medewerker_code, @achternaam, @voornaam);
-				INSERT INTO medewerker_rol VALUES (@medewerker_code, @rol)
+                  FROM medewerker_rol_type
+                  WHERE medewerker_rol = @rol))
+        BEGIN
+          INSERT INTO medewerker(medewerker_code, achternaam, voornaam)
+            VALUES(@medewerker_code, @achternaam, @voornaam);
+          INSERT INTO medewerker_rol VALUES (@medewerker_code, @rol)
 
-				EXEC sp_DatabaseUserToevoegen @login_naam = @medewerker_code, @wachtwoord = @wachtwoord
+          DECLARE @sql NVARCHAR(255)
+          IF EXISTS (select '!'
+                 FROM [sys].[server_principals]
+                 WHERE name = @medewerker_code)
+            THROW 50013, 'De naam moet uniek zijn.', 16
+          ELSE
+            BEGIN
+            SELECT @sql = 'CREATE LOGIN ' + @medewerker_code + ' WITH PASSWORD ' + '= ''' + @wachtwoord + ''', DEFAULT_DATABASE = LeanDb; '
+                          + 'CREATE USER ' + @medewerker_code + ' FROM LOGIN ' + @medewerker_code + '; '
+                          + 'ALTER ROLE MEDEWERKER ADD MEMBER ' + @medewerker_code
+            EXEC sys.sp_executesql @stmt = @sql
+            IF @TranCounter = 0 AND XACT_STATE() = 1
+              COMMIT TRANSACTION;
+            END
 			END
-		ELSE
-			BEGIN
-				THROW 50020, 'Dit is geen bestaande rol', 16
-			END
+        ELSE
+          THROW 50020, 'Dit is geen bestaande rol', 16
 	END TRY
 	BEGIN CATCH
 			IF @TranCounter = 0
@@ -210,7 +221,7 @@ AS BEGIN
 		THROW
 	END CATCH
 END
-
+GO
 --BR7 project(eind_datum) moet na project(begin_datum) vallen.
 ALTER TABLE project WITH CHECK
 	ADD CONSTRAINT CK_EINDDATUM_NA_BEGINDATUM CHECK (eind_datum > begin_datum)
@@ -313,9 +324,9 @@ CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
 						EXISTS(	SELECT  '!'
 										FROM deleted D INNER JOIN PROJECT P ON D.project_code = P.project_code
 										WHERE P.eind_datum < CURRENT_TIMESTAMP))
-					
+
 						THROW 50005, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
-					
+
 			END
 	END
 GO
@@ -335,9 +346,9 @@ CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 						EXISTS(SELECT	'!'
 										FROM (deleted D INNER JOIN medewerker_beschikbaarheid mb ON d.maand = mb.maand) INNER JOIN medewerker m ON mb.medewerker_code = m.medewerker_code
 										WHERE d.maand < CURRENT_TIMESTAMP))
-					
+
 						THROW 50010, 'Verstreken maand kan niet meer aangepast worden.', 16
-					
+
 			END
 	END
 GO
@@ -356,7 +367,7 @@ AS
 					OR
 						EXISTS(SELECT	'!'
 										FROM (deleted D INNER JOIN medewerker_ingepland_project mip ON d.id = mip.id)
-										WHERE FORMAT(d.maand_datum, 'yyyy-MM')  < FORMAT(GETDATE(), 'yyyy-MM')))					
+										WHERE FORMAT(d.maand_datum, 'yyyy-MM')  < FORMAT(GETDATE(), 'yyyy-MM')))
 					THROW 50011, 'Medewerker uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
 				IF (EXISTS(SELECT '!'
 									FROM inserted i INNER JOIN medewerker_op_project mop ON i.id = mop.id
@@ -369,48 +380,6 @@ AS
 					THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 			END
 	END
-
-GO
-
---BR13 een database login user aanmaken en een rol toewijzen
-CREATE PROCEDURE sp_DatabaseUserToevoegen
-@login_naam VARCHAR(255),
-@wachtwoord VARCHAR(40)
-AS
-	SET NOCOUNT ON
-	SET XACT_ABORT OFF
-	DECLARE @TranCounter INT;
-	SET @TranCounter = @@TRANCOUNT;
-	IF @TranCounter > 0
-		SAVE TRANSACTION ProcedureSave;
-	ELSE
-		BEGIN TRANSACTION;
-
-	BEGIN TRY
-		DECLARE @sql NVARCHAR(255)
-		IF EXISTS (SELECT '!'
-					 FROM [sys].[server_principals]
-					 WHERE [name] = @login_naam)
-		THROW 50013, 'De naam moet uniek zijn.', 16
-
-    SELECT @sql = 'CREATE LOGIN ' + @login_naam + ' WITH PASSWORD ' + '= ''' + @wachtwoord + ''''
-		EXEC sys.sp_executesql @stmt = @sql
-	END TRY
-	BEGIN CATCH
-		IF @TranCounter = 0
-			BEGIN
-				PRINT'ROLLBACK TRANSACTION'
-				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
-			END;
-		ELSE
-			BEGIN
-
-				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
-				PRINT XACT_STATE()
-        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
-			END;
-		THROW
-	END CATCH
 GO
 
 -- BR14 De beschikbaarheid van een medewerker kan maar 1x per maand opgegeven.
@@ -509,7 +478,7 @@ GO
 CREATE TRIGGER trg_MandatoryChMedewerkerrol
 ON medewerker_rol
 AFTER DELETE
-AS BEGIN	
+AS BEGIN
 	IF(@@ROWCOUNT > 0)
 		BEGIN
 			IF EXISTS (SELECT '@'
