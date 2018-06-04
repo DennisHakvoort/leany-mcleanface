@@ -425,7 +425,7 @@ CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 							FROM	inserted i --Right join kan hier omdat pure inserts al in de procedure worden afgevangen.
 									RIGHT JOIN deleted d ON i.medewerker_code = d.medewerker_code
 							WHERE	i.maand < CURRENT_TIMESTAMP OR --Inserted maand voor huidige datum.
-									d.maand < CURRENT_TIMESTAMP) --Deleted maand voor huidige datum.
+									d.maand < CURRENT_TIMESTAMP)) --Deleted maand voor huidige datum.
 						THROW 50010, 'Verstreken maand kan niet meer aangepast worden.', 16
 			END
 	END
