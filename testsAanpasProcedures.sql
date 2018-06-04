@@ -2,7 +2,7 @@
 Alle tests volgen hetzelfde template:
 
 --De error die hij geeft of dat hij goed gaat.
-BEGIN TRANSACTION --Open transaction, zodat de test niet de echte database beïnvloed
+BEGIN TRANSACTION --Open transaction, zodat de test niet de echte database beïnvloedt
 BEGIN TRY
 -- Test gaat hier
 END TRY
