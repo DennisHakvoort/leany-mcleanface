@@ -1,3 +1,22 @@
+/*
+Alle tests volgen hetzelfde template:
+
+--De error die hij geeft of dat hij goed gaat.
+BEGIN TRANSACTION --Open transaction, zodat de test niet de echte database beïnvloed
+BEGIN TRY
+-- Test gaat hier
+END TRY
+BEGIN CATCH -- Wanneer er een error is gegooid in de test, word deze hier geprint.
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION --De transaction terugrollen zodat de testdata niet in de echte database terecht komt
+
+Alle tests worden uitgevoerd op een lege database.
+ */
+
 USE LeanDB
 
 GO
