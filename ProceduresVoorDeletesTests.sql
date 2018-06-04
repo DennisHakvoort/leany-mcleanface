@@ -26,7 +26,7 @@ GO
 --succesvol
 BEGIN TRANSACTION
 BEGIN TRY
-	INSERT INTO project_categorie (naam, parent)
+	INSERT INTO project_categorie (naam, hoofdcategorie)
 		VALUES ('subsidie', null)
 	EXEC sp_VerwijderenProjectCategorie 'subsidie'
 END TRY
@@ -43,7 +43,7 @@ ROLLBACK TRANSACTION
 --Een categorie met subcategoriën kan niet verwijderd worden.
 BEGIN TRANSACTION
 BEGIN TRY
-	INSERT INTO project_categorie (naam, parent)
+	INSERT INTO project_categorie (naam, hoofdcategorie)
 	VALUES ('subsidie', null),
 		('bedrijf', 'subsidie')
 	EXEC sp_VerwijderenProjectCategorie 'subsidie'
@@ -61,7 +61,7 @@ ROLLBACK TRANSACTION
 --Een categorie die gebruikt wordt door een project kan niet verwijderd worden.
 BEGIN TRANSACTION
 BEGIN TRY
-	INSERT INTO project_categorie (naam, parent)
+	INSERT INTO project_categorie (naam, hoofdcategorie)
 		VALUES ('subsidie', null)
 	INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
 		VALUES ('BB', 'subsidie', '01-01-2001', '01-01-2020', 'bubble')
@@ -99,7 +99,7 @@ GO
 -- Projectrol kan niet worden verwijdert, omdat het nog in gebruik is.
 BEGIN TRANSACTION
 BEGIN TRY
-	INSERT INTO project_categorie (naam, parent)
+	INSERT INTO project_categorie (naam, hoofdcategorie)
 		VALUES ('uitzendwerk', NULL);
 	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
 		VALUES ('PROJUICE', 'MarktMedia uitzendbureau', 'uitzendwerk', GETDATE(), GETDATE() +300, 900);

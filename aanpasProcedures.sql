@@ -33,7 +33,7 @@ AS
 			THROW 50009, 'Deze categorie bestaat niet', 16;
 
 		UPDATE project_categorie
-		SET naam = @naamNieuw, parent =@parentNieuw
+		SET naam = @naamNieuw, hoofdcategorie =@parentNieuw
 		WHERE naam = @naamOud;
 
 		IF @TranCounter = 0 AND XACT_STATE() = 1

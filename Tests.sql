@@ -166,7 +166,7 @@ IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
 VALUES ('GB', 'Gertruude', 'van Barneveld')
-INSERT INTO PROJECT_CATEGORIE (naam, parent)
+INSERT INTO PROJECT_CATEGORIE (naam, hoofdcategorie)
 VALUES ('subsidie', NULL)
 INSERT INTO PROJECT (PROJECT_CODE, categorie_naam, BEGIN_DATUM, EIND_DATUM, PROJECT_NAAM)
 VALUES ('PR', 'subsidie', '01-01-1990', '01-01-2100', 'test project')
@@ -196,7 +196,7 @@ IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
 VALUES ('GB', 'Gertruude', 'van Barneveld')
-INSERT INTO PROJECT_CATEGORIE (naam, parent)
+INSERT INTO PROJECT_CATEGORIE (naam, hoofdcategorie)
 VALUES ('subsidie', NULL)
 INSERT INTO PROJECT (PROJECT_CODE, categorie_naam, BEGIN_DATUM, EIND_DATUM, PROJECT_NAAM)
 VALUES ('PR', 'subsidie', '01-01-1990', '01-01-2100', 'test project')
@@ -226,7 +226,7 @@ IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
 VALUES ('GB', 'Gertruude', 'van Barneveld')
-INSERT INTO PROJECT_CATEGORIE (naam, parent)
+INSERT INTO PROJECT_CATEGORIE (naam, hoofdcategorie)
 VALUES ('subsidie', NULL)
 INSERT INTO PROJECT (PROJECT_CODE, categorie_naam, BEGIN_DATUM, EIND_DATUM, PROJECT_NAAM)
 VALUES ('PR', 'subsidie', '01-01-1990', '01-01-2100', 'test project')
@@ -253,7 +253,7 @@ BEGIN TRANSACTION
 		INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 			VALUES ('aa', 'arend', 'aas');
 
-		INSERT INTO project_categorie (naam, parent)
+		INSERT INTO project_categorie (naam, hoofdcategorie)
 			VALUES	('onderwijs', null);
 
 		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
@@ -296,7 +296,7 @@ BEGIN TRANSACTION
 		INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 			VALUES ('aa', 'arend', 'aas');
 
-		INSERT INTO project_categorie (naam, parent)
+		INSERT INTO project_categorie (naam, hoofdcategorie)
 			VALUES	('onderwijs', null);
 
 		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
@@ -340,7 +340,7 @@ BEGIN TRANSACTION
 		INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 			VALUES ('aa', 'arend', 'aas');
 
-		INSERT INTO project_categorie (naam, parent)
+		INSERT INTO project_categorie (naam, hoofdcategorie)
 			VALUES	('onderwijs', null);
 
 		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
@@ -379,7 +379,7 @@ GO
 -- The INSERT statement conflicted with the CHECK constraint "CK_EINDDATUM_NA_BEGINDATUM". The conflict occurred in database "LeanDb", table "dbo.project".
 BEGIN TRANSACTION
 	BEGIN TRY
-		INSERT INTO project_categorie (naam, parent)
+		INSERT INTO project_categorie (naam, hoofdcategorie)
 			VALUES ('testCat', null);
 		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
 			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()-1)), 'generieke projectnaam');
@@ -398,7 +398,7 @@ GO
 -- The INSERT statement conflicted with the CHECK constraint "CK_EINDDATUM_NA_BEGINDATUM". The conflict occurred in database "LeanDb", table "dbo.project".
 BEGIN TRANSACTION
 	BEGIN TRY
-		INSERT INTO project_categorie (naam, parent)
+		INSERT INTO project_categorie (naam, hoofdcategorie)
 			VALUES ('testCat', null);
 		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
 			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam'); -- geldig data
@@ -418,7 +418,7 @@ GO
 -- BR7 Succes Test single insert
 BEGIN TRANSACTION
 	BEGIN TRY
-		INSERT INTO project_categorie (naam, parent)
+		INSERT INTO project_categorie (naam, hoofdcategorie)
 			VALUES ('testCat', null);
 		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
 			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam');
@@ -433,7 +433,7 @@ GO
 -- BR7 Succes Test multi inserts
 BEGIN TRANSACTION
 	BEGIN TRY
-		INSERT INTO project_categorie (naam, parent)
+		INSERT INTO project_categorie (naam, hoofdcategorie)
 			VALUES ('testCat', null);
 		INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
 			VALUES ('PROJC99999P', 'testCat', CONVERT(date, GETDATE()), CONVERT(date, (GETDATE()+1)), 'generieke projectnaam');
@@ -484,9 +484,9 @@ GO
 --gaat goed
 BEGIN TRANSACTION
 BEGIN TRY
-INSERT INTO PROJECT_CATEGORIE (naam, parent)
+INSERT INTO PROJECT_CATEGORIE (naam, hoofdcategorie)
 VALUES ('subsidie', NULL)
-INSERT INTO PROJECT_CATEGORIE (naam, parent)
+INSERT INTO PROJECT_CATEGORIE (naam, hoofdcategorie)
 VALUES ('bedrijf1', 'subsidie')
 END TRY
 BEGIN CATCH
@@ -1252,7 +1252,7 @@ BEGIN TRY
 	DECLARE @einddatum DATE = GETDATE() +300
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 		VALUES ('KB01', 'Kean', 'Bergmans');
-	INSERT INTO project_categorie (naam, parent)
+	INSERT INTO project_categorie (naam, hoofdcategorie)
 		VALUES ('school', NULL);
 	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
 		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
@@ -1282,7 +1282,7 @@ BEGIN TRY
 	DECLARE @einddatum DATE = GETDATE() +300
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 		VALUES ('WB02', 'Wouter', 'Bosh');
-	INSERT INTO project_categorie (naam, parent)
+	INSERT INTO project_categorie (naam, hoofdcategorie)
 		VALUES ('school', NULL);
 	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
 		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10);
@@ -1309,7 +1309,7 @@ BEGIN TRY
 	DECLARE @einddatum DATE = GETDATE() +300
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 		VALUES ('RZK1', 'Rudolf', 'Bergmans');
-	INSERT INTO project_categorie (naam, parent)
+	INSERT INTO project_categorie (naam, hoofdcategorie)
 		VALUES ('school', NULL);
 	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
 		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10)
@@ -1341,7 +1341,7 @@ BEGIN TRY
 	DECLARE @einddatum DATE = GETDATE() +300
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 		VALUES ('BB10', 'Berend', 'Botje');
-	INSERT INTO project_categorie (naam, parent)
+	INSERT INTO project_categorie (naam, hoofdcategorie)
 		VALUES ('school', NULL);
 	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
 		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10);
@@ -1369,7 +1369,7 @@ BEGIN TRY
 	DECLARE @einddatum DATE = GETDATE() +300
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 		VALUES ('MM99', 'Meep', 'Meepster');
-	INSERT INTO project_categorie (naam, parent)
+	INSERT INTO project_categorie (naam, hoofdcategorie)
 		VALUES ('school', NULL);
 	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum, verwachte_uren)
 		VALUES ('projo0321', 'beste project', 'school', @date, @einddatum, 10);

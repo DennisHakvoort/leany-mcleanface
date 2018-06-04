@@ -228,20 +228,20 @@ ALTER TABLE project WITH CHECK
 	ADD CONSTRAINT CK_EINDDATUM_NA_BEGINDATUM CHECK (eind_datum > begin_datum)
 GO
 
---BR8 project_categorie(parent) moet een waarde zijn uit de project_categorie(naam) of NULL. Het kan niet naar zichzelf verwijzen.
+--BR8 project_categorie(hoofdcategorie) moet een waarde zijn uit de project_categorie(naam) of NULL. Het kan niet naar zichzelf verwijzen.
 CREATE TRIGGER trg_SubCategorieHeeftHoofdCategorie
  ON project_categorie
  AFTER INSERT, UPDATE
 AS
 BEGIN
 BEGIN TRY
-  IF NOT EXISTS ((SELECT parent
+  IF NOT EXISTS ((SELECT hoofdcategorie
 			  FROM inserted
 			  WHERE EXISTS (SELECT naam
 							   FROM PROJECT_CATEGORIE
-							   WHERE naam = inserted.PARENT
+							   WHERE naam = inserted.hoofdcategorie
 							   )
-							   OR parent IS NULL
+							   OR hoofdcategorie IS NULL
 							   ))
 	THROW 50003, 'Deze subcategorie heeft geen geldige hoofdcategorie', 16
   END TRY
@@ -259,7 +259,7 @@ BEGIN
 BEGIN TRY
   IF EXISTS ((SELECT naam
 			 FROM deleted
-			 WHERE parent IS NULL AND naam IN (SELECT parent
+			 WHERE hoofdcategorie IS NULL AND naam IN (SELECT hoofdcategorie
 											  FROM project_categorie
 											  )))
 		THROW 50002, 'Kan geen categorie met met subcategories verwijderen', 16

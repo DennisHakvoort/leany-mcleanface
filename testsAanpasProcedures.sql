@@ -1,7 +1,7 @@
 /*
 Alle tests volgen dezelfde template:
-
---zet hier de verwachte foutmelding neer of zet hier neer dat het een succesvole test is.
+securityadmin kan gebuirkers aanmaken
+--zet hier de verwach0te foutmelding neer of zet hier neer dat het een succesvole test is.
 BEGIN TRANSACTION --Open transaction, zodat de test niet de echte database beïnvloedert
 BEGIN TRY
 -- Test gaat hier
@@ -25,7 +25,7 @@ GO
 --succesvol
 BEGIN TRANSACTION
 BEGIN TRY
-INSERT INTO project_categorie (naam, parent)
+INSERT INTO project_categorie (naam, hoofdcategorie)
 VALUES ('subsidie', NULL),
 	   ('Onderwijs', 'subsidie')
 EXEC sp_WijzigCategorieen 'Onderwijs', 'Cursus', NULL
@@ -45,7 +45,7 @@ GO
 BEGIN TRANSACTION
 BEGIN TRY
 set xact_abort on
-INSERT INTO project_categorie (naam, parent)
+INSERT INTO project_categorie (naam, hoofdcategorie)
 VALUES ('subsidie', NULL),
 	   ('Onderwijs', 'subsidie')
 EXEC sp_WijzigCategorieen 'bestaat niet', 'Cursus', NULL
@@ -308,9 +308,9 @@ BEGIN TRY
 	DECLARE @date DATETIME = (getdate() + 10);
 	DECLARE @einddatum DATETIME = (getdate() + 300);
 
-	INSERT INTO project_categorie (naam, parent)
+	INSERT INTO project_categorie (naam, hoofdcategorie)
 		VALUES ('werkschool', NULL);
-	INSERT INTO project_categorie (naam, parent)
+	INSERT INTO project_categorie (naam, hoofdcategorie)
 		VALUES ('wiskunde', NULL);
 	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum)
 		VALUES ('PROJAH01', 'project AH', 'werkschool', GETDATE() + 30, GETDATE() +200);
@@ -336,9 +336,9 @@ BEGIN TRY
 	DECLARE @date DATETIME = (getdate() + 10);
 	DECLARE @einddatum DATETIME = (getdate() + 300);
 
-	INSERT INTO project_categorie (naam, parent)
+	INSERT INTO project_categorie (naam, hoofdcategorie)
 		VALUES ('Biochemie', NULL);
-	INSERT INTO project_categorie (naam, parent)
+	INSERT INTO project_categorie (naam, hoofdcategorie)
 		VALUES ('Scheikunde', NULL);
 	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum)
 		VALUES ('PROJAH01', 'project LODL', 'Biochemie', GETDATE() + 30, GETDATE() +200);
@@ -360,7 +360,7 @@ GO
 --succesvol
 BEGIN TRANSACTION
 BEGIN TRY
- INSERT INTO project_categorie (naam, parent)
+ INSERT INTO project_categorie (naam, hoofdcategorie)
  VALUES ('subsidie', NULL)
  INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
  VALUES('BB', 'subsidie', '01-01-2001', '01-01-2020', 'BB')
@@ -388,7 +388,7 @@ GO
 -- De medewerker met de opgegeven medewerker_code is niet aan dit project gekoppeld.
 BEGIN TRANSACTION
 BEGIN TRY
- INSERT INTO project_categorie (naam, parent)
+ INSERT INTO project_categorie (naam, hoofdcategorie)
  VALUES ('subsidie', NULL)
  INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
  VALUES('BB', 'subsidie', '01-01-2001', '01-01-2020', 'BB')
