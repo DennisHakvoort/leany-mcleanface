@@ -1,8 +1,8 @@
 /*
-Alle tests volgen hetzelfde template:
+Alle tests volgen dezelfde template:
 
---De error die hij geeft of dat hij goed gaat.
-BEGIN TRANSACTION --Open transaction, zodat de test niet de echte database beïnvloedt
+--zet hier de verwachte foutmelding neer of zet hier neer dat het een succesvole test is.
+BEGIN TRANSACTION --Open transaction, zodat de test niet de echte database beïnvloedert
 BEGIN TRY
 -- Test gaat hier
 END TRY
