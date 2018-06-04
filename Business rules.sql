@@ -1,6 +1,60 @@
 --BUSINESS RULES--
---TODO: Commit transaction toevoegen
---TODO: SELECT @@TRANCOUNTER weghalen
+
+/*
+CREATE PROCEDURE sp_VoorbeeldProcedure
+@variabele1 CHAR(4),
+@variabele2 CHAR(20)
+AS BEGIN
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+
+	BEGIN TRY
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
+
+GO
+
+CREATE TRIGGER trg_VoorbeeldTrigger
+ON voorbeeld_tabel
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+BEGIN TRY 
+	--iets
+END TRY
+BEGIN CATCH
+	THROW
+END CATCH
+END
+GO
+
+*/
+
+
+
 
 USE LeanDb
 GO
@@ -17,7 +71,7 @@ CREATE PROCEDURE sp_DropConstraint
 	AS
 	BEGIN TRY
 		DECLARE @sql NVARCHAR(255)
-    SELECT @sql = 'ALTER TABLE ' + @table_name + ' DROP CONSTRAINT ' + @Constraint_name; /*Zet een query in mekaar om de taak uit te voeren*/
+    SELECT @sql = 'ALTER TABLE ' + @table_name + ' DROP CONSTRAINT ' + @Constraint_name; /*Zet een query in elkaar om de taak uit te voeren*/
 		EXEC sys.sp_executesql @stmt = @sql --statement wordt geëxecute
 	END TRY
 	BEGIN CATCH
@@ -334,13 +388,13 @@ CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
 		IF(@@ROWCOUNT > 0)
 			BEGIN
 				/*
-				Zorgt ervoor dat er geen medewerkers meer worden toegevoegd aan/verwijderd van een project.
+				Zorgt ervoor dat er geen medewerkers meer worden toegevoegd aan/verwijderd van een project
 				dat is verlopen.
 				*/
 				IF (EXISTS(	SELECT	'!'
 							FROM	inserted i 
 									INNER JOIN project p ON i.project_code = p.project_code
-							WHERE	p.eind_datum < CURRENT_TIMESTAMP)
+							WHERE	p.eind_datum < CURRENT_TIMESTAMP) --project-einddatum voor huidige datum
 					OR	EXISTS(	SELECT  '!'
 								FROM	deleted d
 										INNER JOIN project p ON d.project_code = p.project_code
@@ -365,14 +419,10 @@ CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 			*/
 				IF	(EXISTS(SELECT	'!'
 							FROM	inserted i
-									INNER JOIN medewerker_beschikbaarheid mb ON i.maand = mb.maand 
-									INNER JOIN medewerker m ON mb.medewerker_code = m.medewerker_code
-							WHERE	i.maand < CURRENT_TIMESTAMP)
+							WHERE	i.maand < CURRENT_TIMESTAMP) --Maand voor huidige datum.
 					OR	EXISTS( SELECT	'!'
 								FROM	deleted d 
-										INNER JOIN medewerker_beschikbaarheid mb ON d.maand = mb.maand 
-										INNER JOIN medewerker m ON mb.medewerker_code = m.medewerker_code
-								WHERE	d.maand < CURRENT_TIMESTAMP))
+								WHERE	d.maand < CURRENT_TIMESTAMP)) --Maand voor huidige datum.
 						THROW 50010, 'Verstreken maand kan niet meer aangepast worden.', 16
 			END
 	END
@@ -392,14 +442,13 @@ AS
 				*/
 				IF	(EXISTS(SELECT	'!'
 							FROM	inserted i 
-									INNER JOIN medewerker_ingepland_project mip ON i.id = mip.id
 							WHERE	FORMAT(i.maand_datum, 'yyyy-MM') < FORMAT(GETDATE(), 'yyyy-MM'))
+							--Datums worden omgezet naar hetzelfde formaat en vergeleken met elkaar.
 					OR
 						EXISTS( SELECT	'!'
 								FROM	deleted d 
-										INNER JOIN medewerker_ingepland_project mip ON d.id = mip.id
 								WHERE	FORMAT(d.maand_datum, 'yyyy-MM')  < FORMAT(GETDATE(), 'yyyy-MM')))
-					THROW 50011, 'Medewerker uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
+					THROW 50011, 'Medewerker-uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
 
 				/*
 				Deze selectqueries achterhalen of het project waar de bettreffende medewerker voor ingepland is, 
@@ -411,12 +460,14 @@ AS
 									INNER JOIN medewerker_op_project mop ON i.id = mop.id
 									INNER JOIN project p ON mop.project_code = p.project_code
 							WHERE	eind_datum < CURRENT_TIMESTAMP)
+							--Door middel van de joins wordt het juiste project opgehaald, en diens einddatum vergeleken met
+							--de huidige einddatum.
 				OR (EXISTS(	SELECT '!'
 							FROM	deleted d 
 									INNER JOIN medewerker_op_project mop ON d.id = mop.id
 									INNER JOIN project p ON mop.project_code = p.project_code
 							WHERE	eind_datum < CURRENT_TIMESTAMP)))
-					THROW 50001, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
+					THROW 50001, 'Een project kan niet meer worden aangepast nadat deze is afgelopen.', 16
 			END
 	END
 GO
@@ -444,7 +495,7 @@ AS BEGIN
 		IF EXISTS  (SELECT	'@'
 					FROM	medewerker_beschikbaarheid
 					WHERE	medewerker_code = @medewerker_code AND 
-							FORMAT(maand, 'yyyy-MM') = FORMAT(@maand, 'yyyy-MM'))
+							FORMAT(maand, 'yyyy-MM') = FORMAT(@maand, 'yyyy-MM')) --Datumformaten gelijkgezet en datums vergeleken.
 						THROW 50016, 'Medewerkerbeschikbaarheid is voor de ingevoerde maand al aangegeven', 16;
 		/*
 		Het is niet mogelijk om met terugwerkende kracht aan te geven hoeveel een medewerker beschikbaar was.
@@ -485,8 +536,8 @@ BEGIN
 		*/
 		IF EXISTS(SELECT	'@'
 				  FROM		deleted d
-				  WHERE		d.begin_datum < GETDATE() AND
-							d.begin_datum NOT IN (SELECT	i.begin_datum 
+				  WHERE		d.begin_datum < GETDATE() AND --begindatum voor huidige datum
+							d.begin_datum NOT IN (SELECT	i.begin_datum --nagaan of begindatum überhaupt is aangepast
 												  FROM		inserted i 
 												  WHERE		i.project_code = d.project_code))
 		THROW 50025, 'Begindatum mag niet worden aangepast als het project is gestart.', 16
@@ -521,7 +572,7 @@ BEGIN
 		IF EXISTS(	SELECT	'@'
 					FROM	inserted i
 							INNER JOIN deleted d ON i.project_code = d.project_code
-					WHERE	i.eind_datum < d.eind_datum)
+					WHERE	i.eind_datum < d.eind_datum) --nieuwe datum (inserted) voor oude datum (deleted)
 
 		THROW 50024, 'Nieuwe einddatum valt voor de oude einddatum.', 16
 
@@ -543,9 +594,9 @@ CREATE PROCEDURE sp_checkProjectRechten
  */
   IF(EXISTS(SELECT	'!'
             FROM	medewerker_op_project
-            WHERE	project_rol = 'Projectleider' AND 
-					medewerker_code = CURRENT_USER AND 
-					project_code = @projectcode)
+            WHERE	project_rol = 'Projectleider' AND --rol van de medewerker
+					medewerker_code = CURRENT_USER AND --ingelogde user
+					project_code = @projectcode) --relevante projectcode
     OR
      EXISTS(SELECT	'!'
             FROM	medewerker_rol
