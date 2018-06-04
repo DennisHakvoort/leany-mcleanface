@@ -385,7 +385,11 @@ AFTER UPDATE, INSERT, DELETE
 AS
 	BEGIN
 		IF(@@ROWCOUNT > 0)
-			BEGIN
+			BEGIN		
+				/*
+				Hier wordt bekeken of bij de gewijzigde waardes sprake is van een planningsmaand die al is verstreken.
+				Is dit het geval, wordt error 50011 geworpen.
+				*/
 				IF	(EXISTS(SELECT	'!'
 							FROM	inserted i 
 									INNER JOIN medewerker_ingepland_project mip ON i.id = mip.id
@@ -396,6 +400,12 @@ AS
 										INNER JOIN medewerker_ingepland_project mip ON d.id = mip.id
 								WHERE	FORMAT(d.maand_datum, 'yyyy-MM')  < FORMAT(GETDATE(), 'yyyy-MM')))
 					THROW 50011, 'Medewerker uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
+
+				/*
+				Deze selectqueries achterhalen of het project waar de bettreffende medewerker voor ingepland is, 
+				niet al voorbij is. Dit wordt bepaald door de eind_datumwaarde te vergelijken met de huidige.
+				Is dit het geval, wordt error 50001 geworpen.
+				*/
 				IF (EXISTS( SELECT	'!'
 							FROM	inserted i 
 									INNER JOIN medewerker_op_project mop ON i.id = mop.id
@@ -411,7 +421,7 @@ AS
 	END
 GO
 
--- BR14 De beschikbaarheid van een medewerker kan maar 1x per maand opgegeven.
+-- BR14 De beschikbaarheid van een medewerker kan maar 1x per maand worden opgegeven.
 CREATE PROCEDURE sp_invullenBeschikbareDagen
 @medewerker_code VARCHAR(5),
 @maand DATE,
@@ -426,16 +436,23 @@ AS BEGIN
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-
-		IF EXISTS (SELECT '@'
-					FROM medewerker_beschikbaarheid
-					WHERE medewerker_code = @medewerker_code
-					and FORMAT(maand, 'yyyy-MM') = FORMAT(@maand, 'yyyy-MM'))
-						THROW 50016, 'Medewerkerbeschikbaarheid is voor de ingevulde maand al ingepland', 16;
-
+		/*
+		Onderstaande query wordt gebruikt om te bepalen of er al beschikbaarheid bekend is voor de medewerker in de ingevoerde maand.
+		Het is namelijk niet mogelijk om dit opnieuw in te vullen. 
+		Hier is een speciale aanpasprocedure voor.
+		*/
+		IF EXISTS  (SELECT	'@'
+					FROM	medewerker_beschikbaarheid
+					WHERE	medewerker_code = @medewerker_code AND 
+							FORMAT(maand, 'yyyy-MM') = FORMAT(@maand, 'yyyy-MM'))
+						THROW 50016, 'Medewerkerbeschikbaarheid is voor de ingevoerde maand al aangegeven', 16;
+		/*
+		Het is niet mogelijk om met terugwerkende kracht aan te geven hoeveel een medewerker beschikbaar was.
+		Onderstaande query achterhaalt of dit het geval is.
+		*/
 		IF (FORMAT(@maand, 'yyyy-MM') < FORMAT(GETDATE(), 'yyyy-MM'))
-						THROW 50017, 'U kan geen medewerkerbeschikbaarheid in het verleden opgegeven', 16;
-
+						THROW 50017, 'Het is niet mogelijk om medewerkerbeschikbaarheid in te vullen voor een verstreken maand.', 16;
+		
 		INSERT INTO medewerker_beschikbaarheid(medewerker_code, maand, beschikbare_dagen)
 			VALUES	(@medewerker_code, @maand, @beschikbare_dagen);
 	END TRY
@@ -461,21 +478,29 @@ CREATE TRIGGER trg_UpdateBegindatumValtNaIngeplandMedewerker
 AS
 BEGIN
 	BEGIN TRY
-
+		/*
+		Onderstaande query gaat na of het betreffende project al is begonnen.
+		Als de oude begindatum vóór de huidige datum valt, en dezelfde begindatum niet voorkomt in de insertedtabel
+		(en dus is gewijzigd), wordt error 50025 geworpen.
+		*/
 		IF EXISTS(SELECT	'@'
 				  FROM		deleted d
 				  WHERE		d.begin_datum < GETDATE() AND
 							d.begin_datum NOT IN (SELECT	i.begin_datum 
 												  FROM		inserted i 
 												  WHERE		i.project_code = d.project_code))
-		THROW 50025, 'Begindatum mag niet worden aangepast als het project is gestart', 16
-		IF EXISTS(SELECT '@'
-					FROM inserted i
-					INNER JOIN medewerker_op_project mop ON i.project_code = mop.project_code
-					INNER JOIN medewerker_ingepland_project mip ON mop.id = mip.id
-					WHERE FORMAT(i.begin_datum, 'yyyy-MM') < FORMAT(mip.maand_datum, 'yyyy-MM'))
+		THROW 50025, 'Begindatum mag niet worden aangepast als het project is gestart.', 16
+		/*
+		Hier wordt nagegaan of er niet al medewerkers zijn ingepland in de oorspronkelijke beginmaand. Is dit het geval,
+		wordt error 50023 geworpen.
+		*/
+		IF EXISTS(	SELECT	'@'
+					FROM	inserted i
+							INNER JOIN medewerker_op_project mop ON i.project_code = mop.project_code
+							INNER JOIN medewerker_ingepland_project mip ON mop.id = mip.id
+					WHERE	FORMAT(i.begin_datum, 'yyyy-MM') < FORMAT(mip.maand_datum, 'yyyy-MM'))
 
-		THROW 50023, 'Begindatum kan niet worden aangepast. Een medewerker is al ingepland voor de begindatum.', 16
+		THROW 50023, 'Begindatum kan niet worden aangepast. Een of meerdere medewerkers zijn al ingepland voor de huidige begindatum.', 16
 	END TRY
 	BEGIN CATCH
 		THROW
@@ -483,17 +508,20 @@ BEGIN
 END
 GO
 
--- BR16 Einddatum voor een project mag alleen verlengt worden.
+-- BR16 Einddatum voor een project mag alleen verlengd worden.
 CREATE TRIGGER trg_UpdateEinddatumAlleenVerlengen
   ON project
   AFTER UPDATE
 AS
 BEGIN
 	BEGIN TRY
-		IF EXISTS(SELECT '@'
-					FROM inserted i
-					INNER JOIN deleted d ON i.project_code = d.project_code
-					WHERE i.eind_datum < d.eind_datum)
+	/*
+	Onderstaand if-statement bekijkt of het einde van een project wordt vervroegd in plaats van uitgesteld.
+	*/
+		IF EXISTS(	SELECT	'@'
+					FROM	inserted i
+							INNER JOIN deleted d ON i.project_code = d.project_code
+					WHERE	i.eind_datum < d.eind_datum)
 
 		THROW 50024, 'Nieuwe einddatum valt voor de oude einddatum.', 16
 
@@ -509,13 +537,20 @@ CREATE PROCEDURE sp_checkProjectRechten
   @projectcode VARCHAR(40)
  AS
  BEGIN
-  IF(EXISTS(SELECT '!'
-            FROM medewerker_op_project
-            WHERE project_rol = 'Projectleider' AND medewerker_code = CURRENT_USER AND project_code = @projectcode)
+ /*
+ Onderstaande queries gaan na of de databasegebruiker die op dit moment is ingelogd 
+ het recht heeft om projecten aan te passen.
+ */
+  IF(EXISTS(SELECT	'!'
+            FROM	medewerker_op_project
+            WHERE	project_rol = 'Projectleider' AND 
+					medewerker_code = CURRENT_USER AND 
+					project_code = @projectcode)
     OR
-     EXISTS(SELECT '!'
-            FROM medewerker_rol
-            WHERE medewerker_rol = 'Superuser' AND medewerker_code = CURRENT_USER)
+     EXISTS(SELECT	'!'
+            FROM	medewerker_rol
+            WHERE	medewerker_rol = 'Superuser' AND 
+					medewerker_code = CURRENT_USER)
 		OR CURRENT_USER = 'dbo'
   )
   RETURN
@@ -531,10 +566,14 @@ AFTER DELETE
 AS BEGIN
 	IF(@@ROWCOUNT > 0)
 		BEGIN
-			IF EXISTS (SELECT '@'
-						FROM deleted d RIGHT JOIN medewerker_rol mr
-							ON d.medewerker_code = mr.medewerker_code
-						HAVING COUNT(*) < 1)
+		/*
+		Als een medewerkers rol wordt verwijderd terwijl het zijn laatste rol is,
+		wordt dit teruggedraaid en error 50032 geworpen.
+		*/
+			IF EXISTS  (SELECT	'@'
+						FROM	deleted d 
+								RIGHT JOIN medewerker_rol mr ON d.medewerker_code = mr.medewerker_code
+						HAVING	COUNT(*) < 1)
 				THROW 50032, 'Medewerkerrol kan niet worden verwijderd. Een medewerker moet een rol hebben.', 16
 		END
 END
