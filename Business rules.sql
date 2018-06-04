@@ -304,7 +304,7 @@ BEGIN TRY -- dubbele negation
 									FROM	project_categorie
 									WHERE	naam = inserted.parent) -- checkt of de opgegeven parent daadwerkelijk bestaat
 							OR --tweede voorwaarde
-							parent IS NULL)) --als de parent NULL is betekend het dat de categorie een hoofdcategorie is  
+							parent IS NULL)) --als de parent NULL is betekent het dat de categorie een hoofdcategorie is  
 	THROW 50003, 'Deze subcategorie heeft geen geldige hoofdcategorie', 16 -- wordt gegooid als geen parent wordt geselecteerd uit de eerste select
   END TRY
   BEGIN CATCH
@@ -360,19 +360,23 @@ GO
 --2
 CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Ingepland
 	ON medewerker_ingepland_project
-	AFTER INSERT, UPDATE, DELETE
+	AFTER UPDATE, DELETE
 	AS
 	BEGIN
 		IF (@@ROWCOUNT > 0)
 			BEGIN
 				--Hier wordt nagekeken of er niks wordt aangepast aan geplande uren van projecten die al verstreken zijn.
-				IF (EXISTS(	SELECT '!'
-							FROM (inserted I INNER JOIN medewerker_op_project MIP ON I.id = MIP.id) INNER JOIN project P on MIP.project_code = P.project_code
-							WHERE P.eind_datum < CURRENT_TIMESTAMP)
+				IF (EXISTS(	SELECT	'!'
+							FROM	inserted I 
+									INNER JOIN medewerker_op_project mip ON i.id = mip.id 
+									INNER JOIN project p on mip.project_code = p.project_code
+							WHERE	p.eind_datum < CURRENT_TIMESTAMP)--einde project voor huidige datum/tijd.
 					OR
-						EXISTS( SELECT '!'
-								FROM (deleted D INNER JOIN medewerker_op_project MIP ON D.id = MIP.id) INNER JOIN project P on MIP.project_code = P.project_code
-								WHERE P.eind_datum < CURRENT_TIMESTAMP))
+						EXISTS( SELECT	'!'
+								FROM	deleted d 
+										INNER JOIN medewerker_op_project mip ON d.id = mip.id 
+										INNER JOIN project p on mip.project_code = p.project_code
+								WHERE p.eind_datum < CURRENT_TIMESTAMP))
 					BEGIN
 						;THROW 50004, 'Een project kan niet meer aangepast worden nadat deze is afgelopen.', 16
 					END
@@ -382,7 +386,7 @@ GO
 --3
 CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
 	ON medewerker_op_project
-	AFTER UPDATE, INSERT, DELETE
+	AFTER UPDATE, DELETE
 	AS
 	BEGIN
 		IF(@@ROWCOUNT > 0)
@@ -418,11 +422,10 @@ CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 			en wordt er een error geworpen.
 			*/
 				IF	(EXISTS(SELECT	'!'
-							FROM	inserted i
-							WHERE	i.maand < CURRENT_TIMESTAMP) --Maand voor huidige datum.
-					OR	EXISTS( SELECT	'!'
-								FROM	deleted d 
-								WHERE	d.maand < CURRENT_TIMESTAMP)) --Maand voor huidige datum.
+							FROM	inserted i --Right join kan hier omdat pure inserts al in de procedure worden afgevangen.
+									RIGHT JOIN deleted d ON i.medewerker_code = d.medewerker_code
+							WHERE	i.maand < CURRENT_TIMESTAMP OR --Inserted maand voor huidige datum.
+									d.maand < CURRENT_TIMESTAMP) --Deleted maand voor huidige datum.
 						THROW 50010, 'Verstreken maand kan niet meer aangepast worden.', 16
 			END
 	END
