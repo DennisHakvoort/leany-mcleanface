@@ -19,7 +19,7 @@ DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerOpProject
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerker
 GO
 
---SP 5 aanpassen project categorieën
+--SP 5 aanpassen projectcategorieën
 CREATE PROCEDURE sp_WijzigProjectCategorie
 @naamOud   VARCHAR(40),
 @naamNieuw VARCHAR(40),
