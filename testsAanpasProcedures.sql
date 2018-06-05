@@ -1,4 +1,25 @@
 /*
+         ___
+        /___\     Hierbij verklaar ik deze database heilig
+       |/. .\|  /
+       (   > ) /
+        \ < /
+         )_(
+       .;_u_;.
+      /       \
+     ; / _|_ \ ;
+     | |  |  | |
+     | \  '  / |
+     | /\   /\ |
+     |/\/   \/\|
+     `|       |`
+      |       |
+      `;""""";`
+       |     |
+       |_____|
+        / | \
+       (_/ \_)
+
 Alle tests volgen dezelfde template:
 securityadmin kan gebuirkers aanmaken
 --zet hier de verwach0te foutmelding neer of zet hier neer dat het een succesvole test is.
