@@ -484,7 +484,7 @@ AS BEGIN
 							WHERE	project_code = @project_code AND
 									subproject_naam = @subproject_naam_oud)
 		--Hier wordt nagekeken of er gegevens bekend zijn bij de opgegeven combinatie projectcode-subprojectnaam.
-		THROW 50028, 'Dit subproject is niet gevonden.', 16;
+		THROW 50041, 'Dit subproject is niet gevonden.', 16;
 
 		UPDATE	subproject --Wijzigingen worden doorgevoerd.
 		SET		project_code = @project_code,
