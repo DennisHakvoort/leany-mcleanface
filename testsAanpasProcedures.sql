@@ -232,6 +232,7 @@ END CATCH
 ROLLBACK TRANSACTION
 GO
 
+
 --Tests sp_WijzigMedewerkerOpProject
 --Probeer een bestaande medewerker met project te wijzigen.
 --Succestest
@@ -416,6 +417,75 @@ BEGIN TRY
 
 	EXEC sp_WijzigProject @project_code = 'PROJAH021', @categorie_naam = 'Scheikunde', @begin_datum = @date
 		,@eind_datum = @einddatum, @project_naam = 'project LIDL', @verwachte_uren = 90
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Test sp_WijzigSubproject
+--Succestest
+--De naam van een subproject wordt veranderd van Testsub naar Subtest.
+BEGIN TRANSACTION
+BEGIN TRY
+	DECLARE @date DATETIME = (getdate() + 10);
+	DECLARE @einddatum DATETIME = (getdate() + 300);
+
+	INSERT INTO project_categorie (naam, hoofdcategorie)
+		VALUES ('Biochemie', NULL);
+
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum)
+		VALUES ('PROJAH01', 'project LODL', 'Biochemie', GETDATE() + 30, GETDATE() +200);
+
+	INSERT INTO subproject_categorie (subproject_categorie_naam) 
+		VALUES('Biologie');
+
+	INSERT INTO subproject (project_code, subproject_naam, subproject_categorie_naam, subproject_verwachte_uren)
+		VALUES('PROJAH01', 'Testsub', 'Biologie', 12);
+
+	EXEC sp_WijzigSubproject 'PROJAH01', 'Testsub', 'Subtest', 'Biologie', 12;
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Test sp_WijzigSubproject
+--Faaltest
+--De projectcode die wordt meegegeven aan de procedure
+--komt niet overeen met de daadwerkelijke projectcode.
+/*
+ERROR NUMMER:	50044
+ERROR SEVERITY:	16
+ERROR MESSAGE:	Dit subproject is niet gevonden.
+*/
+BEGIN TRANSACTION
+BEGIN TRY
+	DECLARE @date DATETIME = (getdate() + 10);
+	DECLARE @einddatum DATETIME = (getdate() + 300);
+
+	INSERT INTO project_categorie (naam, hoofdcategorie)
+		VALUES ('Biochemie', NULL);
+
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum)
+		VALUES ('PROJAH01', 'project LODL', 'Biochemie', GETDATE() + 30, GETDATE() +200);
+
+	INSERT INTO subproject_categorie (subproject_categorie_naam) 
+		VALUES('Biologie');
+
+	--Incorrecte projectcode
+	INSERT INTO subproject (project_code, subproject_naam, subproject_categorie_naam, subproject_verwachte_uren)
+		VALUES('PROJAH01', 'Testsub', 'Biologie', 12);
+
+	EXEC sp_WijzigSubproject 'PROJAH00', 'Testsub', 'Subtest', 'Biologie', 12;
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
