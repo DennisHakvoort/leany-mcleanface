@@ -211,3 +211,48 @@ AS
 		THROW
 	END CATCH
 GO
+
+CREATE PROCEDURE sp_InsertSubproject
+@parent_code VARCHAR(20),
+@naam VARCHAR(40),
+@verwachte_uren	INT,
+@categorie VARCHAR(40)
+AS BEGIN
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	SELECT @TranCounter
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF NOT EXISTS(SELECT '@'
+					FROM subproject_categorie
+					WHERE subproject_categorie_naam = @categorie)
+			THROW 50, 'Opgegeven subproject categorie naam bestaand niet.', 16
+		IF NOT EXISTS(SELECT '@'
+						FROM project
+						WHERE project_code = @parent_code)
+			THROW 50, 'Opgegeven hoofdprojectcode bestaat niet.', 16
+		IF (@verwachte_uren < 0)
+			THROW 50, 'Verwachte uren van subprojecten mogen niet negatief zijn.', 16
+		
+		INSERT INTO subproject (project_code, subproject_naam, subproject_categorie_naam, subproject_verwachte_uren)
+			VALUES (@parent_code, @naam, @verwachte_uren, @categorie);
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
