@@ -1,3 +1,25 @@
+-/*
+-         ___
+-        /___\     Hierbij verklaar ik deze database heilig
+-       |/. .\|  /
+-       (   > ) /
+-        \ < /
+-         )_(
+-       .;_u_;.
+-      /       \
+-     ; / _|_ \ ;
+-     | |  |  | |
+-     | \  '  / |
+-     | /\   /\ |
+-     |/\/   \/\|
+-     `|       |`
+-      |       |
+-      `;""""";`
+-       |     |
+-       |_____|
+-        / | \
+-       (_/ \_)
+*/
 --Query -> SQLCMD mode
 --path verplaatsen met jouw pad naar de folder waar alle bestanden staan.
 :setvar path "C:\Users\HH Nguyen\Documents\GitHub\leany-mcleanface"
