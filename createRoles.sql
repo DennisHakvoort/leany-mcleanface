@@ -49,8 +49,4 @@ GRANT EXECUTE ON sp_MedewerkerToevoegen TO SUPERUSER
 GRANT EXECUTE ON sp_InsertMedewerkerIngepland TO SUPERUSER
 GRANT EXECUTE ON sp_ProjecturenInplannen TO SUPERUSER
 GRANT EXECUTE ON sp_invullenBeschikbareDagen TO SUPERUSER
-
-
-
-
-
+GRANT EXECUTE ON sp_WijzigProjectRol TO SUPERUSER
