@@ -1,18 +1,21 @@
 --COMPLETELY WIPES OUT THE DATABASE, BE CAREFUL--
+
+/*==============================================================*/
+/* DBMS name:      Microsoft SQL Server 2008                    */
+/* Created on:     5-6-2018 10:12:47                            */
+/*==============================================================*/
+
 USE Master
+GO
 
 DROP DATABASE IF EXISTS LeanDb;
+GO
 
 CREATE DATABASE LeanDb
 GO
 
 USE LeanDb
 GO
-
-/*==============================================================*/
-/* DBMS name:      Microsoft SQL Server 2008                    */
-/* Created on:     5-6-2018 10:12:47                            */
-/*==============================================================*/
 
 
 if exists (select 1
@@ -451,7 +454,7 @@ go
 /* Domain: MEDEWERKER_CODE                                      */
 /*==============================================================*/
 create type MEDEWERKER_CODE
-   from varchar(3)
+   from varchar(5)
 go
 
 /*==============================================================*/
