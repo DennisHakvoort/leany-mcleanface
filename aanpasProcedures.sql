@@ -13,10 +13,10 @@ DROP PROCEDURE IF EXISTS sp_WijzigProjectRol
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerBeschikbareDagen
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRol
-DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerOpProject
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerIngeplandProject
-DROP PROCEDURE IF EXISTS sp_WijzigenMedewerker
 DROP PROCEDURE IF EXISTS sp_WijzigProject
+DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerOpProject
+DROP PROCEDURE IF EXISTS sp_WijzigenMedewerker
 GO
 
 --SP 5 aanpassen project categorieën
@@ -74,7 +74,6 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-			EXECUTE sp_checkProjectRechten @projectcode = @project_code
 
   	IF NOT EXISTS (SELECT project_rol
 				   FROM project_rol_type
