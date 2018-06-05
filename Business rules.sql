@@ -672,7 +672,6 @@ AS BEGIN
 			END;
 		THROW
 	END CATCH
-
 END
 GO
 
