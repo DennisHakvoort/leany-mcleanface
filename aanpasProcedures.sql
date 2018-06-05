@@ -82,7 +82,7 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-
+  
   	IF NOT EXISTS (SELECT	project_rol
 				   FROM		project_rol_type
 				   WHERE	project_rol = @project_rol_oud)
