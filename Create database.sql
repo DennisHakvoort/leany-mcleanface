@@ -8,9 +8,10 @@ GO
 
 USE LeanDb
 GO
+
 /*==============================================================*/
 /* DBMS name:      Microsoft SQL Server 2008                    */
-/* Created on:     4-6-2018 16:30:17                            */
+/* Created on:     5-6-2018 10:12:47                            */
 /*==============================================================*/
 
 
@@ -464,7 +465,7 @@ go
 /* Domain: NAAM                                                 */
 /*==============================================================*/
 create type NAAM
-   from varchar(20)
+   from nvarchar(20)
 go
 
 /*==============================================================*/
@@ -499,8 +500,8 @@ go
 /* Table: categorie_tag                                         */
 /*==============================================================*/
 create table categorie_tag (
-   TAG_NAAM             nvarchar(40)         not null,
-   constraint PK_CATEGORIE_TAG primary key nonclustered (TAG_NAAM)
+   tag_naam             nvarchar(40)         not null,
+   constraint PK_CATEGORIE_TAG primary key nonclustered (tag_naam)
 )
 go
 
@@ -508,10 +509,10 @@ go
 /* Table: medewerker                                            */
 /*==============================================================*/
 create table medewerker (
-   MEDEWERKER_CODE      MEDEWERKER_CODE      not null,
-   ACHTERNAAM           NAAM                 not null,
-   VOORNAAM             NAAM                 not null,
-   constraint PK_MEDEWERKER primary key nonclustered (MEDEWERKER_CODE)
+   medewerker_code      MEDEWERKER_CODE      not null,
+   voornaam             NAAM                 not null,
+   achternaam           NAAM                 not null,
+   constraint PK_MEDEWERKER primary key nonclustered (medewerker_code)
 )
 go
 
@@ -519,10 +520,10 @@ go
 /* Table: medewerker_beschikbaarheid                            */
 /*==============================================================*/
 create table medewerker_beschikbaarheid (
-   MEDEWERKER_CODE      MEDEWERKER_CODE      not null,
-   MAAND                JAAR                 not null,
-   BESCHIKBARE_DAGEN    DAGEN                not null,
-   constraint PK_MEDEWERKER_BESCHIKBAARHEID primary key nonclustered (MEDEWERKER_CODE, MAAND)
+   medewerker_code      MEDEWERKER_CODE      not null,
+   maand                JAAR                 not null,
+   beschikbare_dagen    DAGEN                not null,
+   constraint PK_MEDEWERKER_BESCHIKBAARHEID primary key nonclustered (medewerker_code, maand)
 )
 go
 
@@ -530,7 +531,7 @@ go
 /* Index: BESCHIKBAAR_VOOR_FK                                   */
 /*==============================================================*/
 create index BESCHIKBAAR_VOOR_FK on medewerker_beschikbaarheid (
-MEDEWERKER_CODE ASC
+medewerker_code ASC
 )
 go
 
@@ -538,10 +539,10 @@ go
 /* Table: medewerker_ingepland_project                          */
 /*==============================================================*/
 create table medewerker_ingepland_project (
-   ID                   integer              not null,
-   MAAND_DATUM          MAAND                not null,
-   MEDEWERKER_UREN      UREN                 not null,
-   constraint PK_MEDEWERKER_INGEPLAND_PROJEC primary key nonclustered (MAAND_DATUM, ID)
+   id                   integer              not null,
+   medewerker_uren      UREN                 not null,
+   maand_datum          MAAND                not null,
+   constraint PK_MEDEWERKER_INGEPLAND_PROJEC primary key nonclustered (maand_datum, id)
 )
 go
 
@@ -549,7 +550,7 @@ go
 /* Index: UREN_INGEPLAND_OP_FK                                  */
 /*==============================================================*/
 create index UREN_INGEPLAND_OP_FK on medewerker_ingepland_project (
-ID ASC
+id ASC
 )
 go
 
@@ -557,11 +558,11 @@ go
 /* Table: medewerker_op_project                                 */
 /*==============================================================*/
 create table medewerker_op_project (
-   MEDEWERKER_CODE      MEDEWERKER_CODE      not null,
-   PROJECT_CODE         PROJECT_CODE         not null,
-   PROJECT_ROL          PROJECT_ROL          not null,
-   ID                   integer              not null,
-   constraint PK_MEDEWERKER_OP_PROJECT primary key (ID)
+   id                   integer              not null           IDENTITY,
+   project_code         PROJECT_CODE         not null,
+   medewerker_code      MEDEWERKER_CODE      not null,
+   project_rol          PROJECT_ROL          not null,
+   constraint PK_MEDEWERKER_OP_PROJECT primary key (id)
 )
 go
 
@@ -569,7 +570,7 @@ go
 /* Index: NEEMT_DEEL_AAN_FK                                     */
 /*==============================================================*/
 create index NEEMT_DEEL_AAN_FK on medewerker_op_project (
-MEDEWERKER_CODE ASC
+medewerker_code ASC
 )
 go
 
@@ -577,7 +578,7 @@ go
 /* Index: HEEFT_DEELNEMERS_FK                                   */
 /*==============================================================*/
 create index HEEFT_DEELNEMERS_FK on medewerker_op_project (
-PROJECT_CODE ASC
+project_code ASC
 )
 go
 
@@ -585,7 +586,7 @@ go
 /* Index: HEEFT_ALS_ROL_BINNEN_HET_PROJECT_FK                   */
 /*==============================================================*/
 create index HEEFT_ALS_ROL_BINNEN_HET_PROJECT_FK on medewerker_op_project (
-PROJECT_ROL ASC
+project_rol ASC
 )
 go
 
@@ -593,9 +594,9 @@ go
 /* Table: medewerker_rol                                        */
 /*==============================================================*/
 create table medewerker_rol (
-   MEDEWERKER_CODE      MEDEWERKER_CODE      not null,
-   MEDEWERKER_ROL       MEDEWERKER_ROL       not null,
-   constraint PK_MEDEWERKER_ROL primary key (MEDEWERKER_CODE, MEDEWERKER_ROL)
+   medewerker_code      MEDEWERKER_CODE      not null,
+   medewerker_rol       MEDEWERKER_ROL       not null,
+   constraint PK_MEDEWERKER_ROL primary key (medewerker_code, medewerker_rol)
 )
 go
 
@@ -603,7 +604,7 @@ go
 /* Index: HEEFT_DE_ROL_FK                                       */
 /*==============================================================*/
 create index HEEFT_DE_ROL_FK on medewerker_rol (
-MEDEWERKER_CODE ASC
+medewerker_code ASC
 )
 go
 
@@ -611,7 +612,7 @@ go
 /* Index: HEEFT_DE_ROL2_FK                                      */
 /*==============================================================*/
 create index HEEFT_DE_ROL2_FK on medewerker_rol (
-MEDEWERKER_ROL ASC
+medewerker_rol ASC
 )
 go
 
@@ -619,8 +620,8 @@ go
 /* Table: medewerker_rol_type                                   */
 /*==============================================================*/
 create table medewerker_rol_type (
-   MEDEWERKER_ROL       MEDEWERKER_ROL       not null,
-   constraint PK_MEDEWERKER_ROL_TYPE primary key nonclustered (MEDEWERKER_ROL)
+   medewerker_rol       MEDEWERKER_ROL       not null,
+   constraint PK_MEDEWERKER_ROL_TYPE primary key nonclustered (medewerker_rol)
 )
 go
 
@@ -628,13 +629,13 @@ go
 /* Table: project                                               */
 /*==============================================================*/
 create table project (
-   PROJECT_CODE         PROJECT_CODE         not null,
-   CATEGORIE_NAAM       CATEGORIE_NAAM       not null,
-   PROJECT_NAAM         PROJECT_NAAM         not null,
-   BEGIN_DATUM          DATUM                not null,
-   EIND_DATUM           DATUM                not null,
-   VERWACHTE_UREN       UREN                 null,
-   constraint PK_PROJECT primary key nonclustered (PROJECT_CODE)
+   project_code         PROJECT_CODE         not null,
+   categorie_naam       CATEGORIE_NAAM       not null,
+   begin_datum          DATUM                not null,
+   eind_datum           DATUM                not null,
+   project_naam         PROJECT_NAAM         not null,
+   verwachte_uren       UREN                 null,
+   constraint PK_PROJECT primary key nonclustered (project_code)
 )
 go
 
@@ -642,7 +643,7 @@ go
 /* Index: IS_VAN_TYPE_FK                                        */
 /*==============================================================*/
 create index IS_VAN_TYPE_FK on project (
-CATEGORIE_NAAM ASC
+categorie_naam ASC
 )
 go
 
@@ -650,9 +651,9 @@ go
 /* Table: project_categorie                                     */
 /*==============================================================*/
 create table project_categorie (
-   NAAM                 CATEGORIE_NAAM       not null,
-   HOOFDCATEGORIE       CATEGORIE_NAAM       null,
-   constraint PK_PROJECT_CATEGORIE primary key nonclustered (NAAM)
+   naam                 CATEGORIE_NAAM       not null,
+   hoofdcategorie       CATEGORIE_NAAM       null,
+   constraint PK_PROJECT_CATEGORIE primary key nonclustered (naam)
 )
 go
 
@@ -660,7 +661,7 @@ go
 /* Index: PARENT_VAN_CATEGORIE_FK                               */
 /*==============================================================*/
 create index PARENT_VAN_CATEGORIE_FK on project_categorie (
-HOOFDCATEGORIE ASC
+hoofdcategorie ASC
 )
 go
 
@@ -668,8 +669,8 @@ go
 /* Table: project_rol_type                                      */
 /*==============================================================*/
 create table project_rol_type (
-   PROJECT_ROL          PROJECT_ROL          not null,
-   constraint PK_PROJECT_ROL_TYPE primary key nonclustered (PROJECT_ROL)
+   project_rol          PROJECT_ROL          not null,
+   constraint PK_PROJECT_ROL_TYPE primary key nonclustered (project_rol)
 )
 go
 
@@ -677,11 +678,11 @@ go
 /* Table: projectlid_op_subproject                              */
 /*==============================================================*/
 create table projectlid_op_subproject (
-   ID                   integer              not null,
-   PROJECT_CODE         PROJECT_CODE         not null,
-   SUBPROJECT_NAAM      PROJECT_NAAM         not null,
-   SUBPROJECT_UREN      UREN                 null,
-   constraint PK_PROJECTLID_OP_SUBPROJECT primary key (ID, PROJECT_CODE, SUBPROJECT_NAAM)
+   id                   integer              not null,
+   project_code         PROJECT_CODE         not null,
+   subproject_naam      PROJECT_NAAM         not null,
+   subproject_uren      UREN                 null,
+   constraint PK_PROJECTLID_OP_SUBPROJECT primary key (id, project_code, subproject_naam)
 )
 go
 
@@ -689,8 +690,8 @@ go
 /* Index: PROJECTLID_INGEDEELD_OP_SUBPROJECT_FK                 */
 /*==============================================================*/
 create index PROJECTLID_INGEDEELD_OP_SUBPROJECT_FK on projectlid_op_subproject (
-PROJECT_CODE ASC,
-SUBPROJECT_NAAM ASC
+project_code ASC,
+subproject_naam ASC
 )
 go
 
@@ -698,7 +699,7 @@ go
 /* Index: PROJECT_SUBTAAK_MEDEWERKER_FK                         */
 /*==============================================================*/
 create index PROJECT_SUBTAAK_MEDEWERKER_FK on projectlid_op_subproject (
-ID ASC
+id ASC
 )
 go
 
@@ -706,11 +707,11 @@ go
 /* Table: subproject                                            */
 /*==============================================================*/
 create table subproject (
-   PROJECT_CODE         PROJECT_CODE         not null,
-   SUBPROJECT_NAAM      PROJECT_NAAM         not null,
-   SUBPROJECT_CATEGORIE_NAAM CATEGORIE_NAAM       not null,
-   SUBPROJECT_VERWACHTE_UREN UREN                 null,
-   constraint PK_SUBPROJECT primary key nonclustered (PROJECT_CODE, SUBPROJECT_NAAM)
+   project_code         PROJECT_CODE         not null,
+   subproject_naam      PROJECT_NAAM         not null,
+   subproject_categorie_naam CATEGORIE_NAAM       not null,
+   subproject_verwachte_uren UREN                 null,
+   constraint PK_SUBPROJECT primary key nonclustered (project_code, subproject_naam)
 )
 go
 
@@ -718,7 +719,7 @@ go
 /* Index: SUBPROJECT_IN_PROJECT_FK                              */
 /*==============================================================*/
 create index SUBPROJECT_IN_PROJECT_FK on subproject (
-PROJECT_CODE ASC
+project_code ASC
 )
 go
 
@@ -726,7 +727,7 @@ go
 /* Index: CATEGORIE_VAN_SUBPROJECT_FK                           */
 /*==============================================================*/
 create index CATEGORIE_VAN_SUBPROJECT_FK on subproject (
-SUBPROJECT_CATEGORIE_NAAM ASC
+subproject_categorie_naam ASC
 )
 go
 
@@ -734,8 +735,8 @@ go
 /* Table: subproject_categorie                                  */
 /*==============================================================*/
 create table subproject_categorie (
-   SUBPROJECT_CATEGORIE_NAAM CATEGORIE_NAAM       not null,
-   constraint PK_SUBPROJECT_CATEGORIE primary key nonclustered (SUBPROJECT_CATEGORIE_NAAM)
+   subproject_categorie_naam CATEGORIE_NAAM       not null,
+   constraint PK_SUBPROJECT_CATEGORIE primary key nonclustered (subproject_categorie_naam)
 )
 go
 
@@ -743,9 +744,9 @@ go
 /* Table: tag_van_categorie                                     */
 /*==============================================================*/
 create table tag_van_categorie (
-   NAAM                 CATEGORIE_NAAM       not null,
-   TAG_NAAM             nvarchar(40)         not null,
-   constraint PK_TAG_VAN_CATEGORIE primary key (NAAM, TAG_NAAM)
+   naam                 CATEGORIE_NAAM       not null,
+   tag_naam             nvarchar(40)         not null,
+   constraint PK_TAG_VAN_CATEGORIE primary key (naam, tag_naam)
 )
 go
 
@@ -753,7 +754,7 @@ go
 /* Index: TAG_VAN_CATEGORIE_FK                                  */
 /*==============================================================*/
 create index TAG_VAN_CATEGORIE_FK on tag_van_categorie (
-NAAM ASC
+naam ASC
 )
 go
 
@@ -761,95 +762,95 @@ go
 /* Index: TAG_VAN_CATEGORIE2_FK                                 */
 /*==============================================================*/
 create index TAG_VAN_CATEGORIE2_FK on tag_van_categorie (
-TAG_NAAM ASC
+tag_naam ASC
 )
 go
 
 alter table medewerker_beschikbaarheid
-   add constraint FK_MEDEWERK_BESCHIKBA_MEDEWERK foreign key (MEDEWERKER_CODE)
-      references medewerker (MEDEWERKER_CODE)
+   add constraint FK_MEDEWERK_BESCHIKBA_MEDEWERK foreign key (medewerker_code)
+      references medewerker (medewerker_code)
          on update cascade on delete cascade
 go
 
 alter table medewerker_ingepland_project
-   add constraint FK_MEDEWERK_UREN_INGE_MEDEWERK foreign key (ID)
-      references medewerker_op_project (ID)
+   add constraint FK_MEDEWERK_UREN_INGE_MEDEWERK foreign key (id)
+      references medewerker_op_project (id)
          on update cascade on delete cascade
 go
 
 alter table medewerker_op_project
-   add constraint FK_MEDEWERK_HEEFT_ALS_PROJECT_ foreign key (PROJECT_ROL)
-      references project_rol_type (PROJECT_ROL)
+   add constraint FK_MEDEWERK_HEEFT_ALS_PROJECT_ foreign key (project_rol)
+      references project_rol_type (project_rol)
          on update cascade
 go
 
 alter table medewerker_op_project
-   add constraint FK_MEDEWERK_HEEFT_DEE_PROJECT foreign key (PROJECT_CODE)
-      references project (PROJECT_CODE)
+   add constraint FK_MEDEWERK_HEEFT_DEE_PROJECT foreign key (project_code)
+      references project (project_code)
          on update cascade on delete cascade
 go
 
 alter table medewerker_op_project
-   add constraint FK_MEDEWERK_NEEMT_DEE_MEDEWERK foreign key (MEDEWERKER_CODE)
-      references medewerker (MEDEWERKER_CODE)
+   add constraint FK_MEDEWERK_NEEMT_DEE_MEDEWERK foreign key (medewerker_code)
+      references medewerker (medewerker_code)
          on update cascade on delete cascade
 go
 
 alter table medewerker_rol
-   add constraint FK_MEDEWERKER_ROL_FK_MEDEWERKER_ROL_TYPE foreign key (MEDEWERKER_ROL)
-      references medewerker_rol_type (MEDEWERKER_ROL)
+   add constraint FK_MEDEWERKER_ROL_FK_MEDEWERKER_ROL_TYPE foreign key (medewerker_rol)
+      references medewerker_rol_type (medewerker_rol)
          on update cascade
 go
 
 alter table medewerker_rol
-   add constraint FK_MEDEWERK_FK_MEDEWE_MEDEWERK foreign key (MEDEWERKER_CODE)
-      references medewerker (MEDEWERKER_CODE)
+   add constraint FK_MEDEWERK_FK_MEDEWE_MEDEWERK foreign key (medewerker_code)
+      references medewerker (medewerker_code)
          on update cascade on delete cascade
 go
 
 alter table project
-   add constraint FK_PROJECT_IS_VAN_TY_PROJECT_ foreign key (CATEGORIE_NAAM)
-      references project_categorie (NAAM)
+   add constraint FK_PROJECT_IS_VAN_TY_PROJECT_ foreign key (categorie_naam)
+      references project_categorie (naam)
          on update cascade
 go
 
 alter table project_categorie
-   add constraint FK_PROJECT__PARENT_VA_PROJECT_ foreign key (HOOFDCATEGORIE)
-      references project_categorie (NAAM)
+   add constraint FK_PROJECT__PARENT_VA_PROJECT_ foreign key (hoofdcategorie)
+      references project_categorie (naam)
 go
 
 alter table projectlid_op_subproject
-   add constraint FK_PROJECTL_PROJECTLI_SUBPROJE foreign key (PROJECT_CODE, SUBPROJECT_NAAM)
-      references subproject (PROJECT_CODE, SUBPROJECT_NAAM)
+   add constraint FK_PROJECTL_PROJECTLI_SUBPROJE foreign key (project_code, subproject_naam)
+      references subproject (project_code, subproject_naam)
          on update cascade on delete cascade
 go
 
 alter table projectlid_op_subproject
-   add constraint FK_PROJECTL_PROJECT_S_MEDEWERK foreign key (ID)
-      references medewerker_op_project (ID)
+   add constraint FK_PROJECTL_PROJECT_S_MEDEWERK foreign key (id)
+      references medewerker_op_project (id)
          on update cascade on delete cascade
 go
 
 alter table subproject
-   add constraint FK_SUBPROJE_CATEGORIE_SUBPROJE foreign key (SUBPROJECT_CATEGORIE_NAAM)
-      references subproject_categorie (SUBPROJECT_CATEGORIE_NAAM)
+   add constraint FK_SUBPROJE_CATEGORIE_SUBPROJE foreign key (subproject_categorie_naam)
+      references subproject_categorie (subproject_categorie_naam)
          on update cascade
 go
 
 alter table subproject
-   add constraint FK_SUBPROJE_SUBPROJEC_PROJECT foreign key (PROJECT_CODE)
-      references project (PROJECT_CODE)
+   add constraint FK_SUBPROJE_SUBPROJEC_PROJECT foreign key (project_code)
+      references project (project_code)
 go
 
 alter table tag_van_categorie
-   add constraint FK_TAG_VAN_CATEGORIE_FK_CATEGORIE_TAG foreign key (TAG_NAAM)
-      references categorie_tag (TAG_NAAM)
+   add constraint FK_TAG_VAN_CATEGORIE_FK_CATEGORIE_TAG foreign key (tag_naam)
+      references categorie_tag (tag_naam)
          on update cascade
 go
 
 alter table tag_van_categorie
-   add constraint FK_TAG_VAN__FK_TAG_VA_PROJECT_ foreign key (NAAM)
-      references project_categorie (NAAM)
+   add constraint FK_TAG_VAN__FK_TAG_VA_PROJECT_ foreign key (naam)
+      references project_categorie (naam)
          on update cascade on delete cascade
 go
 
