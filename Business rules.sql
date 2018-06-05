@@ -114,7 +114,7 @@ CREATE PROCEDURE sp_InsertMedewerker
 @voornaam NVARCHAR(20),
 @medewerker_code VARCHAR(5),
 @wachtwoord VARCHAR(40),
-@rol varchar(40)
+@rol VARCHAR(40)
 AS BEGIN
 	SET NOCOUNT ON 
 	SET XACT_ABORT OFF

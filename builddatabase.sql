@@ -1,6 +1,6 @@
 --Query -> SQLCMD mode
 --path verplaatsen met jouw pad naar de folder waar alle bestanden staan.
-:setvar path "C:\Users\duppi\OneDrive\Datagrip\leany-mcleanface"
+:setvar path "C:\Users\HH Nguyen\Documents\GitHub\leany-mcleanface"
 :setvar create "\Create database.sql"
 :setvar businessrules "\Business rules.sql"
 :r $(path)$(create)
@@ -14,3 +14,4 @@
 
 --kopieerplakplek voor pad, scheelt gezoek
 --Dennis: C:\Users\duppi\OneDrive\Datagrip\leany-mcleanface
+--Hoang: C:\Users\HH Nguyen\Documents\GitHub\leany-mcleanface
