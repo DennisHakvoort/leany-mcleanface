@@ -42,7 +42,7 @@ ON voorbeeld_tabel
 AFTER INSERT, UPDATE, DELETE
 AS
 BEGIN
-BEGIN TRY 
+BEGIN TRY
 	--iets
 END TRY
 BEGIN CATCH
@@ -61,7 +61,7 @@ GO
 
 --PROCEDURE OM CONSTRAINTS TE DROPPEN ALS DEZE BESTAAN
 /*
-Deze procedure verwijdert opgegeven constraints van tabellen. 
+Deze procedure verwijdert opgegeven constraints van tabellen.
 */
 DROP PROCEDURE IF EXISTS sp_DropConstraint
 GO
@@ -75,7 +75,7 @@ CREATE PROCEDURE sp_DropConstraint
 		EXEC sys.sp_executesql @stmt = @sql --statement wordt geëxecute
 	END TRY
 	BEGIN CATCH
-		--Print in plaats van raiserror, om ervoor te zorgen dat het script gewoon doorgaat. 
+		--Print in plaats van raiserror, om ervoor te zorgen dat het script gewoon doorgaat.
 		PRINT 'Het volgende constraint is niet gedropt, waarschijnlijk omdat deze niet bestond: ' + @Constraint_name
 	END CATCH
 GO
@@ -193,7 +193,7 @@ AS BEGIN
 	BEGIN TRY
 			--Onderstaande query gaat na of er sprake is van een gebrek aan beschikbaarheid in de betreffende maand.
 		 IF EXISTS (SELECT	'!'
-					FROM	medewerker_op_project m 
+					FROM	medewerker_op_project m
 							LEFT OUTER JOIN medewerker_ingepland_project i ON m.ID = i.ID
 							LEFT OUTER JOIN medewerker_beschikbaarheid b ON m.medewerker_code = b.medewerker_code
 					WHERE	@id = m.id AND (b.beschikbare_dagen = 0 OR b.beschikbare_dagen IS NULL) AND b.maand = @maand_datum)
@@ -250,14 +250,14 @@ AS BEGIN
 		DECLARE @id INT; -- id representeert de combinatie van een medewerker en project. Wordt uit de tabel medewerker_op_project opgehaald.
 		SET @id = (SELECT	id
 				   FROM		medewerker_op_project
-				   WHERE	medewerker_code = @medewerker_code AND	
+				   WHERE	medewerker_code = @medewerker_code AND
 							project_code = @project_code)
 
 		IF EXISTS (	SELECT		1 --Onderstaande query telt het maandelijkse aantal uren op en vergelijkt het met maximum.
 					FROM		medewerker_ingepland_project mip
 								INNER JOIN medewerker_op_project mop ON mip.id = mop.id
 								INNER JOIN project p on mop.project_code = p.project_code
-					WHERE		mop.medewerker_code = @medewerker_code AND	
+					WHERE		mop.medewerker_code = @medewerker_code AND
 								FORMAT(mip.maand_datum, 'yyyy-MM') = FORMAT(GETDATE(), 'yyyy-MM') --format naar yyyy-MM zodat het vergeleken kan worden
 					GROUP BY	medewerker_code
 					HAVING		SUM(mip.medewerker_uren) + @medewerker_uren <= 184) -- 184 is het maximum aantal uren per maand voor een medewerker (184 uur = 23 dagen * 8 uur)
@@ -292,7 +292,7 @@ ALTER TABLE project WITH CHECK
 	ADD CONSTRAINT CK_EINDDATUM_NA_BEGINDATUM CHECK (eind_datum > begin_datum)
 GO
 
---BR8 project_categorie(parent) moet een waarde zijn uit de project_categorie(naam) of NULL. Het kan niet naar zichzelf verwijzen.
+--BR8 project_categorie(hoofdcategorie) moet een waarde zijn uit de project_categorie(naam) of NULL. Het kan niet naar zichzelf verwijzen.
 CREATE TRIGGER trg_SubCategorieHeeftHoofdCategorie
 ON project_categorie
 AFTER INSERT, UPDATE
@@ -302,14 +302,14 @@ AS BEGIN
 			RETURN;
 		END
 	BEGIN TRY -- Als het niet bestaat werp een error.
-		IF NOT EXISTS (SELECT parent -- als een parent wordt geselecteerd is de ingevulde waarde geldig.
-						FROM inserted --als één van de twee voorwaardes true resulteert wordt de parent van inserted geselecteerd
+		IF NOT EXISTS (SELECT hoofdcategorie -- als een hoofdcategorie wordt geselecteerd is de ingevulde waarde geldig.
+						FROM inserted --als één van de twee voorwaardes true resulteert wordt de hoofdcategorie van inserted geselecteerd
 						WHERE EXISTS (SELECT naam -- eerste voorwaarde
 										FROM project_categorie
-										WHERE naam = inserted.parent) --checkt of de opgegeven parent daadwerkelijk bestaat
+										WHERE naam = inserted.hoofdcategorie) --checkt of de opgegeven hoofdcategorie daadwerkelijk bestaat
 									OR --tweede voorwaarde
-										parent IS NULL) --als de parent NULL is betekent het dat de categorie een hoofdcategorie is  
-		THROW 50003, 'Een subcategorie moet een bestaande hoofdcategorie hebben.', 16 --wordt gegooid als geen parent wordt geselecteerd uit de eerste select
+										hoofdcategorie IS NULL) --als de hoofdcategorie NULL is betekent het dat de categorie een hoofdcategorie is  
+		THROW 50003, 'Een subcategorie moet een bestaande hoofdcategorie hebben.', 16 --wordt gegooid als geen hoofdcategorie wordt geselecteerd uit de eerste select
 	END TRY
 	BEGIN CATCH
 		THROW;
@@ -333,7 +333,7 @@ AS BEGIN
 	*/
 		IF EXISTS ((SELECT naam
 					FROM deleted
-					WHERE naam IN (SELECT parent
+					WHERE naam IN (SELECT hoofdcategorie
 									FROM	project_categorie)))
 			THROW 50002, 'Een hoofdcategorie kan niet verwijdert worden als deze subcategorieen heeft.', 16
 	END TRY
@@ -524,7 +524,7 @@ AS BEGIN
 	BEGIN TRY
 		/*
 		Onderstaande query wordt gebruikt om te bepalen of er al beschikbaarheid bekend is voor de medewerker in de ingevoerde maand.
-		Het is namelijk niet mogelijk om dit opnieuw in te vullen. 
+		Het is namelijk niet mogelijk om dit opnieuw in te vullen.
 		Hier is een speciale aanpasprocedure voor.
 		*/
 		IF EXISTS  (SELECT	'@'
@@ -541,6 +541,9 @@ AS BEGIN
 		
 		INSERT INTO medewerker_beschikbaarheid(medewerker_code, maand, beschikbare_dagen)
 			VALUES	(@medewerker_code, @maand, @beschikbare_dagen);
+			
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 			IF @TranCounter = 0
@@ -576,7 +579,7 @@ AS BEGIN
 				  FROM		deleted d
 				  WHERE		d.begin_datum < GETDATE() AND --begindatum voor huidige datum
 							d.begin_datum NOT IN (SELECT	i.begin_datum --nagaan of begindatum überhaupt is aangepast
-												  FROM		inserted i 
+												  FROM		inserted i
 												  WHERE		i.project_code = d.project_code))
 			THROW 50025, 'Begindatum mag niet worden aangepast als het project is gestart.', 16
 		/*
@@ -626,6 +629,15 @@ GO
 CREATE PROCEDURE sp_checkProjectRechten
 @projectcode VARCHAR(20)
 AS BEGIN
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
 	/*
 	Onderstaande queries gaan na of de databasegebruiker die op dit moment is ingelogd 
 	het recht heeft om projecten aan te passen.
@@ -644,6 +656,23 @@ AS BEGIN
 			RETURN
 	ELSE
 		THROW 50033, 'De huidige gebruiker heeft de rechten niet om dit project aan te passen', 16;
+
+	IF @TranCounter = 0 AND XACT_STATE() = 1
+		COMMIT TRANSACTION;
+	END TRY
+
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+
 END
 GO
 
