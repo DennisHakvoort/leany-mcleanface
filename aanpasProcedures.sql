@@ -1,19 +1,26 @@
+/*==================================================================*/
+/* DBMS name:      Microsoft SQL Server 2008                        */
+/* Created on:     24-5-2018 10:51:54                               */
+/*==================================================================*/
+
+/* Stored procedures voor wijzigen in tabellen voor database LeanDb */
+
 USE LeanDb
 GO
 
-DROP PROCEDURE IF EXISTS sp_WijzigCategorieen
+DROP PROCEDURE IF EXISTS sp_WijzigProjectCategorie
 DROP PROCEDURE IF EXISTS sp_WijzigProjectRol
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRolType
-DROP PROCEDURE IF EXISTS sp_WijzigBeschikbareDagen
-DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerRol
+DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerBeschikbareDagen
+DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerRol
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerIngeplandProject
 DROP PROCEDURE IF EXISTS sp_WijzigProject
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerkerOpProject
 DROP PROCEDURE IF EXISTS sp_WijzigenMedewerker
 GO
 
---SP wijzigen categorieën
-CREATE PROCEDURE sp_WijzigCategorieen
+--SP 5 aanpassen projectcategorieën
+CREATE PROCEDURE sp_WijzigProjectCategorie
 @naamOud   VARCHAR(40),
 @naamNieuw VARCHAR(40),
 @parentNieuw VARCHAR(40)
@@ -30,7 +37,8 @@ AS
 		IF NOT EXISTS (SELECT naam
 				       FROM project_categorie
 				       WHERE naam = @naamOud)
-			THROW 50009, 'Deze categorie bestaat niet', 16;
+
+			THROW 50009, 'Deze projectcategorie bestaat niet.', 16;
 
 		UPDATE project_categorie
 		SET naam = @naamNieuw, hoofdcategorie =@parentNieuw
@@ -52,7 +60,7 @@ AS
 	END CATCH
 GO
 
---SP voor wijzigen projectrollen
+--SP 4 aanpassen project_rol_type
 CREATE PROCEDURE sp_WijzigProjectRol
 @project_rol_oud    VARCHAR(40),
 @project_rol_nieuw  VARCHAR(40)
@@ -66,10 +74,12 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+
   	IF NOT EXISTS (SELECT project_rol
 				   FROM project_rol_type
-				   WHERE project_rol = @project_rol_oud)
-		THROW 50013, 'Projectrol bestaat niet.', 16;
+				   WHERE	 project_rol = @project_rol_oud)
+
+		THROW 50013, 'Deze projectrol bestaat niet.', 16;
 
 	UPDATE project_rol_type
 	SET project_rol = @project_rol_nieuw
@@ -91,7 +101,7 @@ AS
 	END CATCH
   GO
 
- --SP aanpassen medewerker rol types
+--SP 12 aanpassen medewerker_rol_type
 CREATE PROCEDURE sp_WijzigMedewerkerRolType
 @medewerker_Rol_Oud   VARCHAR(40),
 @medewerker_Rol_Nieuw VARCHAR(40)
@@ -108,7 +118,8 @@ AS
 		IF NOT EXISTS (SELECT medewerker_rol
 				   FROM medewerker_rol_type
 				   WHERE medewerker_rol = @medewerker_Rol_Oud)
-		THROW 50008, 'medewerkerrol bestaat niet.', 16;
+
+		THROW 50008, 'Deze medewerkerrol bestaat niet.', 16;
 
 	UPDATE medewerker_rol_type
 	SET medewerker_rol = @medewerker_Rol_Nieuw
@@ -116,7 +127,6 @@ AS
 
     IF @TranCounter = 0 AND XACT_STATE() = 1
 		COMMIT TRANSACTION;
-
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
@@ -131,8 +141,8 @@ AS
 	END CATCH
 GO
 
---update beschikbare dagen van een medewerker
-CREATE PROCEDURE sp_WijzigBeschikbareDagen
+--SP 10 aanpassen medewerker_Beschikbaarheid
+CREATE PROCEDURE sp_WijzigMedewerkerBeschikbareDagen
 @medewerker_code VARCHAR(5),
 @maand DATE,
 @beschikbare_dagen INT
@@ -150,7 +160,8 @@ AS BEGIN
 		IF NOT EXISTS (SELECT '@'
 						FROM medewerker_beschikbaarheid
 						WHERE medewerker_code = @medewerker_code and (FORMAT(maand, 'yyyy-MM')) = (FORMAT(@maand, 'yyyy-MM')))
-			THROW 50019, 'Mederwerker is in de opgegeven maand nog niet ingepland', 16;
+
+			THROW 50019, 'Deze medewerker heeft geen beschikbare werkdagen voor de opgegeven maand.', 16;
 
 		UPDATE medewerker_beschikbaarheid
 		SET beschikbare_dagen = @beschikbare_dagen
@@ -173,8 +184,8 @@ AS BEGIN
 END
 GO
 
---SP het veranderen van een rol die een medewerker is toegekend.
-CREATE PROCEDURE sp_WijzigenMedewerkerRol
+--SP 11 aanpassen medewerker_rol
+CREATE PROCEDURE sp_WijzigMedewerkerRol
 @medewerker_code VARCHAR(5),
 @oude_rol        VARCHAR(40),
 @nieuwe_rol      VARCHAR(40)
@@ -191,6 +202,7 @@ AS
 		IF NOT EXISTS (SELECT medewerker_code
 					   FROM medewerker_rol
 					   WHERE medewerker_code = @medewerker_code AND medewerker_rol = @oude_rol)
+
 			THROW 50015, 'Medewerker in combinatie met deze rol bestaat niet.', 16;
 
 		UPDATE medewerker_rol
@@ -213,10 +225,10 @@ AS
 	END CATCH
 GO
 
---Sp aanpassen medewerker op project
+--SP 7 aanpassen medewerker_op_project
 CREATE PROCEDURE sp_WijzigenMedewerkerOpProject
 @project_code VARCHAR(20),
-@medewerker_code VARCHAR(5),
+@medewerker_code NVARCHAR(5),
 @nieuwe_ProjectRol VARCHAR(40)
 AS
 	SET NOCOUNT ON
@@ -230,12 +242,13 @@ AS
 	BEGIN TRY
 			EXECUTE sp_checkProjectRechten @projectcode = @project_code
 
-		IF NOT EXISTS (SELECT *
+		IF NOT EXISTS (SELECT '!'
 					   FROM medewerker_op_project
 				       WHERE project_code = @project_code AND medewerker_code = @medewerker_code)
-			THROW 50019, ' De medewerker met de opgegeven medewerker_code is niet aan dit project gekoppeld.', 16;
 
-		UPDATE MEDEWERKER_OP_PROJECT
+			THROW 50035, 'De medewerker met de opgegeven medewerker_code is niet aan dit project gekoppeld.', 16;
+
+		UPDATE medewerker_op_project
 		SET project_rol = @nieuwe_ProjectRol
 		WHERE project_code = @project_code AND medewerker_code = @medewerker_code;
 
@@ -255,9 +268,10 @@ AS
 	END CATCH
 GO
 
---SP 8 Toevoegen SP aanpassen medewerker_ingepland_project
+--SP 8 aanpassen medewerker_ingepland_project
 CREATE PROCEDURE sp_WijzigenMedewerkerIngeplandProject
-@id INT,
+@medewerker_code NVARCHAR (5),
+@project_code VARCHAR (20),
 @medewerker_uren INT,
 @maand_datum DATETIME
 AS
@@ -270,16 +284,19 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		IF NOT EXISTS (SELECT '!'
-				FROM medewerker_ingepland_project mip INNER JOIN medewerker_op_project mop
-				ON mip.id = mop.id
-				WHERE mip.id = @id)
+		DECLARE @id INT = (SELECT id
+						FROM medewerker_op_project
+						WHERE medewerker_code =  @medewerker_code AND project_code = @project_code)
 
-		THROW 50034, 'Er bestaat geen medewerker_ingepland_project record met de opgegeven id.', 16
+		IF NOT EXISTS (SELECT '!'
+				FROM medewerker_ingepland_project mip
+				WHERE mip.id = @id AND (FORMAT(mip.maand_datum, 'yyyy-MM'))  = (FORMAT(@maand_datum, 'yyyy-MM')))
+
+		THROW 50034, 'Er bestaat geen medewerker_ingepland_project record met de opgegeven gegevens.', 16
 
 		UPDATE medewerker_ingepland_project
 		SET medewerker_uren = @medewerker_uren
-		WHERE id = @id AND maand_datum = @maand_datum
+		WHERE id = @id AND (FORMAT(maand_datum, 'yyyy-MM')) = (FORMAT(@maand_datum, 'yyyy-MM'))
 
 		IF @TranCounter = 0 AND XACT_STATE() = 1
 			COMMIT TRANSACTION;
@@ -297,7 +314,7 @@ AS
 	END CATCH
 GO
 
---SP 9 Toevoegen SP aanpassen medewerker.
+--SP 9 aanpassen medewerker
 CREATE PROCEDURE sp_WijzigenMedewerker
 @medewerker_code VARCHAR(5),
 @achternaam NVARCHAR(20),
@@ -339,7 +356,7 @@ AS BEGIN
 END
 GO
 
---SP wijzigen projecten
+--SP 6 SP aanpassen projecten
 CREATE PROCEDURE sp_WijzigProject
 @project_code VARCHAR(20),
 @categorie_naam VARCHAR(40),
@@ -347,7 +364,7 @@ CREATE PROCEDURE sp_WijzigProject
 @eind_datum DATETIME,
 @project_naam VARCHAR(40),
 @verwachte_uren INT
-AS BEGIN
+AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
@@ -363,7 +380,7 @@ AS BEGIN
 					FROM project
 					WHERE project_code = @project_code)
 
-				THROW 50027, 'Opgegeven projectcode bestaat niet', 16
+				THROW 50027, 'Opgegeven projectcode bestaat niet.', 16
 
 		UPDATE project
 		SET categorie_naam = @categorie_naam,
@@ -387,5 +404,4 @@ AS BEGIN
 			END;
 		THROW
 	END CATCH
-END
 GO
