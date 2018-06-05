@@ -457,3 +457,50 @@ AS
 		THROW
 	END CATCH
 GO
+
+CREATE PROCEDURE sp_AanpassenProjectlidOpSubproject
+	@medewerker_code VARCHAR(6),
+	@project_code VARCHAR(40),
+	@subproject_naam VARCHAR(40),
+	@nieuwe_uren INT
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		EXECUTE sp_checkProjectRechten @projectcode = @project_code
+
+		DECLARE @id INT = (	SELECT id
+												FROM medewerker_op_project
+												WHERE medewerker_code = @medewerker_code AND project_code = @project_code)
+
+		IF(NOT EXISTS(SELECT '!'
+									FROM projectlid_op_subproject
+									WHERE id = @id AND project_code = @project_code AND subproject_naam = @subproject_naam
+		))
+			THROW 50039, 'Deze combinatie van gebruiker en subproject bestaat niet.', 16
+
+		UPDATE projectlid_op_subproject
+		SET subproject_uren = @nieuwe_uren
+		WHERE id = @id AND project_code = @project_code AND subproject_naam = @subproject_naam
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+GO

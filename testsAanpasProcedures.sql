@@ -431,3 +431,43 @@ BEGIN CATCH
 END CATCH
 ROLLBACK TRANSACTION
 GO
+
+--sp_AanpassenProjectlidOpSubproject
+--success
+BEGIN TRANSACTION
+BEGIN TRY
+	IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
+		DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
+	INSERT INTO medewerker VALUES ('JP', 'Julie', 'Provost')
+	INSERT INTO project_categorie VALUES ('cat', NULL)
+	INSERT INTO project VALUES ('proj', 'cat', 'jan 2018', 'jan 2020', 'Groene thee', '12002')
+	INSERT INTO project_rol_type VALUES ('projectleider')
+	INSERT INTO medewerker_op_project VALUES ('proj', 'JP', 'projectleider')
+	INSERT INTO subproject_categorie VALUES ('cat')
+	INSERT INTO subproject VALUES ('proj', 'sub', 'cat', 12)
+	INSERT INTO projectlid_op_subproject VALUES (1, 'proj', 'sub', 10)
+
+	EXECUTE sp_AanpassenProjectlidOpSubproject @medewerker_code = 'JP', @project_code = 'proj', @subproject_naam = 'sub', @nieuwe_uren = 9
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Deze combinatie van gebruiker en subproject bestaat niet.
+BEGIN TRANSACTION
+BEGIN TRY
+	EXECUTE sp_AanpassenProjectlidOpSubproject @medewerker_code = 'JP', @project_code = 'proj', @subproject_naam = 'sub', @nieuwe_uren = 9
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
