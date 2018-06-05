@@ -1,12 +1,33 @@
 /*
+         ___
+        /___\     Hierbij verklaar ik deze database heilig
+       |/. .\|  /
+       (   > ) /
+        \ < /
+         )_(
+       .;_u_;.
+      /       \
+     ; / _|_ \ ;
+     | |  |  | |
+     | \  '  / |
+     | /\   /\ |
+     |/\/   \/\|
+     `|       |`
+      |       |
+      `;""""";`
+       |     |
+       |_____|
+        / | \
+       (_/ \_)
+
 Alle tests volgen dezelfde template:
 securityadmin kan gebuirkers aanmaken
---zet hier de verwach0te foutmelding neer of zet hier neer dat het een succesvole test is.
-BEGIN TRANSACTION --Open transaction, zodat de test niet de echte database beïnvloedert
+--zet hier de verwachte foutmelding neer of zet hier neer dat het een succesvolle test is.
+BEGIN TRANSACTION --Open transaction, zodat de duivelse gedaanten van de tests de database niet ontheiligen.
 BEGIN TRY
 -- Test gaat hier
 END TRY
-BEGIN CATCH -- Wanneer er een error is gegooid in de test, word deze hier geprint.
+BEGIN CATCH -- Wanneer er een error is gegooid in de test, wordt deze hier geprint.
 	PRINT 'CATCH RESULTATEN:'
 	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
 	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())

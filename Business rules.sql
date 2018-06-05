@@ -298,14 +298,14 @@ CREATE TRIGGER trg_SubCategorieHeeftHoofdCategorie
 AS
 BEGIN
 BEGIN TRY -- dubbele negation
-  IF NOT EXISTS ((SELECT	hoofdcategorie --  als een parent wordt geselecteerd is de ingevulde waarde geldig.
-				  FROM		inserted -- als één van de twee voorwaardes true resulteert wordt de parent van inserted geselecteerd
+  IF NOT EXISTS ((SELECT	hoofdcategorie --  als een hoofdcategorie wordt geselecteerd is de ingevulde waarde geldig.
+				  FROM		inserted -- als één van de twee voorwaardes true resulteert wordt de hoofdcategorie van inserted geselecteerd
 				  WHERE		EXISTS (SELECT	naam -- eerste voorwaarde
 									FROM	project_categorie
-									WHERE	naam = inserted.hoofdcategorie) -- checkt of de opgegeven parent daadwerkelijk bestaat
+									WHERE	naam = inserted.hoofdcategorie) -- checkt of de opgegeven hoofdcategorie daadwerkelijk bestaat
 							OR --tweede voorwaarde
-							hoofdcategorie IS NULL)) --als de parent NULL is betekent het dat de categorie een hoofdcategorie is
-	THROW 50003, 'Deze subcategorie heeft geen geldige hoofdcategorie', 16 -- wordt gegooid als geen parent wordt geselecteerd uit de eerste select
+							hoofdcategorie IS NULL)) --als de hoofdcategorie NULL is betekent het dat de categorie een hoofdcategorie is
+	THROW 50003, 'Deze subcategorie heeft geen geldige hoofdcategorie', 16 -- wordt gegooid als geen hoofdcategorie wordt geselecteerd uit de eerste select
   END TRY
   BEGIN CATCH
     THROW

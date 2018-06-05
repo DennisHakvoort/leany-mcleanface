@@ -66,7 +66,7 @@ GO
 
 --SP 4 aanpassen project_rol_type
 /*
-Deze SP is voor het aanpassen van mogelijke projectrollen. De oude naam wordt opgegeven, 
+Deze SP is voor het aanpassen van mogelijke projectrollen. De oude naam wordt opgegeven,
 en de naam waarmee die vervangen wordt.
 */
 CREATE PROCEDURE sp_WijzigProjectRol
@@ -82,7 +82,7 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-  
+
   	IF NOT EXISTS (SELECT	project_rol
 				   FROM		project_rol_type
 				   WHERE	project_rol = @project_rol_oud)
@@ -176,7 +176,7 @@ AS BEGIN
 
 		IF NOT EXISTS  (SELECT	'@'
 						FROM	medewerker_beschikbaarheid
-						WHERE	medewerker_code = @medewerker_code AND 
+						WHERE	medewerker_code = @medewerker_code AND
 								(FORMAT(maand, 'yyyy-MM')) = (FORMAT(@maand, 'yyyy-MM')))
 			--Hier wordt de opgevraagd of er voor de betreffende medewerker-maand-combinatie
 			--wat is ingevuld.
@@ -184,7 +184,7 @@ AS BEGIN
 
 		UPDATE	medewerker_beschikbaarheid --Hier worden de wijzigingen doorgevoerd.
 		SET		beschikbare_dagen = @beschikbare_dagen
-		WHERE	medewerker_code = @medewerker_code AND 
+		WHERE	medewerker_code = @medewerker_code AND
 				(FORMAT(maand, 'yyyy-MM')) = (FORMAT(@maand, 'yyyy-MM'));
 
 		IF @TranCounter = 0 AND XACT_STATE() = 1
@@ -225,7 +225,7 @@ AS
 	BEGIN TRY
 		IF NOT EXISTS (SELECT	medewerker_code
 					   FROM		medewerker_rol
-					   WHERE	medewerker_code = @medewerker_code AND 
+					   WHERE	medewerker_code = @medewerker_code AND
 								medewerker_rol = @oude_rol)
 			--Hier wordt nagegaan of de combinatie medewerkercode-rol voorkomt in de database.
 			--Zo niet, wordt een error geworpen.
@@ -233,7 +233,7 @@ AS
 
 		UPDATE	medewerker_rol --De wijziging wordt doorgevoerd.
 		SET		medewerker_rol = @nieuwe_rol
-		WHERE	medewerker_code = @medewerker_code AND 
+		WHERE	medewerker_code = @medewerker_code AND
 				medewerker_rol = @oude_rol;
 
 		IF @TranCounter = 0 AND XACT_STATE() = 1
@@ -272,20 +272,20 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-			EXECUTE sp_checkProjectRechten @projectcode = @project_code 
-			--Hierboven wordt gecheckt of de huidige gebruiker de benodigde rechten heeft om 
+			EXECUTE sp_checkProjectRechten @projectcode = @project_code
+			--Hierboven wordt gecheckt of de huidige gebruiker de benodigde rechten heeft om
 			--het betreffende project aan te passen.
 
 		IF NOT EXISTS (SELECT	'!'
 					   FROM		medewerker_op_project
-				       WHERE	project_code = @project_code AND 
+				       WHERE	project_code = @project_code AND
 								medewerker_code = @medewerker_code)
 			--Als de opgegeven medewerker niet aan het opgegeven project is verbonden, wordt een error geworpen.
 			THROW 50035, 'De medewerker met de opgegeven medewerker_code is niet aan dit project gekoppeld.', 16;
 
 		UPDATE	medewerker_op_project --Hier wordt de data gewijzigd.
 		SET		project_rol = @nieuwe_ProjectRol
-		WHERE	project_code = @project_code AND 
+		WHERE	project_code = @project_code AND
 				medewerker_code = @medewerker_code;
 
 		IF @TranCounter = 0 AND XACT_STATE() = 1
@@ -307,7 +307,7 @@ GO
 --SP 8 aanpassen medewerker_ingepland_project
 /*
 Met deze stored procedure kan de data met betrekking tot de ingeplande uren van een
-medewerker op een project worden aangepast. Hiervoor zijn de medewerkercode, de projectcode, 
+medewerker op een project worden aangepast. Hiervoor zijn de medewerkercode, de projectcode,
 het nieuwe aantal uren en de maand nodig.
 */
 CREATE PROCEDURE sp_WijzigenMedewerkerIngeplandProject
@@ -327,19 +327,19 @@ AS
 	BEGIN TRY
 		DECLARE @id INT = (	SELECT	id --KoppelID wordt opgevraagd voor data-opvraag medewerker_ingepland_project.
 							FROM	medewerker_op_project
-							WHERE	medewerker_code =  @medewerker_code AND 
+							WHERE	medewerker_code =  @medewerker_code AND
 									project_code = @project_code)
 
 		IF NOT EXISTS (	SELECT	'!'
 						FROM	medewerker_ingepland_project mip
-						WHERE	mip.id = @id AND 
+						WHERE	mip.id = @id AND
 								(FORMAT(mip.maand_datum, 'yyyy-MM'))  = (FORMAT(@maand_datum, 'yyyy-MM')))--format voor vergelijken datums
 		--Als de medewerker niet is ingepland voor het project in de betreffende maand, wordt een error geworpen.
 		THROW 50034, 'Er bestaat geen medewerker_ingepland_project record met de opgegeven gegevens.', 16
 
 		UPDATE	medewerker_ingepland_project --Hier wordt de data geüpdatet.
 		SET		medewerker_uren = @medewerker_uren
-		WHERE	id = @id AND 
+		WHERE	id = @id AND
 				(FORMAT(maand_datum, 'yyyy-MM')) = (FORMAT(@maand_datum, 'yyyy-MM'))
 
 		IF @TranCounter = 0 AND XACT_STATE() = 1
@@ -406,7 +406,7 @@ GO
 
 --SP 6 SP aanpassen projecten
 /*
-Hier kunnen projectgegevens worden aangepast aan de hand van de projectcode 
+Hier kunnen projectgegevens worden aangepast aan de hand van de projectcode
 en de nieuwe informatie die daarbij hoort.
 */
 CREATE PROCEDURE sp_WijzigProject
