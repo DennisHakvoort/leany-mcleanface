@@ -434,6 +434,7 @@ GO
 
 --Test sp_WijzigSubproject
 --Succestest
+--De naam van een subproject wordt veranderd van Testsub naar Subtest.
 BEGIN TRANSACTION
 BEGIN TRY
 	DECLARE @date DATETIME = (getdate() + 10);
@@ -464,8 +465,10 @@ GO
 
 --Test sp_WijzigSubproject
 --Faaltest
+--De projectcode die wordt meegegeven aan de procedure
+--komt niet overeen met de daadwerkelijke projectcode.
 /*
-ERROR NUMMER:	50028
+ERROR NUMMER:	50044
 ERROR SEVERITY:	16
 ERROR MESSAGE:	Dit subproject is niet gevonden.
 */
