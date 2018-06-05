@@ -8,9 +8,10 @@ GO
 
 USE LeanDb
 GO
+
 /*==============================================================*/
 /* DBMS name:      Microsoft SQL Server 2008                    */
-/* Created on:     4-6-2018 16:30:17                            */
+/* Created on:     5-6-2018 09:53:33                            */
 /*==============================================================*/
 
 
@@ -509,8 +510,8 @@ go
 /*==============================================================*/
 create table medewerker (
    MEDEWERKER_CODE      MEDEWERKER_CODE      not null,
-   ACHTERNAAM           NAAM                 not null,
    VOORNAAM             NAAM                 not null,
+   ACHTERNAAM           NAAM                 not null,
    constraint PK_MEDEWERKER primary key nonclustered (MEDEWERKER_CODE)
 )
 go
@@ -539,8 +540,8 @@ go
 /*==============================================================*/
 create table medewerker_ingepland_project (
    ID                   integer              not null,
-   MAAND_DATUM          MAAND                not null,
    MEDEWERKER_UREN      UREN                 not null,
+   MAAND_DATUM          MAAND                not null,
    constraint PK_MEDEWERKER_INGEPLAND_PROJEC primary key nonclustered (MAAND_DATUM, ID)
 )
 go
@@ -557,10 +558,10 @@ go
 /* Table: medewerker_op_project                                 */
 /*==============================================================*/
 create table medewerker_op_project (
-   MEDEWERKER_CODE      MEDEWERKER_CODE      not null,
+   ID                   integer              not null           IDENTITY,
    PROJECT_CODE         PROJECT_CODE         not null,
+   MEDEWERKER_CODE      MEDEWERKER_CODE      not null,
    PROJECT_ROL          PROJECT_ROL          not null,
-   ID                   integer              not null,
    constraint PK_MEDEWERKER_OP_PROJECT primary key (ID)
 )
 go
@@ -630,9 +631,9 @@ go
 create table project (
    PROJECT_CODE         PROJECT_CODE         not null,
    CATEGORIE_NAAM       CATEGORIE_NAAM       not null,
-   PROJECT_NAAM         PROJECT_NAAM         not null,
    BEGIN_DATUM          DATUM                not null,
    EIND_DATUM           DATUM                not null,
+   PROJECT_NAAM         PROJECT_NAAM         not null,
    VERWACHTE_UREN       UREN                 null,
    constraint PK_PROJECT primary key nonclustered (PROJECT_CODE)
 )
