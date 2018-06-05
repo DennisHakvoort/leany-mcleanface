@@ -41,7 +41,7 @@ AS
 			THROW 50009, 'Deze projectcategorie bestaat niet.', 16;
 
 		UPDATE project_categorie
-		SET naam = @naamNieuw, parent = @parentNieuw
+		SET naam = @naamNieuw, hoofdcategorie =@parentNieuw
 		WHERE naam = @naamOud;
 
 		IF @TranCounter = 0 AND XACT_STATE() = 1
@@ -74,7 +74,6 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-
   	IF NOT EXISTS (SELECT project_rol
 				   FROM project_rol_type
 				   WHERE	 project_rol = @project_rol_oud)

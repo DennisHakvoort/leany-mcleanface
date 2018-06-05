@@ -42,7 +42,7 @@ ON voorbeeld_tabel
 AFTER INSERT, UPDATE, DELETE
 AS
 BEGIN
-BEGIN TRY 
+BEGIN TRY
 	--iets
 END TRY
 BEGIN CATCH
@@ -61,7 +61,7 @@ GO
 
 --PROCEDURE OM CONSTRAINTS TE DROPPEN ALS DEZE BESTAAN
 /*
-Deze procedure verwijdert opgegeven constraints van tabellen. 
+Deze procedure verwijdert opgegeven constraints van tabellen.
 */
 DROP PROCEDURE IF EXISTS sp_DropConstraint
 GO
@@ -75,7 +75,7 @@ CREATE PROCEDURE sp_DropConstraint
 		EXEC sys.sp_executesql @stmt = @sql --statement wordt geëxecute
 	END TRY
 	BEGIN CATCH
-		--Print in plaats van raiserror, om ervoor te zorgen dat het script gewoon doorgaat. 
+		--Print in plaats van raiserror, om ervoor te zorgen dat het script gewoon doorgaat.
 		PRINT 'Het volgende constraint is niet gedropt, waarschijnlijk omdat deze niet bestond: ' + @Constraint_name
 	END CATCH
 GO
@@ -135,7 +135,7 @@ AS BEGIN
         BEGIN
           INSERT INTO medewerker(medewerker_code, achternaam, voornaam)--Voegt de medewerker toe
             VALUES(@medewerker_code, @achternaam, @voornaam);
-          INSERT INTO medewerker_rol 
+          INSERT INTO medewerker_rol
 			VALUES (@medewerker_code, @rol)--Geeft meteen rol aan medewerker (mandatory child)
 
           DECLARE @sql NVARCHAR(255)
@@ -192,7 +192,7 @@ AS
 	BEGIN TRY
 			--Onderstaande query gaat na of er sprake is van een gebrek aan beschikbaarheid in de betreffende maand.
 		 IF EXISTS (SELECT	'!'
-					FROM	medewerker_op_project m 
+					FROM	medewerker_op_project m
 							LEFT OUTER JOIN medewerker_ingepland_project i ON m.ID = i.ID
 							LEFT OUTER JOIN medewerker_beschikbaarheid b ON m.medewerker_code = b.medewerker_code
 					WHERE	@id = m.id AND (b.beschikbare_dagen = 0 OR b.beschikbare_dagen IS NULL) AND b.maand = @maand_datum)
@@ -250,14 +250,14 @@ AS BEGIN
 	DECLARE @id INT; -- id representeert de combinatie van een medewerker en project. Wordt uit de tabel medewerker_op_project opgehaald.
 		SET @id = (SELECT	id
 				   FROM		medewerker_op_project
-				   WHERE	medewerker_code = @medewerker_code AND	
+				   WHERE	medewerker_code = @medewerker_code AND
 							project_code = @project_code)
 
 		IF EXISTS (	SELECT		1 --Onderstaande query telt het maandelijkse aantal uren op en vergelijkt het met maximum.
 					FROM		medewerker_ingepland_project mip
 								INNER JOIN medewerker_op_project mop ON mip.id = mop.id
 								INNER JOIN project p on mop.project_code = p.project_code
-					WHERE		mop.medewerker_code = @medewerker_code AND	
+					WHERE		mop.medewerker_code = @medewerker_code AND
 								FORMAT(mip.maand_datum, 'yyyy-MM') = FORMAT(GETDATE(), 'yyyy-MM') --format naar yyyy-MM zodat het vergeleken kan worden
 					GROUP BY	medewerker_code
 					HAVING		SUM(mip.medewerker_uren) + @medewerker_uren <= 184) -- 184 is het maximum aantal uren per maand voor een medewerker
@@ -291,20 +291,20 @@ ALTER TABLE project WITH CHECK
 	ADD CONSTRAINT CK_EINDDATUM_NA_BEGINDATUM CHECK (eind_datum > begin_datum)
 GO
 
---BR8 project_categorie(parent) moet een waarde zijn uit de project_categorie(naam) of NULL. Het kan niet naar zichzelf verwijzen.
+--BR8 project_categorie(hoofdcategorie) moet een waarde zijn uit de project_categorie(naam) of NULL. Het kan niet naar zichzelf verwijzen.
 CREATE TRIGGER trg_SubCategorieHeeftHoofdCategorie
  ON project_categorie
  AFTER INSERT, UPDATE
 AS
 BEGIN
 BEGIN TRY -- dubbele negation
-  IF NOT EXISTS ((SELECT	parent --  als een parent wordt geselecteerd is de ingevulde waarde geldig.
+  IF NOT EXISTS ((SELECT	hoofdcategorie --  als een parent wordt geselecteerd is de ingevulde waarde geldig.
 				  FROM		inserted -- als één van de twee voorwaardes true resulteert wordt de parent van inserted geselecteerd
 				  WHERE		EXISTS (SELECT	naam -- eerste voorwaarde
 									FROM	project_categorie
-									WHERE	naam = inserted.parent) -- checkt of de opgegeven parent daadwerkelijk bestaat
+									WHERE	naam = inserted.hoofdcategorie) -- checkt of de opgegeven parent daadwerkelijk bestaat
 							OR --tweede voorwaarde
-							parent IS NULL)) --als de parent NULL is betekent het dat de categorie een hoofdcategorie is  
+							hoofdcategorie IS NULL)) --als de parent NULL is betekent het dat de categorie een hoofdcategorie is
 	THROW 50003, 'Deze subcategorie heeft geen geldige hoofdcategorie', 16 -- wordt gegooid als geen parent wordt geselecteerd uit de eerste select
   END TRY
   BEGIN CATCH
@@ -326,7 +326,7 @@ Is dit het geval, wordt er een error geworpen.
 */
   IF EXISTS ((SELECT	naam
 			  FROM		deleted
-			  WHERE		naam IN (SELECT parent
+			  WHERE		naam IN (SELECT hoofdcategorie
 								 FROM	project_categorie)))
 		THROW 50002, 'Kan geen categorie met met subcategories verwijderen', 16
   END TRY
@@ -367,14 +367,14 @@ CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Ingepland
 			BEGIN
 				--Hier wordt nagekeken of er niks wordt aangepast aan geplande uren van projecten die al verstreken zijn.
 				IF (EXISTS(	SELECT	'!'
-							FROM	inserted I 
-									INNER JOIN medewerker_op_project mip ON i.id = mip.id 
+							FROM	inserted I
+									INNER JOIN medewerker_op_project mip ON i.id = mip.id
 									INNER JOIN project p on mip.project_code = p.project_code
 							WHERE	p.eind_datum < CURRENT_TIMESTAMP)--einde project voor huidige datum/tijd.
 					OR
 						EXISTS( SELECT	'!'
-								FROM	deleted d 
-										INNER JOIN medewerker_op_project mip ON d.id = mip.id 
+								FROM	deleted d
+										INNER JOIN medewerker_op_project mip ON d.id = mip.id
 										INNER JOIN project p on mip.project_code = p.project_code
 								WHERE p.eind_datum < CURRENT_TIMESTAMP))
 					BEGIN
@@ -396,7 +396,7 @@ CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
 				dat is verlopen.
 				*/
 				IF (EXISTS(	SELECT	'!'
-							FROM	inserted i 
+							FROM	inserted i
 									INNER JOIN project p ON i.project_code = p.project_code
 							WHERE	p.eind_datum < CURRENT_TIMESTAMP) --project-einddatum voor huidige datum
 					OR	EXISTS(	SELECT  '!'
@@ -425,7 +425,7 @@ CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 							FROM	inserted i --Right join kan hier omdat pure inserts al in de procedure worden afgevangen.
 									RIGHT JOIN deleted d ON i.medewerker_code = d.medewerker_code
 							WHERE	i.maand < CURRENT_TIMESTAMP OR --Inserted maand voor huidige datum.
-									d.maand < CURRENT_TIMESTAMP) --Deleted maand voor huidige datum.
+									d.maand < CURRENT_TIMESTAMP)) --Deleted maand voor huidige datum.
 						THROW 50010, 'Verstreken maand kan niet meer aangepast worden.', 16
 			END
 	END
@@ -438,35 +438,35 @@ AFTER UPDATE, INSERT, DELETE
 AS
 	BEGIN
 		IF(@@ROWCOUNT > 0)
-			BEGIN		
+			BEGIN
 				/*
 				Hier wordt bekeken of bij de gewijzigde waardes sprake is van een planningsmaand die al is verstreken.
 				Is dit het geval, wordt error 50011 geworpen.
 				*/
 				IF	(EXISTS(SELECT	'!'
-							FROM	inserted i 
+							FROM	inserted i
 							WHERE	FORMAT(i.maand_datum, 'yyyy-MM') < FORMAT(GETDATE(), 'yyyy-MM'))
 							--Datums worden omgezet naar hetzelfde formaat en vergeleken met elkaar.
 					OR
 						EXISTS( SELECT	'!'
-								FROM	deleted d 
+								FROM	deleted d
 								WHERE	FORMAT(d.maand_datum, 'yyyy-MM')  < FORMAT(GETDATE(), 'yyyy-MM')))
 					THROW 50011, 'Medewerker-uren voor een verstreken maand kunnen niet meer aangepast worden.', 16
 
 				/*
-				Deze selectqueries achterhalen of het project waar de bettreffende medewerker voor ingepland is, 
+				Deze selectqueries achterhalen of het project waar de bettreffende medewerker voor ingepland is,
 				niet al voorbij is. Dit wordt bepaald door de eind_datumwaarde te vergelijken met de huidige.
 				Is dit het geval, wordt error 50001 geworpen.
 				*/
 				IF (EXISTS( SELECT	'!'
-							FROM	inserted i 
+							FROM	inserted i
 									INNER JOIN medewerker_op_project mop ON i.id = mop.id
 									INNER JOIN project p ON mop.project_code = p.project_code
 							WHERE	eind_datum < CURRENT_TIMESTAMP)
 							--Door middel van de joins wordt het juiste project opgehaald, en diens einddatum vergeleken met
 							--de huidige einddatum.
 				OR (EXISTS(	SELECT '!'
-							FROM	deleted d 
+							FROM	deleted d
 									INNER JOIN medewerker_op_project mop ON d.id = mop.id
 									INNER JOIN project p ON mop.project_code = p.project_code
 							WHERE	eind_datum < CURRENT_TIMESTAMP)))
@@ -492,12 +492,12 @@ AS BEGIN
 	BEGIN TRY
 		/*
 		Onderstaande query wordt gebruikt om te bepalen of er al beschikbaarheid bekend is voor de medewerker in de ingevoerde maand.
-		Het is namelijk niet mogelijk om dit opnieuw in te vullen. 
+		Het is namelijk niet mogelijk om dit opnieuw in te vullen.
 		Hier is een speciale aanpasprocedure voor.
 		*/
 		IF EXISTS  (SELECT	'@'
 					FROM	medewerker_beschikbaarheid
-					WHERE	medewerker_code = @medewerker_code AND 
+					WHERE	medewerker_code = @medewerker_code AND
 							FORMAT(maand, 'yyyy-MM') = FORMAT(@maand, 'yyyy-MM')) --Datumformaten gelijkgezet en datums vergeleken.
 						THROW 50016, 'Medewerkerbeschikbaarheid is voor de ingevoerde maand al aangegeven', 16;
 		/*
@@ -506,7 +506,7 @@ AS BEGIN
 		*/
 		IF (FORMAT(@maand, 'yyyy-MM') < FORMAT(GETDATE(), 'yyyy-MM'))
 						THROW 50017, 'Het is niet mogelijk om medewerkerbeschikbaarheid in te vullen voor een verstreken maand.', 16;
-		
+
 		INSERT INTO medewerker_beschikbaarheid(medewerker_code, maand, beschikbare_dagen)
 			VALUES	(@medewerker_code, @maand, @beschikbare_dagen);
 	END TRY
@@ -541,7 +541,7 @@ BEGIN
 				  FROM		deleted d
 				  WHERE		d.begin_datum < GETDATE() AND --begindatum voor huidige datum
 							d.begin_datum NOT IN (SELECT	i.begin_datum --nagaan of begindatum überhaupt is aangepast
-												  FROM		inserted i 
+												  FROM		inserted i
 												  WHERE		i.project_code = d.project_code))
 		THROW 50025, 'Begindatum mag niet worden aangepast als het project is gestart.', 16
 		/*
@@ -592,7 +592,7 @@ CREATE PROCEDURE sp_checkProjectRechten
  AS
  BEGIN
  /*
- Onderstaande queries gaan na of de databasegebruiker die op dit moment is ingelogd 
+ Onderstaande queries gaan na of de databasegebruiker die op dit moment is ingelogd
  het recht heeft om projecten aan te passen.
  */
   IF(EXISTS(SELECT	'!'
@@ -603,7 +603,7 @@ CREATE PROCEDURE sp_checkProjectRechten
     OR
      EXISTS(SELECT	'!'
             FROM	medewerker_rol
-            WHERE	medewerker_rol = 'Superuser' AND 
+            WHERE	medewerker_rol = 'Superuser' AND
 					medewerker_code = CURRENT_USER)
 		OR CURRENT_USER = 'dbo'
   )
@@ -625,7 +625,7 @@ AS BEGIN
 		wordt dit teruggedraaid en error 50032 geworpen.
 		*/
 			IF EXISTS  (SELECT	'@'
-						FROM	deleted d 
+						FROM	deleted d
 								RIGHT JOIN medewerker_rol mr ON d.medewerker_code = mr.medewerker_code
 						HAVING	COUNT(*) < 1)
 				THROW 50032, 'Medewerkerrol kan niet worden verwijderd. Een medewerker moet een rol hebben.', 16
