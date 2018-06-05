@@ -97,7 +97,7 @@ GO
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker_rol_type VALUES ('test')
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aaaa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
+EXEC sp_InsertMedewerker @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aaaa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -114,8 +114,8 @@ GO
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker_rol_type VALUES ('test')
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
+EXEC sp_InsertMedewerker @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
+EXEC sp_InsertMedewerker @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -130,8 +130,8 @@ GO
 --[S00016][50020] Dit is geen bestaande rol
 BEGIN TRANSACTION
 BEGIN TRY
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
+EXEC sp_InsertMedewerker @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
+EXEC sp_InsertMedewerker @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -145,7 +145,7 @@ GO
 --[S00016][50020] Dit is geen bestaande rol
 BEGIN TRANSACTION --werken allemaal
 BEGIN TRY
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
+EXEC sp_InsertMedewerker @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -276,7 +276,7 @@ BEGIN TRANSACTION
 
 		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
 			VALUES	((select IDENT_CURRENT('medewerker_op_project'))-1, 10, CONVERT(date, @date));
-		EXEC sp_ProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = -10, @maand_datum = @date
+		EXEC sp_insertProjecturenMedewerker @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = -10, @maand_datum = @date
 		PRINT 'test mislukt'
 END TRY
 BEGIN CATCH
@@ -320,7 +320,7 @@ BEGIN TRANSACTION
 		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
 			VALUES	((select IDENT_CURRENT('medewerker_op_project'))-1, 10, CONVERT(date, @date));
 		
-		EXEC sp_ProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 1000, @maand_datum = @date
+		EXEC sp_insertProjecturenMedewerker @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 1000, @maand_datum = @date
 		PRINT 'test mislukt'
 END TRY
 BEGIN CATCH
@@ -363,7 +363,7 @@ BEGIN TRANSACTION
 		
 		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
 			VALUES	((select IDENT_CURRENT('medewerker_op_project')), 10, CONVERT(date, @date));
-		EXEC sp_ProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C11', @medewerker_uren = 10, @maand_datum = @date
+		EXEC sp_insertProjecturenMedewerker @medewerker_code = 'aa', @project_code = 'PROJC0101C11', @medewerker_uren = 10, @maand_datum = @date
 		PRINT 'test succesvol'
 END TRY
 BEGIN CATCH
@@ -1196,7 +1196,7 @@ GO
 BEGIN TRANSACTION
 	BEGIN TRY
 		INSERT INTO medewerker VALUES ('JD', 'Jan', 'Dieter')
-		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'JD', @maand = '1900-01-01', @beschikbare_dagen = 20
+		EXEC sp_InsertBeschikbareDagen @medewerker_code = 'JD', @maand = '1900-01-01', @beschikbare_dagen = 20
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -1214,7 +1214,7 @@ BEGIN TRY
 	DECLARE @date DATETIME = GETDATE();
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 		VALUES ('BR', 'Boris', 'Brilmans')
-	EXEC sp_invullenBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
+	EXEC sp_InsertBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -1232,8 +1232,8 @@ BEGIN TRANSACTION
 		DECLARE @date DATETIME = GETDATE();
 		INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 			VALUES ('BRN', 'Borido', 'Borisen')
-		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
-		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
+		EXEC sp_InsertBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
+		EXEC sp_InsertBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -1439,7 +1439,7 @@ ROLLBACK TRANSACTION
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker_rol_type VALUES ('Medewerker')
-EXECUTE sp_MedewerkerToevoegen @achternaam = 'Peterson', @voornaam = 'Johnson', @medewerker_code = 'jope', @wachtwoord = 'VeiligWachtw00rd', @rol = 'Medewerker';
+EXECUTE sp_InsertMedewerker @achternaam = 'Peterson', @voornaam = 'Johnson', @medewerker_code = 'jope', @wachtwoord = 'VeiligWachtw00rd', @rol = 'Medewerker';
 INSERT INTO project_rol_type VALUES ('Projectleider')
 INSERT INTO project_categorie VALUES ('cat', NULL)
 INSERT INTO project VALUES ('test', 'cat', 'jan 2019', 'feb 2020', 'testproject', 12)
@@ -1461,7 +1461,7 @@ ROLLBACK TRANSACTION
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker_rol_type VALUES ('Superuser')
-EXECUTE sp_MedewerkerToevoegen @achternaam = 'Peterson', @voornaam = 'Johnson', @medewerker_code = 'jope', @wachtwoord = 'VeiligWachtw00rd', @rol = 'Superuser';
+EXECUTE sp_InsertMedewerker @achternaam = 'Peterson', @voornaam = 'Johnson', @medewerker_code = 'jope', @wachtwoord = 'VeiligWachtw00rd', @rol = 'Superuser';
 INSERT INTO project_rol_type VALUES ('Programmeuse')
 INSERT INTO project_categorie VALUES ('cat', NULL)
 INSERT INTO project VALUES ('test', 'cat', 'jan 2019', 'feb 2020', 'testproject', 12)
@@ -1484,7 +1484,7 @@ ROLLBACK TRANSACTION
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker_rol_type VALUES ('Medewerker')
-EXECUTE sp_MedewerkerToevoegen @achternaam = 'Peterson', @voornaam = 'Johnson', @medewerker_code = 'jope', @wachtwoord = 'VeiligWachtw00rd', @rol = 'Medewerker';
+EXECUTE sp_InsertMedewerker @achternaam = 'Peterson', @voornaam = 'Johnson', @medewerker_code = 'jope', @wachtwoord = 'VeiligWachtw00rd', @rol = 'Medewerker';
 INSERT INTO project_rol_type VALUES ('Programmeuse')
 INSERT INTO project_categorie VALUES ('cat', NULL)
 INSERT INTO project VALUES ('test', 'cat', 'jan 2019', 'feb 2020', 'testproject', 12)
