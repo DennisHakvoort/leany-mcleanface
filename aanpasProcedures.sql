@@ -469,44 +469,43 @@ CREATE PROCEDURE sp_WijzigSubproject
 @subproject_naam_nieuw VARCHAR(40),
 @subproject_categorie_naam VARCHAR(40),
 @subproject_verwachte_uren INT
-AS BEGIN
-	SET NOCOUNT ON
-	SET XACT_ABORT OFF
-	DECLARE @TranCounter INT;
-	SET @TranCounter = @@TRANCOUNT;
-	IF @TranCounter > 0
-		SAVE TRANSACTION ProcedureSave;
+AS 
+SET NOCOUNT ON
+SET XACT_ABORT OFF
+DECLARE @TranCounter INT;
+SET @TranCounter = @@TRANCOUNT;
+IF @TranCounter > 0
+	SAVE TRANSACTION ProcedureSave;
+ELSE
+	BEGIN TRANSACTION;
+BEGIN TRY
+        IF NOT EXISTS  (SELECT	'!'
+						FROM	subproject
+						WHERE	project_code = @project_code AND
+								subproject_naam = @subproject_naam_oud)
+	--Hier wordt nagekeken of er gegevens bekend zijn bij de opgegeven combinatie projectcode-subprojectnaam.
+	THROW 50044, 'Dit subproject is niet gevonden.', 16;
+
+	UPDATE	subproject --Wijzigingen worden doorgevoerd.
+	SET		project_code = @project_code,
+			subproject_naam = @subproject_naam_nieuw,
+			subproject_categorie_naam = @subproject_categorie_naam,
+			subproject_verwachte_uren = @subproject_verwachte_uren
+	WHERE	project_code = @project_code AND
+			subproject_naam = @subproject_naam_oud
+
+	IF @TranCounter = 0 AND XACT_STATE() = 1
+		COMMIT TRANSACTION;
+END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+		BEGIN
+			IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+		END;
 	ELSE
-		BEGIN TRANSACTION;
-	BEGIN TRY
-         	IF NOT EXISTS  (SELECT	'!'
-							FROM	subproject
-							WHERE	project_code = @project_code AND
-									subproject_naam = @subproject_naam_oud)
-		--Hier wordt nagekeken of er gegevens bekend zijn bij de opgegeven combinatie projectcode-subprojectnaam.
-		THROW 50041, 'Dit subproject is niet gevonden.', 16;
-
-		UPDATE	subproject --Wijzigingen worden doorgevoerd.
-		SET		project_code = @project_code,
-				subproject_naam = @subproject_naam_nieuw,
-				@subproject_categorie_naam = @subproject_categorie_naam,
-				@subproject_verwachte_uren = @subproject_verwachte_uren
-		WHERE	project_code = @project_code AND
-				subproject_naam = @subproject_naam_oud
-
-		IF @TranCounter = 0 AND XACT_STATE() = 1
-			COMMIT TRANSACTION;
-	END TRY
-		BEGIN CATCH
-			IF @TranCounter = 0
-			BEGIN
-				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
-			END;
-		ELSE
-			BEGIN
-				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
-			END;
-		THROW
-	END CATCH
-END
+		BEGIN
+			IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+		END;
+	THROW
+END CATCH
 GO
