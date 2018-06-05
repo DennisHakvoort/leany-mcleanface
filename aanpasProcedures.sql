@@ -504,3 +504,46 @@ AS
 		THROW
 	END CATCH
 GO
+
+CREATE PROCEDURE sp_AanpassenSubprojectCategorie
+@categorieNaam VARCHAR(40),
+@nieuweCategorieNaam VARCHAR(40)
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF(NOT EXISTS(SELECT '!'
+									FROM subproject_categorie
+									WHERE subproject_categorie_naam = @categorieNaam))
+			THROW 50042, 'Deze categorie bestaat niet.', 16
+
+		IF(EXISTS(SELECT '!'
+							FROM subproject
+							WHERE subproject_categorie_naam = @categorieNaam))
+			THROW 50043, 'Deze categorie wordt nog gebruikt door een subproject.', 16
+
+		UPDATE subproject_categorie
+		SET subproject_categorie_naam = @nieuweCategorieNaam
+		WHERE subproject_categorie_naam = @categorieNaam
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+GO

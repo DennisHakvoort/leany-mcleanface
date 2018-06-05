@@ -471,3 +471,52 @@ BEGIN CATCH
 END CATCH
 ROLLBACK TRANSACTION
 GO
+
+--test sp_AanpassenSubprojectCategorie
+--success
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO subproject_categorie VALUES ('cat')
+
+	EXECUTE sp_AanpassenSubprojectCategorie @categorieNaam = 'cat', @nieuweCategorieNaam = 'bat'
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Deze categorie bestaat niet.
+BEGIN TRANSACTION
+BEGIN TRY
+	EXECUTE sp_AanpassenSubprojectCategorie @categorieNaam = 'cat', @nieuweCategorieNaam = 'bat'
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Deze categorie wordt nog gebruikt door een subproject.
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO project_categorie VALUES ('cat', NULL)
+	INSERT INTO project VALUES ('proj', 'cat', 'jan 2018', 'jan 2020', 'Groene thee', '12002')
+	INSERT INTO subproject_categorie VALUES ('cat')
+	INSERT INTO subproject VALUES ('proj', 'sub', 'cat', 12)
+	EXECUTE sp_AanpassenSubprojectCategorie @categorieNaam = 'cat', @nieuweCategorieNaam = 'bat'
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
