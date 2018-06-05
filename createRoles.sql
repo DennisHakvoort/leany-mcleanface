@@ -45,12 +45,8 @@ GRANT SELECT ON project_rol_type TO SUPERUSER
 GRANT SELECT ON tag_van_categorie TO SUPERUSER
 --EXECUTE PROCEDURES
 GRANT EXECUTE ON sp_DropConstraint TO SUPERUSER
-GRANT EXECUTE ON sp_MedewerkerToevoegen TO SUPERUSER
+GRANT EXECUTE ON sp_InsertMedewerker TO SUPERUSER
 GRANT EXECUTE ON sp_InsertMedewerkerIngepland TO SUPERUSER
-GRANT EXECUTE ON sp_ProjecturenInplannen TO SUPERUSER
-GRANT EXECUTE ON sp_invullenBeschikbareDagen TO SUPERUSER
-
-
-
-
-
+GRANT EXECUTE ON sp_insertProjecturenMedewerker TO SUPERUSER
+GRANT EXECUTE ON sp_InsertBeschikbareDagen TO SUPERUSER
+GRANT EXECUTE ON sp_WijzigProjectRol TO SUPERUSER

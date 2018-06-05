@@ -147,7 +147,7 @@ GO
 --insert project categorie
 CREATE PROCEDURE sp_InsertProjectCategorie
 @naam   CHAR(40),
-@parent CHAR(40)
+@hoofdcategorie CHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -159,8 +159,8 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		 INSERT INTO project_categorie (naam, parent)
-		 VALUES (@naam, @parent)
+		 INSERT INTO project_categorie (naam, hoofdcategorie)
+		 VALUES (@naam, @hoofdcategorie)
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
