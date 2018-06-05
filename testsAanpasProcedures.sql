@@ -1,6 +1,6 @@
 /*==================================================================*/
 /* DBMS name:      Microsoft SQL Server 2008                        */
-/* Created on:     05-06-2018 10:51:54                               */
+/* Created on:     05-06-2018 10:51:54                              */
 /*==================================================================*/
 
 /* Test uitvoeringen voor de wijzig procedures voor database LeanDb */
@@ -29,7 +29,7 @@ GO
 
 --Tests sp_WijzigProjectCategorie
 --Insert toegestane data
---Succes test
+--Succestest
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO project_categorie (naam, hoofdcategorie)
@@ -49,7 +49,7 @@ GO
 --Probeer een niet bestaande categorie te wijzigen
 --Msg 50009, Level 16, State 16, Procedure sp_WijzigProjectCategorie, Line 20 [Batch Start Line 14]
 --Deze projectcategorie bestaat niet.
---Faal test
+--Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
 set xact_abort on
@@ -69,7 +69,7 @@ GO
 
 --Tests sp_wijzigProjectRol
 --wijzig een bestaande rol
---Succes test
+--Succestest
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO project_rol_type
@@ -88,7 +88,7 @@ GO
 --Probeer een niet bestaande rol te wijzigen
 --Msg 50013, Level 16, State 16, Procedure sp_WijzigProjectRol, Line 19 [Batch Start Line 33]
 --Deze projectrol bestaat niet.
---Faal test
+--Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO project_rol_type
@@ -106,7 +106,7 @@ GO
 
 --Tests sp_WijzigMedewerkerRolType
 --Probeer toegestane data te wijzigen
---Succes test
+--Succestest
 BEGIN TRANSACTION
 BEGIN TRY
 	INSERT INTO medewerker_rol_type
@@ -125,7 +125,7 @@ GO
 --Probeer een niet-bestaand medewerkerroltype te wijzigen.
 --Msg 50008, Level 16, State 16, Procedure sp_WijzigMedewerkerRolType, Line 21 [Batch Start Line 34]
 --Deze medewerkerrol bestaat niet.
---Faal test
+--Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
 	INSERT INTO medewerker_rol_type
@@ -143,7 +143,7 @@ GO
 
 --Tests sp_WijzigMedewerkerBeschikbareDagen
 --Beschikbare dagen in een maand voor een medewerker wijzigen.
--- Succes test
+-- Succestest
 BEGIN TRANSACTION
 BEGIN TRY
 	DECLARE @date DATETIME = getdate() +30
@@ -166,7 +166,7 @@ GO
 --Test sp_WijzigMedewerkerBeschikbareDagen
 -- Msg 500019, Level 16, State 16, Procedure sp_WijzignBeschikbareDagen, Line 22 [Batch Start Line 65]
 -- Deze medewerker heeft geen beschikbare werkdagen voor de opgegeven maand.
--- Faal test
+-- Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
 	DECLARE @date DATETIME = getdate()
@@ -186,7 +186,7 @@ GO
 
 --Tests sp_WijzigMedewerkerRol
 --Verander de rol van een medewerker.
---Succes test
+--Succestest
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
@@ -234,7 +234,7 @@ GO
 
 --Tests sp_WijzigMedewerkerOpProject
 --Probeer een bestaande medewerker met project te wijzigen.
---Succes test
+--Succestest
 BEGIN TRANSACTION
 BEGIN TRY
  INSERT INTO project_categorie (naam, hoofdcategorie)
@@ -263,7 +263,7 @@ GO
 --Probeer een niet bestaande medewerker/ project combinatie aan te passen
 --Msg 50035, Level 16, State 16, Procedure sp_WijzigMedewerkerOpProject, Line 21 [Batch Start Line 92]
 --De medewerker met de opgegeven medewerker_code is niet aan dit project gekoppeld.
---Faal test
+--Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
  INSERT INTO project_categorie (naam, hoofdcategorie)
@@ -291,7 +291,7 @@ GO
 
 --Tests sp_WijzigMedewerkerIngeplandProject
 --Wijzig een medewerker_ingepland_project maand of ingedeelde uren
---Succes test
+--Succestest
 BEGIN TRANSACTION
 BEGIN TRY
 	DECLARE @maand_beschikbaar DATETIME = (GETDATE() + 40);
@@ -323,7 +323,7 @@ GO
 --Een medewerker_ingepland_project wijzigen die niet bestaat
 --Msg 50034, Level 16, State 16, Procedure sp_WijzigMedewerkerIngeplandProject, Line 23 [Batch Start Line 137]
 --Er bestaat geen medewerker_ingepland_project record met de opgegeven id.
---Faal test
+--Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
 	DECLARE @maand_beschikbaar DATETIME = (GETDATE() + 10);
@@ -340,7 +340,7 @@ GO
 
 --Tests sp_WijzigMedewerker
 --Wijzig een bestaande medewerker gegevens
---Succes test
+--Succestest
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker VALUES ('aa34F', 'Samir', 'WieDan')
@@ -357,7 +357,7 @@ GO
 
 --Probeer een medewerker te wijzigen waar geen record van bestaat
 --Msg 50028, 'een medewerker met dit medewerker_code bestaat niet.', 16
---Faal test
+--Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
 EXEC sp_WijzigMedewerker 'a1122', 'Fatima', 'Ahmed';
@@ -373,7 +373,7 @@ GO
 
 --Tests sp_aanpassenProject
 --Wijzig een bestaande project
---Succes test
+--Succestest
 BEGIN TRANSACTION
 BEGIN TRY
 	DECLARE @date DATETIME = (getdate() + 10);
@@ -401,7 +401,7 @@ GO
 --Wijzig een niet bestaande project
 --Msg 50027, Level 16, State 16, Procedure sp_WijzigProject
 --Opgegeven projectcode bestaat niet.
---Faal test
+--Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
 	DECLARE @date DATETIME = (getdate() + 10);
