@@ -2,7 +2,7 @@
 Alle tests volgen dezelfde template:
 securityadmin kan gebuirkers aanmaken
 --zet hier de verwach0te foutmelding neer of zet hier neer dat het een succesvole test is.
-BEGIN TRANSACTION --Open transaction, zodat de test niet de echte database beïnvloedert
+BEGIN TRANSACTION --Open transaction, zodat de test niet de echte database verkracht.
 BEGIN TRY
 -- Test gaat hier
 END TRY
