@@ -3,7 +3,7 @@
 /* Created on:     05-06-2018 10:51:54                               */
 /*==================================================================*/
 
-/* Stored procedures voor wijzigen in tabellen voor database LeanDb */
+/* Stored procedures voor wijzigingen in tabellen voor database LeanDb */
 
 USE LeanDb
 GO
