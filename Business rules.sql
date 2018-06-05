@@ -369,6 +369,7 @@ AS BEGIN
 	END CATCH
 END 
 GO
+
 --2
 CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Ingepland
 ON medewerker_ingepland_project
@@ -398,6 +399,7 @@ AS BEGIN
 	END CATCH
 END
 GO
+
 --3
 CREATE TRIGGER trg_ProjectVerstrekenMedewerker_Op_Project
 ON medewerker_op_project
