@@ -1,29 +1,26 @@
 --TODO: De rechten updaten met eventuele nieuwe tables en procedures.
 --Codegeneratie, handig voor het updaten van de statements.
-SELECT 'GRANT SELECT ON ' + TABLE_NAME + ' TO SUPERUSER'
-FROM --INFORMATION_SCHEMA.VIEWS
-     INFORMATION_SCHEMA.TABLES
-
-SELECT 'GRANT EXECUTE ON ' + SPECIFIC_NAME + ' TO SUPERUSER'
-FROM   INFORMATION_SCHEMA.ROUTINES
-WHERE ROUTINE_TYPE = 'PROCEDURE' AND (SPECIFIC_NAME != 'sp_DropConstraint'
-                                      OR  SPECIFIC_NAME != 'sp_DatabaseUserToevoegen')
+-- SELECT 'GRANT SELECT ON ' + TABLE_NAME + ' TO SUPERUSER'
+-- FROM --INFORMATION_SCHEMA.VIEWS
+--      INFORMATION_SCHEMA.TABLES
+--
+-- SELECT 'GRANT EXECUTE ON ' + SPECIFIC_NAME + ' TO SUPERUSER'
+-- FROM   INFORMATION_SCHEMA.ROUTINES
+-- WHERE ROUTINE_TYPE = 'PROCEDURE' AND (SPECIFIC_NAME != 'sp_DropConstraint'
+--                                       OR  SPECIFIC_NAME != 'sp_DatabaseUserToevoegen')
 /*
 Gebruiker toevoegen als superuser:
 Run de volgende commmando's en verander de 'USERNAME' in de user naam en de 'LOGINNAME' in de login naam.
 ALTER ROLE [SUPERUSER] ADD MEMBER [LOGINNAME]
 ALTER ROLE [db_securityadmin] ADD MEMBER [LOGINNAME]
 ALTER SERVER ROLE [securityadmin] ADD MEMBER [USERNAME]
-ALTER SERVER ROLE [SUPERUSER] ADD MEMBER [USERNAME]
+GRANT ALTER ANY USER TO [LOGINNAME]
 */
 
 --Drop en creëer rollen.
 DROP ROLE IF EXISTS MEDEWERKER
 DROP ROLE IF EXISTS SUPERUSER
 -- GO
-
-CREATE SERVER ROLE SUPERUSER
-GRANT ALTER ANY USER TO SUPERUSER
 
 CREATE ROLE MEDEWERKER
 CREATE ROLE SUPERUSER
@@ -80,10 +77,8 @@ GRANT EXECUTE ON sp_VerwijderenMedewerkerRolType TO SUPERUSER
 GRANT EXECUTE ON sp_VerwijderenProjectlidOpSubproject TO SUPERUSER
 GRANT EXECUTE ON sp_VerwijderenSubprojectCategorie TO SUPERUSER
 GRANT EXECUTE ON sp_DropConstraint TO SUPERUSER
-GRANT EXECUTE ON sp_MedewerkerToevoegen TO SUPERUSER
 GRANT EXECUTE ON sp_InsertMedewerkerIngepland TO SUPERUSER
 GRANT EXECUTE ON sp_InsertProjecturenMedewerker TO SUPERUSER
-GRANT EXECUTE ON sp_invullenBeschikbareDagen TO SUPERUSER
 GRANT EXECUTE ON sp_checkProjectRechten TO SUPERUSER
 GRANT EXECUTE ON sp_WijzigProjectCategorie TO SUPERUSER
 GRANT EXECUTE ON sp_WijzigProjectRol TO SUPERUSER
