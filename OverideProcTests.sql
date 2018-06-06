@@ -1,3 +1,11 @@
+/*==================================================================*/
+/* DBMS name:      Microsoft SQL Server 2008                        */
+/* Created on:     06-06-2018 10:51:54                              */
+/*==================================================================*/
+
+/* Stored procedures tests voor insertProcedures.sql bestand        */
+
+
 /*
 Alle tests volgen hetzelfde template:
 
@@ -17,15 +25,18 @@ ROLLBACK TRANSACTION --De transaction terugrollen zodat de testdata niet in de e
 Alle tests worden uitgevoerd op een lege database.
  */
 
+ USE LeanDb
+ GO
+
 --Runt alle insert procedures.
+
 BEGIN TRANSACTION
 BEGIN TRY
-EXEC sp_MedewerkerToevoegen 'van Megchelen', 'Supreme leader', 'Sv'
-EXEC sp_InsertMedewerkerRolType 'lid'
-EXEC sp_InsertMedewerkerRol 'Sv', 'lid'
+EXEC sp_InsertMedewerkerRolType 'Tester'
+EXEC sp_MedewerkerToevoegen 'van Megchelen', 'Supreme leader', 'Sv', 'WachtwoordTest123', 'Tester'
 EXEC sp_InsertProjectRolType 'projectleider'
 EXEC sp_insertProjectCategorie 'subsidie', NULL
-EXEC sp_InsertProject 'AK', 'subsidie', '01-01-1900', '01-01-2300', 'ALLES KAPOT'
+EXEC sp_InsertProject 'AK', 'subsidie', '01-01-1900', '01-01-2300', 'ALLES KAPOT', 1300
 EXEC sp_InsertMedewerkerOpProject 'AK', 'Sv', 'projectleider'
 END TRY
 BEGIN CATCH
@@ -35,3 +46,5 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
+
