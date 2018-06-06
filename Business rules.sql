@@ -83,6 +83,7 @@ GO
 --DROP ALLE BUSINESS RULES
 EXEC sp_DropConstraint @Constraint_name = 'CK_UREN_MIN_MAX', @table_name = 'medewerker_beschikbaarheid'
 EXEC sp_DropConstraint @Constraint_name = 'CK_EINDDATUM_NA_BEGINDATUM', @table_name = 'project'
+EXEC sp_DropConstraint @Constraint_name = 'UC_Medewerker_Project_Code', @table_name = 'medewerker_op_project'
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenProject
 DROP TRIGGER IF EXISTS trg_ProjectVerstrekenMedewerker_Ingepland
 DROP TRIGGER IF EXISTS trg_SubCategorieHeeftHoofdCategorie
@@ -700,3 +701,7 @@ AS BEGIN
 	END CATCH
 END
 GO
+
+--BR18 In de tabel medewerker_op_project moet de combinatie van medewerker_code en project_code uniek zijn.
+ALTER TABLE medewerker_op_project
+ADD CONSTRAINT UC_Medewerker_Project_Code UNIQUE (medewerker_code, project_code)
