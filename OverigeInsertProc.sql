@@ -313,6 +313,9 @@ AS BEGIN
 	BEGIN TRY
 		DECLARE @id INT = -1
 
+		IF (@subproject_uren < 0)
+			THROW 50050, 'Verwachte uren voor een subproject mag niet negatief zijn.', 16
+
 		IF NOT EXISTS (SELECT '@'
 					FROM medewerker_op_project
 					WHERE medewerker_code = @medewerker_code
@@ -323,9 +326,6 @@ AS BEGIN
 					FROM medewerker_op_project
 					WHERE medewerker_code = @medewerker_code
 					AND	project_code =@project_code)
-
-		IF (@subproject_uren < 0)
-			THROW 50050, 'Verwachte uren voor een subproject mag niet negatief zijn.', 16
 
 		INSERT INTO projectlid_op_subproject (id, project_code, subproject_naam, subproject_uren)
 			VALUES (@id, @project_code, @subproject_naam, @subproject_uren)
