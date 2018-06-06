@@ -1495,8 +1495,8 @@ REVERT
 ROLLBACK TRANSACTION
 GO
 
---BR18 unique test
---succes test
+--BR18 unique-test
+--succestest
 BEGIN TRANSACTION
 BEGIN TRY
 	DECLARE @date DATETIME = GETDATE()
@@ -1526,8 +1526,8 @@ BEGIN CATCH
 END CATCH
 ROLLBACK TRANSACTION
 
---BR18 unique test
---faal test
+--BR18 unique-test
+--faaltest
 --Violation of UNIQUE KEY constraint 'UC_Medewerker_Project_Code'
 BEGIN TRANSACTION
 BEGIN TRY
