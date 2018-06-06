@@ -143,7 +143,7 @@ BEGIN TRY
 	INSERT INTO medewerker_op_project VALUES ('DEA12', 'cod95', 'CEO');
 	INSERT INTO medewerker_ingepland_project VALUES (IDENT_CURRENT('medewerker_op_project'), 300, @maand_beschikbaar);
 
-	DECLARE @id int = IDENT_CURRENT('medewerker_op_project') + 1;
+	DECLARE @id int = IDENT_CURRENT('medewerker_op_project');
 	EXEC sp_VerwijderenMedewerkerIngeplandProject @id, @maand_beschikbaar;
 END TRY
 BEGIN CATCH
@@ -240,6 +240,50 @@ BEGIN TRY
 	INSERT INTO medewerker_rol_type VALUES ('Administrator');
 	INSERT INTO medewerker_rol VALUES ('cod17', 'Administrator');
 	EXEC sp_VerwijderenMedewerkerRol 'cod17', 'Leider'
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Test voor sp_VerwijderSubproject
+--Succestest, subproject wordt verwijderd.
+BEGIN TRANSACTION
+BEGIN TRY
+	DECLARE @date DATETIME = (getdate() + 10);
+	DECLARE @einddatum DATETIME = (getdate() + 300);
+
+	INSERT INTO project_categorie (naam, hoofdcategorie)
+		VALUES ('Biochemie', NULL);
+
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum)
+		VALUES ('PROJAH01', 'project LODL', 'Biochemie', GETDATE() + 30, GETDATE() +200);
+
+	INSERT INTO subproject_categorie (subproject_categorie_naam) 
+		VALUES('Biologie');
+
+	INSERT INTO subproject (project_code, subproject_naam, subproject_categorie_naam, subproject_verwachte_uren)
+		VALUES('PROJAH01', 'Testsub', 'Biologie', 12);
+
+	INSERT INTO medewerker 
+		VALUES ('cod95', 'Gebruiker7', 'Achternaam7');
+
+	INSERT INTO project_rol_type
+		VALUES('Bioloog')
+	INSERT INTO medewerker_op_project 
+		VALUES ('PROJAH01', 'cod95', 'Bioloog');
+
+	DECLARE @id int = IDENT_CURRENT('medewerker_op_project');
+
+	INSERT INTO projectlid_op_subproject(id, project_code, subproject_naam)
+		VALUES(@id, 'PROJAH01', 'Testsub')
+		
+	EXEC sp_VerwijderSubproject 'PROJAH01', 'Testsub';
+
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
