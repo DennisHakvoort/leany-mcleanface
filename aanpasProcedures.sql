@@ -17,6 +17,7 @@ DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerOpProject
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerIngeplandProject
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerker
 DROP PROCEDURE IF EXISTS sp_WijzigProject
+DROP PROCEDURE IF EXISTS sp_AanpassenProjectlidOpSubproject
 GO
 
 --SP 5 aanpassen projectcategorieën
@@ -317,6 +318,9 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+
+		EXECUTE sp_checkProjectRechten @projectcode = @project_code
+
 		DECLARE @id INT = (SELECT id --KoppelID wordt opgevraagd voor data-opvraag medewerker_ingepland_project.
 						FROM medewerker_op_project
 						WHERE medewerker_code =  @medewerker_code AND project_code = @project_code)
