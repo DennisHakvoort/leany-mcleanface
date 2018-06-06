@@ -228,7 +228,7 @@ AS BEGIN
 		IF NOT EXISTS(SELECT '@' --Checkt of de subprojectcategorie naam niet al bestaat.
 					FROM subproject_categorie
 					WHERE subproject_categorie_naam = @categorie)
-			THROW 50045, 'Opgegeven subproject categorie naam bestaand niet.', 16
+			THROW 50045, 'Opgegeven subprojectcategorienaam bestaand niet.', 16
 
 		IF NOT EXISTS(SELECT '@' --Checkt of de opgegeven hoofdproject wel bestaat.
 						FROM project
@@ -257,7 +257,7 @@ AS BEGIN
 END
 GO
 
---insert subprojectcategorie
+--insert sp_InsertSubprojectCategorie
 CREATE PROCEDURE sp_InsertSubprojectCategorie
 @categorie_naam			VARCHAR(40)
 AS BEGIN
@@ -295,7 +295,7 @@ AS BEGIN
 END
 GO
 
---insert subprojectcategorie
+--insert sp_InsertProjLidOpSubProj
 CREATE PROCEDURE sp_InsertProjLidOpSubProj
 @medewerker_code	VARCHAR(5),
 @project_code		VARCHAR(20),
@@ -313,14 +313,14 @@ AS BEGIN
 	BEGIN TRY
 		DECLARE @id INT = -1
 
-		IF (@subproject_uren < 0)
+		IF (@subproject_uren < 0) --mag niet negatief zijn
 			THROW 50050, 'Verwachte uren voor een subproject mag niet negatief zijn.', 16
 
 		IF NOT EXISTS (SELECT '@'
 					FROM medewerker_op_project
 					WHERE medewerker_code = @medewerker_code
 					AND	project_code =@project_code)
-			THROW 50049, 'Medewerker is niet aan het hoofdproject gekoppeld.', 16
+			THROW 50049, 'Medewerker is niet aan het hoofdproject gekoppeld.', 16 -- moet gekoppeld aan elkaar zijn
 
 		SET @id = (SELECT id
 					FROM medewerker_op_project
