@@ -1373,6 +1373,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 -- BR17 Een medewerker heeft een mandatory child in medewerker_rol
 -- succes test
@@ -1399,6 +1400,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 -- BR17 Een medewerker heeft een mandatory child in medewerker_rol
 -- faal test
@@ -1421,6 +1423,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --BR18
 --Success omdat hij projectleider is
@@ -1444,6 +1447,7 @@ BEGIN CATCH
 END CATCH
 REVERT
 ROLLBACK TRANSACTION
+GO
 
 --Succes omdat hij superuser is.
 BEGIN TRANSACTION
@@ -1466,6 +1470,7 @@ BEGIN CATCH
 END CATCH
 REVERT
 ROLLBACK TRANSACTION
+GO
 
 --Faal omdat hij geen projectleider of superuser is.
 --[S00016][50033] De huidige gebruiker heeft de rechten niet om dit project aan te passen
@@ -1487,4 +1492,68 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 REVERT
+ROLLBACK TRANSACTION
+GO
+
+--unique test
+--succes test
+BEGIN TRANSACTION
+BEGIN TRY
+	DECLARE @date DATETIME = GETDATE()
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('aber', 'Amon', 'Adelaar');
+
+	INSERT INTO project_categorie (naam, hoofdcategorie)
+		VALUES	('onderwijs', null);
+
+	INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+		VALUES	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
+
+	INSERT INTO project_rol_type (project_rol)
+		VALUES	('lector');
+	
+	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
+		VALUES	('PROJC0101C1', 'aber', 'lector');
+
+	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
+		VALUES	('PROJC0101C1', 'aber', 'lector');
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+
+--unique test
+--faal test
+--Violation of UNIQUE KEY constraint 'UC_Medewerker_Project_Code'
+BEGIN TRANSACTION
+BEGIN TRY
+	DECLARE @date DATETIME = GETDATE()
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('aber', 'Amon', 'Adelaar');
+
+	INSERT INTO project_categorie (naam, hoofdcategorie)
+		VALUES	('onderwijs', null);
+
+	INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+		VALUES	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
+
+	INSERT INTO project_rol_type (project_rol)
+		VALUES	('lector');
+	
+	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
+		VALUES	('PROJC0101C1', 'aber', 'lector');
+
+	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
+		VALUES	('PROJC0101C1', 'aber', 'lector');
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
 ROLLBACK TRANSACTION
