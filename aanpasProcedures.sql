@@ -18,6 +18,7 @@ DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerIngeplandProject
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerker
 DROP PROCEDURE IF EXISTS sp_WijzigProject
 DROP PROCEDURE IF EXISTS sp_AanpassenProjectlidOpSubproject
+DROP PROCEDURE IF EXISTS sp_WijzigSubproject
 GO
 
 --SP 5 aanpassen projectcategorieën
@@ -561,12 +562,12 @@ IF @TranCounter > 0
 ELSE
 	BEGIN TRANSACTION;
 BEGIN TRY
-        IF NOT EXISTS  (SELECT	'!'
-						FROM	subproject
-						WHERE	project_code = @project_code AND
-								subproject_naam = @subproject_naam_oud)
-	--Hier wordt nagekeken of er gegevens bekend zijn bij de opgegeven combinatie projectcode-subprojectnaam.
-	THROW 50044, 'Dit subproject is niet gevonden.', 16;
+    IF NOT EXISTS  (SELECT	'!'
+					FROM	subproject
+					WHERE	project_code = @project_code AND
+							subproject_naam = @subproject_naam_oud)
+		--Hier wordt nagekeken of er gegevens bekend zijn bij de opgegeven combinatie projectcode-subprojectnaam.
+		THROW 50044, 'Dit subproject is niet gevonden.', 16;
 
 	UPDATE	subproject --Wijzigingen worden doorgevoerd.
 	SET		project_code = @project_code,
