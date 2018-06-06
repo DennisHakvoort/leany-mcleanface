@@ -45,7 +45,7 @@ GRANT EXECUTE on sp_AanpassenProjectlidOpSubproject TO MEDEWERKER
 GRANT EXECUTE on sp_WijzigMedewerkerIngeplandProject TO MEDEWERKER
 
 
---SUERUSER rollen, hij kan alle views en stored procedures uitvoeren. Ook kan hij alle tables bekijken.
+--SUPERUSER rollen, hij kan alle views en stored procedures uitvoeren. Ook kan hij alle tables bekijken.
 --SELECT VIEWS
 GRANT SELECT ON vw_Bezetting TO SUPERUSER
 GRANT SELECT ON vw_Totaal_Gepland_Beschikbaar_Jaar TO SUPERUSER
