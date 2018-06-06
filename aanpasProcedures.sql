@@ -510,13 +510,13 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		IF(NOT EXISTS(SELECT '!'
+		IF(NOT EXISTS(SELECT '!' --Check of de meegegeven categorie überhaupt bestaat
 									FROM subproject_categorie
 									WHERE subproject_categorie_naam = @categorieNaam))
 			THROW 50042, 'Deze categorie bestaat niet.', 16
 
 		IF(EXISTS(SELECT '!'
-							FROM subproject
+							FROM subproject --Check of de categorie wel verwijderd mag worden. Dit mag niet wanneer het nog gebonden is aan een subproject
 							WHERE subproject_categorie_naam = @categorieNaam))
 			THROW 50043, 'Deze categorie wordt nog gebruikt door een subproject.', 16
 
