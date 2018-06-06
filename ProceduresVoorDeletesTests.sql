@@ -251,7 +251,7 @@ ROLLBACK TRANSACTION
 GO
 
 --Test voor sp_VerwijderSubproject
---Succestest, subproject wordt verwijderd.
+--Succestest, subproject wordt verwijderd inclusief projectlid_op_subprojectdata.
 BEGIN TRANSACTION
 BEGIN TRY
 	DECLARE @date DATETIME = (getdate() + 10);
@@ -283,6 +283,55 @@ BEGIN TRY
 		VALUES(@id, 'PROJAH01', 'Testsub')
 		
 	EXEC sp_VerwijderSubproject 'PROJAH01', 'Testsub';
+
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Test voor sp_VerwijderSubproject
+--Faaltest, subproject wordt niet verwijderd wegens onjuiste invoer projectcode.
+/*
+ERROR NUMMER:	50044
+ERROR SEVERITY:	16
+ERROR MESSAGE:	Dit subproject is niet gevonden.
+*/
+BEGIN TRANSACTION
+BEGIN TRY
+	DECLARE @date DATETIME = (getdate() + 10);
+	DECLARE @einddatum DATETIME = (getdate() + 300);
+
+	INSERT INTO project_categorie (naam, hoofdcategorie)
+		VALUES ('Biochemie', NULL);
+
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum)
+		VALUES ('PROJAH01', 'project LODL', 'Biochemie', GETDATE() + 30, GETDATE() +200);
+
+	INSERT INTO subproject_categorie (subproject_categorie_naam) 
+		VALUES('Biologie');
+
+	INSERT INTO subproject (project_code, subproject_naam, subproject_categorie_naam, subproject_verwachte_uren)
+		VALUES('PROJAH01', 'Testsub', 'Biologie', 12);
+
+	INSERT INTO medewerker 
+		VALUES ('cod95', 'Gebruiker7', 'Achternaam7');
+
+	INSERT INTO project_rol_type
+		VALUES('Bioloog')
+	INSERT INTO medewerker_op_project 
+		VALUES ('PROJAH01', 'cod95', 'Bioloog');
+
+	DECLARE @id int = IDENT_CURRENT('medewerker_op_project');
+
+	INSERT INTO projectlid_op_subproject(id, project_code, subproject_naam)
+		VALUES(@id, 'PROJAH01', 'Testsub')
+		
+	EXEC sp_VerwijderSubproject 'PROJAH00', 'Testsub'; --moet PROJAH01 zijn
 
 END TRY
 BEGIN CATCH
