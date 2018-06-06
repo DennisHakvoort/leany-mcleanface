@@ -17,6 +17,7 @@ DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerOpProject
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerIngeplandProject
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerker
 DROP PROCEDURE IF EXISTS sp_WijzigProject
+DROP PROCEDURE IF EXISTS sp_WijzigSubproject
 GO
 
 --SP 5 aanpassen projectcategorieën
