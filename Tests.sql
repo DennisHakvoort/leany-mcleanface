@@ -1495,7 +1495,7 @@ REVERT
 ROLLBACK TRANSACTION
 GO
 
---unique test
+--BR18 unique test
 --succes test
 BEGIN TRANSACTION
 BEGIN TRY
@@ -1526,7 +1526,7 @@ BEGIN CATCH
 END CATCH
 ROLLBACK TRANSACTION
 
---unique test
+--BR18 unique test
 --faal test
 --Violation of UNIQUE KEY constraint 'UC_Medewerker_Project_Code'
 BEGIN TRANSACTION
