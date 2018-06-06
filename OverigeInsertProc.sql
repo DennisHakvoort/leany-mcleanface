@@ -4,18 +4,20 @@ DROP PROCEDURE IF EXISTS sp_InsertProjectRolType
 DROP PROCEDURE IF EXISTS sp_InsertProject
 DROP PROCEDURE IF EXISTS sp_InsertProjectCategorie
 DROP PROCEDURE IF EXISTS sp_InsertMedewerkerOpProject
+DROP PROCEDURE IF EXISTS sp_InsertSubproject
+DROP PROCEDURE IF EXISTS sp_InsertSubprojectCategorie
+DROP PROCEDURE IF EXISTS sp_InsertProjLidOpSubProj
 
 --insert procedure medeweker_rol
 GO
 CREATE PROCEDURE sp_InsertMedewerkerRol
-@medewerker_code CHAR(5),
-@medewerker_rol  CHAR(40)
+@medewerker_code VARCHAR(5),
+@medewerker_rol  VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
@@ -42,13 +44,12 @@ AS
 	GO
 --Insert procedure medewerker rol type
 CREATE PROCEDURE sp_InsertMedewerkerRolType
-@medewerker_rol  CHAR(40)
+@medewerker_rol  VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
@@ -76,13 +77,12 @@ AS
 GO
 --procedure insert project rol type
 CREATE PROCEDURE sp_InsertProjectRolType
-@project_rol  CHAR(40)
+@project_rol  VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
@@ -109,17 +109,16 @@ AS
 GO
 --procedure insert project
 CREATE PROCEDURE sp_InsertProject
-@project_code   CHAR(20),
-@categorie_naam CHAR(40),
+@project_code   VARCHAR(20),
+@categorie_naam VARCHAR(40),
 @begin_datum	DATETIME,
 @eind_datum		DATETIME,
-@project_naam   CHAR(40)
+@project_naam   VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
@@ -146,14 +145,13 @@ AS
 GO
 --insert project categorie
 CREATE PROCEDURE sp_InsertProjectCategorie
-@naam   CHAR(40),
-@hoofdcategorie CHAR(40)
+@naam   VARCHAR(40),
+@hoofdcategorie VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
@@ -180,15 +178,14 @@ AS
 GO
 --insert medewerker op project
 CREATE PROCEDURE sp_InsertMedewerkerOpProject
-@project_code    CHAR(20),
-@medewerker_code CHAR(5),
-@project_rol	 CHAR(40)
+@project_code    VARCHAR(20),
+@medewerker_code VARCHAR(5),
+@project_rol	 VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
@@ -212,35 +209,127 @@ AS
 	END CATCH
 GO
 
+--insert subproject
 CREATE PROCEDURE sp_InsertSubproject
-@parent_code VARCHAR(20),
-@naam VARCHAR(40),
+@parent_code	VARCHAR(20),
+@naam			VARCHAR(40),
 @verwachte_uren	INT,
-@categorie VARCHAR(40)
+@categorie		VARCHAR(40)
 AS BEGIN
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-	SELECT @TranCounter
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		IF NOT EXISTS(SELECT '@'
+		IF NOT EXISTS(SELECT '@' --Checkt of de subprojectcategorie naam niet al bestaat.
 					FROM subproject_categorie
 					WHERE subproject_categorie_naam = @categorie)
-			THROW 50, 'Opgegeven subproject categorie naam bestaand niet.', 16
-		IF NOT EXISTS(SELECT '@'
+			THROW 50045, 'Opgegeven subproject categorie naam bestaand niet.', 16
+
+		IF NOT EXISTS(SELECT '@' --Checkt of de opgegeven hoofdproject wel bestaat.
 						FROM project
 						WHERE project_code = @parent_code)
-			THROW 50, 'Opgegeven hoofdprojectcode bestaat niet.', 16
-		IF (@verwachte_uren < 0)
-			THROW 50, 'Verwachte uren van subprojecten mogen niet negatief zijn.', 16
+			THROW 50046, 'Opgegeven hoofdprojectcode bestaat niet.', 16
+
+		IF (@verwachte_uren < 0) --Checkt of er geen negatieve uren zijn opgegeven.
+			THROW 50047, 'Verwachte uren van subprojecten mogen niet negatief zijn.', 16
 		
 		INSERT INTO subproject (project_code, subproject_naam, subproject_categorie_naam, subproject_verwachte_uren)
 			VALUES (@parent_code, @naam, @verwachte_uren, @categorie);
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
+GO
+
+--insert subprojectcategorie
+CREATE PROCEDURE sp_InsertSubprojectCategorie
+@categorie_naam			VARCHAR(40)
+AS BEGIN
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF EXISTS(SELECT '@' --Checkt of de subprojectcategorie niet al bestaat.
+					FROM subproject_categorie
+					WHERE subproject_categorie_naam = @categorie_naam)
+			THROW 50048, 'Subprojectcategorie bestaat al.', 16
+
+		INSERT INTO subproject_categorie(subproject_categorie_naam)
+			VALUES (@categorie_naam);
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
+GO
+
+--insert subprojectcategorie
+CREATE PROCEDURE sp_InsertProjLidOpSubProj
+@medewerker_code	VARCHAR(5),
+@project_code		VARCHAR(20),
+@subproject_naam	VARCHAR(40),
+@subproject_uren	INT
+AS BEGIN
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		DECLARE @id INT = -1
+
+		IF NOT EXISTS (SELECT '@'
+					FROM medewerker_op_project
+					WHERE medewerker_code = @medewerker_code
+					AND	project_code =@project_code)
+			THROW 50049, 'Medewerker is niet aan het hoofdproject gekoppeld.', 16
+
+		SET @id = (SELECT id
+					FROM medewerker_op_project
+					WHERE medewerker_code = @medewerker_code
+					AND	project_code =@project_code)
+
+		IF (@subproject_uren < 0)
+			THROW 50050, 'Verwachte uren voor een subproject mag niet negatief zijn.', 16
+
+		INSERT INTO projectlid_op_subproject (id, project_code, subproject_naam, subproject_uren)
+			VALUES (@id, @project_code, @subproject_naam, @subproject_uren)
+
 		IF @TranCounter = 0 AND XACT_STATE() = 1
 			COMMIT TRANSACTION;
 	END TRY
