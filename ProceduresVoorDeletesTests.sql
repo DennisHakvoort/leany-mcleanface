@@ -282,7 +282,7 @@ BEGIN TRY
 	INSERT INTO projectlid_op_subproject(id, project_code, subproject_naam)
 		VALUES(@id, 'PROJAH01', 'Testsub')
 		
-	EXEC sp_VerwijderSubproject 'PROJAH01', 'Testsub';
+	EXEC sp_VerwijderSubproject @project_code='PROJAH01', @subproject_naam='Testsub';
 
 END TRY
 BEGIN CATCH
@@ -331,7 +331,7 @@ BEGIN TRY
 	INSERT INTO projectlid_op_subproject(id, project_code, subproject_naam)
 		VALUES(@id, 'PROJAH01', 'Testsub')
 		
-	EXEC sp_VerwijderSubproject 'PROJAH00', 'Testsub'; --moet PROJAH01 zijn
+	EXEC sp_VerwijderSubproject @project_code= 'PROJAH00', @subproject_naam='Testsub'; --moet PROJAH01 zijn
 
 END TRY
 BEGIN CATCH
