@@ -369,11 +369,6 @@ AS BEGIN
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		IF(	 EXISTS(SELECT	'!'
-					FROM	categorie_tag --Hier wordt gecheckt of de tagnaam al in gebruik is.
-					WHERE	tag_naam = @tag_naam))
-			THROW 50051, 'De ingevoerde tag bestaat al.', 16
-
 		INSERT INTO categorie_tag(tag_naam) --Is de naam nog niet in gebruik, wordt deze toegevoegd.
 			VALUES(@tag_naam)
 
