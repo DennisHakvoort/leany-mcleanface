@@ -639,3 +639,45 @@ BEGIN CATCH
 END CATCH
 ROLLBACK TRANSACTION
 GO
+
+--Stored Procedure sp_WijzigCategorieTag
+--Succestest, een tag wordt toegevoegd zonder foutmelding
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO categorie_tag(tag_naam) --eerst wordt een tag toegevoegd
+		VALUES('Test')
+
+	EXECUTE sp_WijzigCategorieTag @tag_naam_oud = 'Test', @tag_naam_nieuw = 'Testosti' --hier wordt de tag gewijzigd
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Stored Procedure sp_WijzigCategorieTag
+--Faaltest, oude tagnaam foutief
+/*
+CATCH RESULTATEN:
+ERROR NUMMER:	50052
+ERROR SEVERITY:	16
+ERROR MESSAGE:	De te wijzigen tag is niet gevonden.
+*/
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO categorie_tag(tag_naam) --eerst wordt een tag toegevoegd
+		VALUES('Test')
+
+	EXECUTE sp_WijzigCategorieTag @tag_naam_oud = 'Toest'/*in plaats van Test*/, @tag_naam_nieuw = 'Testosti' --nu wordt de tag niet gewijzigd
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO

@@ -19,6 +19,7 @@ DROP PROCEDURE IF EXISTS sp_WijzigMedewerker
 DROP PROCEDURE IF EXISTS sp_WijzigProject
 DROP PROCEDURE IF EXISTS sp_AanpassenProjectlidOpSubproject
 DROP PROCEDURE IF EXISTS sp_WijzigSubproject
+DROP PROCEDURE IF EXISTS sp_WijzigCategorieTag
 GO
 
 --SP 5 aanpassen projectcategorieën
@@ -576,6 +577,51 @@ BEGIN TRY
 			subproject_verwachte_uren = @subproject_verwachte_uren
 	WHERE	project_code = @project_code AND
 			subproject_naam = @subproject_naam_oud
+
+	IF @TranCounter = 0 AND XACT_STATE() = 1
+		COMMIT TRANSACTION;
+END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+		BEGIN
+			IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+		END;
+	ELSE
+		BEGIN
+			IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+		END;
+	THROW
+END CATCH
+GO
+
+--SP aanpassen categorietag
+/*
+Met deze procedure kunnen de namen van categorietags worden aangepast. 
+De stored procedure verwacht de huidige naam en de naam waarin het veranderd moet worden.
+*/
+CREATE PROCEDURE sp_WijzigCategorieTag
+@tag_naam_oud NVARCHAR(40),
+@tag_naam_nieuw NVARCHAR(40)
+AS
+SET NOCOUNT ON
+SET XACT_ABORT OFF
+DECLARE @TranCounter INT;
+SET @TranCounter = @@TRANCOUNT;
+IF @TranCounter > 0
+	SAVE TRANSACTION ProcedureSave;
+ELSE
+	BEGIN TRANSACTION;
+BEGIN TRY
+
+    IF (NOT EXISTS (SELECT	'!'
+					FROM	categorie_tag
+					WHERE	tag_naam = @tag_naam_oud))
+		--Hier wordt nagekeken of de te wijzigen tagnaam bestaat.
+		THROW 50052, 'De te wijzigen tag is niet gevonden.', 16;
+
+	UPDATE	categorie_tag --Wijzigingen worden doorgevoerd.
+	SET		tag_naam = @tag_naam_nieuw
+	WHERE	tag_naam = @tag_naam_oud
 
 	IF @TranCounter = 0 AND XACT_STATE() = 1
 		COMMIT TRANSACTION;
