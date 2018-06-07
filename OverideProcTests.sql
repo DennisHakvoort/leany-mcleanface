@@ -106,7 +106,7 @@ ROLLBACK TRANSACTION
 BEGIN TRANSACTION
 BEGIN TRY
 EXEC sp_insertProjectCategorie 'subsidie', NULL
-EXEC sp_InsertProject 'AK', 'subsidie', '01-01-1900', '01-01-2300', 'ALLES KAPOT'
+EXEC sp_InsertProject 'AK', 'subsidie', '01-01-1900', '01-01-2300', 'ALLES KAPOT', 1300
 EXEC sp_InsertSubprojectCategorie @categorie_naam = 'wafelkraam'
 EXEC sp_InsertSubproject @parent_code = 'AK', @naam = 'subways', @verwachte_uren = -10, @categorie = 'wafelkraam'
 END TRY
