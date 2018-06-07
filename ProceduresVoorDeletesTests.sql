@@ -503,9 +503,6 @@ ERROR MESSAGE:	De te verwijderen tag is niet gevonden.
 */
 BEGIN TRANSACTION
 BEGIN TRY
-	INSERT INTO categorie_tag(tag_naam)
-		VALUES('Test') --testtag wordt toegevoegd
-
 	EXEC sp_VerwijderCategorieTag @tag_naam = 'Testies' --Tag wordt niet verwijderd, geen overeenkomende naam
 END TRY
 BEGIN CATCH
