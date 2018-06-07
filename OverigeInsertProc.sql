@@ -55,7 +55,7 @@ GO
 
 --Insert procedure medewerkerroltype
 /*
-Met deze stored procedure voeg je een nieuw medewerker_rol_type in de database
+Met deze stored procedure voeg je een medewerker_rol toe in medewerker_rol_type. 
 Bijvoorbeeld de rol superuser of medewerker kan je hiermee in de tabel medewerker_rol_type toevoegen.
 */
 CREATE PROCEDURE sp_InsertMedewerkerRolType
@@ -91,7 +91,7 @@ GO
 
 --Insert procedure projectroltype
 /*
-Met deze stored procedure voeg je een nieuw projectroltype toe.
+Met deze stored procedure voeg je een projectroltype toe.
 Bijvoorbeeld de projectrol tester of projectleider.
 */
 CREATE PROCEDURE sp_InsertProjectRolType
@@ -127,7 +127,7 @@ GO
 
 --Insert procedure project
 /*
-Met deze stored procedure kan een project aangemaakt worden en in de database opgeslagen worden.
+Met deze stored procedure voeg je een project toe.
 */
 CREATE PROCEDURE sp_InsertProject
 @project_code   VARCHAR(20),
@@ -167,7 +167,7 @@ GO
 
 --Insert procedure projectcategorie
 /*
-Met deze stored procedure kan een projectcategorie toegevoegd worden.
+Met deze stored procedure voeg je een projectcategorie toe.
 */
 CREATE PROCEDURE sp_InsertProjectCategorie
 @naam   VARCHAR(40),
