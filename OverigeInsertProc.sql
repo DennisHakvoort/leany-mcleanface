@@ -374,7 +374,7 @@ AS BEGIN
 					WHERE	tag_naam = @tag_naam))
 			THROW 50051, 'De ingevoerde tag bestaat al.', 16
 
-		INSERT INTO categrie_tag(tag_naam) --Is de naam nog niet in gebruik, wordt deze toegevoegd.
+		INSERT INTO categorie_tag(tag_naam) --Is de naam nog niet in gebruik, wordt deze toegevoegd.
 			VALUES(@tag_naam)
 
 		IF @TranCounter = 0 AND XACT_STATE() = 1
