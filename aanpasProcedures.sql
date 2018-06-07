@@ -612,16 +612,12 @@ IF @TranCounter > 0
 ELSE
 	BEGIN TRANSACTION;
 BEGIN TRY
+
     IF (NOT EXISTS (SELECT	'!'
 					FROM	categorie_tag
 					WHERE	tag_naam = @tag_naam_oud))
 		--Hier wordt nagekeken of de te wijzigen tagnaam bestaat.
 		THROW 50052, 'De te wijzigen tag is niet gevonden.', 16;
-
-	IF(	 EXISTS(SELECT	'!'
-				FROM	categorie_tag --Hier wordt gecheckt of de ingevoerde tagnaam al in gebruik is.
-				WHERE	tag_naam = @tag_naam_nieuw))
-		THROW 50051, 'De ingevoerde tag bestaat al.', 16;
 
 	UPDATE	categorie_tag --Wijzigingen worden doorgevoerd.
 	SET		tag_naam = @tag_naam_nieuw
