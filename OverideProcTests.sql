@@ -1,5 +1,13 @@
+/*==================================================================*/
+/* DBMS name:      Microsoft SQL Server 2008                        */
+/* Created on:     06-06-2018 10:51:54                              */
+/*==================================================================*/
+
+/* Stored procedures tests voor insertProcedures.sql bestand        */
+
+
 /*
-Alle tests volgen hetzelfde template:
+Alle tests volgen dezelfde template:
 
 --De error die hij geeft of dat hij goed gaat.
 BEGIN TRANSACTION --Open transaction, zodat de test niet de echte database beïnvloedt
@@ -17,16 +25,20 @@ ROLLBACK TRANSACTION --De transaction terugrollen zodat de testdata niet in de e
 Alle tests worden uitgevoerd op een lege database.
  */
 
+ USE LeanDb
+ GO
+
 --Runt alle insert procedures.
+
 BEGIN TRANSACTION
 BEGIN TRY
 EXEC sp_InsertMedewerkerRolType 'braadworst'
 EXEC sp_InsertMedewerker'van Megchelen', 'Supreme leader', 'Sv', 'Wadsm12i30sa', 'braadworst'
 EXEC sp_InsertMedewerkerRolType 'lid'
 EXEC sp_InsertMedewerkerRol 'Sv', 'lid'
-EXEC sp_InsertProjectRolType 'projectleider'
+EXEC sp_InsertProjectRolType 'betatester'
 EXEC sp_insertProjectCategorie 'subsidie', NULL
-EXEC sp_InsertProject 'AK', 'subsidie', '01-01-1900', '01-01-2300', 'ALLES KAPOT'
+EXEC sp_InsertProject 'AK', 'subsidie', '01-01-1900', '01-01-2300', 'ALLES KAPOT', 1300
 EXEC sp_InsertMedewerkerOpProject 'AK', 'Sv', 'projectleider'
 EXEC sp_InsertSubprojectCategorie @categorie_naam = 'submurlock'
 EXEC sp_InsertSubproject @parent_code = 'AK', @naam = 'subways', @verwachte_uren = 10, @categorie = 'submurlock'
@@ -40,6 +52,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --sp_InsertSubprojectCategorie
 --faaltest
@@ -94,7 +107,7 @@ ROLLBACK TRANSACTION
 BEGIN TRANSACTION
 BEGIN TRY
 EXEC sp_insertProjectCategorie 'subsidie', NULL
-EXEC sp_InsertProject 'AK', 'subsidie', '01-01-1900', '01-01-2300', 'ALLES KAPOT'
+EXEC sp_InsertProject 'AK', 'subsidie', '01-01-1900', '01-01-2300', 'ALLES KAPOT', 1300
 EXEC sp_InsertSubprojectCategorie @categorie_naam = 'wafelkraam'
 EXEC sp_InsertSubproject @parent_code = 'AK', @naam = 'subways', @verwachte_uren = -10, @categorie = 'wafelkraam'
 END TRY

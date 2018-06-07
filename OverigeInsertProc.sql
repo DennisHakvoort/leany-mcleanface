@@ -1,3 +1,13 @@
+/*==================================================================*/
+/* DBMS name:      Microsoft SQL Server 2008                        */
+/* Created on:     05-06-2018 10:51:54                              */
+/*==================================================================*/
+
+/* Stored procedures voor insert in tabellen voor database LeanDb   */
+
+USE LeanDb
+GO
+
 DROP PROCEDURE IF EXISTS SP_insertMedewerkerRol
 DROP PROCEDURE IF EXISTS sp_InsertMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_InsertProjectRolType
@@ -8,9 +18,13 @@ DROP PROCEDURE IF EXISTS sp_InsertSubproject
 DROP PROCEDURE IF EXISTS sp_InsertSubprojectCategorie
 DROP PROCEDURE IF EXISTS sp_InsertProjLidOpSubProj
 DROP PROCEDURE IF EXISTS sp_InsertCategorieTag
-
---insert procedure medeweker_rol
 GO
+
+--Insert procedure medewerkerrol
+/*
+Met deze stored procedure voeg je een medewerkerrol toe aan de medewerker_rol tabel. 
+Hierbij worden de medewerker_code en medewerker_rol als parameters meegegeven.
+*/
 CREATE PROCEDURE sp_InsertMedewerkerRol
 @medewerker_code VARCHAR(5),
 @medewerker_rol  VARCHAR(40)
@@ -26,24 +40,28 @@ AS
 	BEGIN TRY
 		 INSERT INTO medewerker_rol (medewerker_code, medewerker_rol)
 		 VALUES (@medewerker_code, @medewerker_rol)
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION'
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
-				PRINT XACT_STATE()
         IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
 		THROW
 	END CATCH
+GO
 
-	GO
---Insert procedure medewerker rol type
+--Insert procedure medewerkerroltype
+/*
+Met deze stored procedure voeg je een medewerker_rol toe in medewerker_rol_type. 
+Bijvoorbeeld de rol superuser of medewerker kan je hiermee in de tabel medewerker_rol_type toevoegen.
+*/
 CREATE PROCEDURE sp_InsertMedewerkerRolType
 @medewerker_rol  VARCHAR(40)
 AS
@@ -58,25 +76,28 @@ AS
 	BEGIN TRY
 		 INSERT INTO medewerker_rol_type (medewerker_rol)
 		 VALUES (@medewerker_rol)
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION'
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
-				PRINT XACT_STATE()
         IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
 		THROW
 	END CATCH
-
-
 GO
---procedure insert project rol type
+
+--Insert procedure projectroltype
+/*
+Met deze stored procedure voeg je een projectroltype toe.
+Bijvoorbeeld de projectrol tester of projectleider.
+*/
 CREATE PROCEDURE sp_InsertProjectRolType
 @project_rol  VARCHAR(40)
 AS
@@ -91,30 +112,34 @@ AS
 	BEGIN TRY
 		 INSERT INTO project_rol_type (project_rol)
 		 VALUES (@project_rol)
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION'
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
-				PRINT XACT_STATE()
         IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
 		THROW
 	END CATCH
-
 GO
---procedure insert project
+
+--Insert procedure project
+/*
+Met deze stored procedure voeg je een project toe.
+*/
 CREATE PROCEDURE sp_InsertProject
 @project_code   VARCHAR(20),
 @categorie_naam VARCHAR(40),
 @begin_datum	DATETIME,
-@eind_datum		DATETIME,
-@project_naam   VARCHAR(40)
+@eind_datum	DATETIME,
+@project_naam   VARCHAR(40),
+@verwachte_uren INT
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -125,26 +150,29 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		 INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
-		 VALUES (@project_code, @categorie_naam, @begin_datum, @eind_datum, @project_naam)
+		 INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam, verwachte_uren)
+		 VALUES (@project_code, @categorie_naam, @begin_datum, @eind_datum, @project_naam, @verwachte_uren)
+		
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION'
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
-				PRINT XACT_STATE()
         IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
 		THROW
 	END CATCH
-
 GO
---insert project categorie
+
+--Insert procedure projectcategorie
+/*
+Met deze stored procedure voeg je een projectcategorie toe.
+*/
 CREATE PROCEDURE sp_InsertProjectCategorie
 @naam   VARCHAR(40),
 @hoofdcategorie VARCHAR(40)
@@ -160,24 +188,27 @@ AS
 	BEGIN TRY
 		 INSERT INTO project_categorie (naam, hoofdcategorie)
 		 VALUES (@naam, @hoofdcategorie)
+
+			IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
 		IF @TranCounter = 0
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION'
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
-				PRINT'ROLLBACK TRANSACTION PROCEDURESAVE'
-				PRINT XACT_STATE()
         IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
 		THROW
 	END CATCH
-
 GO
---insert medewerker op project
+
+--Insert procedure medewerker op project
+/*
+Met deze stored procedure kan je een medewerker indelen op een bestaande project
+*/
 CREATE PROCEDURE sp_InsertMedewerkerOpProject
 @project_code    VARCHAR(20),
 @medewerker_code VARCHAR(5),
@@ -196,15 +227,18 @@ AS
 
 		 INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
 		 VALUES (@project_code, @medewerker_code, @project_rol)
+
+			IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
 	END TRY
 	BEGIN CATCH
-			IF @TranCounter = 0
+		IF @TranCounter = 0
 			BEGIN
 				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
 			END;
 		ELSE
 			BEGIN
-				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
 			END;
 		THROW
 	END CATCH
@@ -351,7 +385,7 @@ GO
 
 --SP Toevoegen tags
 /*
-Met deze procedure kunnen tags worden toegevoegd aan de mogelijke lijst van tags voor categorieën.
+Met deze procedure kunnen tags worden toegevoegd aan de mogelijke lijst van tags voor categorieÃ«n.
 Deze tags zijn bedoeld om gebruikt te worden voor een eventuele zoekfunctie.
 
 De Stored Procedure verwacht alleen een tagnaam.
