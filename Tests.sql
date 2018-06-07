@@ -26,9 +26,11 @@ USE LeanDb
 --Success
 BEGIN TRANSACTION
 BEGIN TRY
+DECLARE @date DATE = GETDATE()+30;
+DECLARE @date2 DATE = GETDATE()+60;
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'sep 2018', 10);
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'dec 2018', 20);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', @date, 10);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', @date2, 20);
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -90,14 +92,12 @@ END CATCH
 ROLLBACK TRANSACTION
 GO
 
-
-
 --BR3
 --Succes test
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker_rol_type VALUES ('test')
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aaaa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
+EXEC sp_InsertMedewerker @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aaaaa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -107,6 +107,7 @@ BEGIN CATCH
 END CATCH
 ROLLBACK TRANSACTION
 GO
+
 
 --BR3
 --[S00016][500014] Medewerker code is al in gebruik
@@ -114,24 +115,8 @@ GO
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker_rol_type VALUES ('test')
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
-END TRY
-BEGIN CATCH
-	PRINT 'CATCH RESULTATEN:'
-	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
-	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
-	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
-END CATCH
-ROLLBACK TRANSACTION
-GO
-
-
---[S00016][50020] Dit is geen bestaande rol
-BEGIN TRANSACTION
-BEGIN TRY
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
+EXEC sp_InsertMedewerker @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
+EXEC sp_InsertMedewerker @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -145,7 +130,7 @@ GO
 --[S00016][50020] Dit is geen bestaande rol
 BEGIN TRANSACTION --werken allemaal
 BEGIN TRY
-EXEC sp_MedewerkerToevoegen @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'aa', @wachtwoord = 'Wachtwoord123', @rol = 'test'
+EXEC sp_InsertMedewerker @achternaam = 'jan', @voornaam = 'peter', @medewerker_code = 'GVDS', @wachtwoord = 'Wachtwoord123', @rol = 'test'
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -156,12 +141,12 @@ END CATCH
 ROLLBACK TRANSACTION
 GO
 
-
 --Test BR4
 --Insert een een tijd schatting van een persoon die uren beschikbaar heeft in de desbetreffende maand
 --succesvol
 BEGIN TRANSACTION
 BEGIN TRY
+DECLARE @currentId INT = (SELECT IDENT_CURRENT('medewerker_op_project'))
 IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
 DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
 INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
@@ -176,9 +161,10 @@ INSERT INTO MEDEWERKER_OP_PROJECT (PROJECT_CODE, MEDEWERKER_CODE, PROJECT_ROL)
 VALUES ('PR', 'GB', 'baas')
 INSERT INTO MEDEWERKER_BESCHIKBAARHEID (MEDEWERKER_CODE, maand, beschikbare_dagen)
 VALUES ('GB', '01-03-2022', 20)
-EXEC sp_InsertMedewerkerIngepland 1, 50, '01-03-2021'
+EXEC sp_InsertMedewerkerIngepland @currentId, 50, '01-03-2022'
 END TRY
 BEGIN CATCH
+throw;
 	PRINT 'CATCH RESULTATEN:'
 	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
 	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
@@ -209,6 +195,7 @@ VALUES ('GB', '01-03-2022', 0)
 EXEC sp_InsertMedewerkerIngepland 1, 1, '01-03-2021'
 END TRY
 BEGIN CATCH
+throw;
 	PRINT 'CATCH RESULTATEN:'
 	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
 	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
@@ -237,6 +224,7 @@ VALUES ('PR', 'GB', 'baas')
 EXEC sp_InsertMedewerkerIngepland 1, 10, '01-03-2021'
 END TRY
 BEGIN CATCH
+throw;
 	PRINT 'CATCH RESULTATEN:'
 	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
 	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
@@ -276,7 +264,7 @@ BEGIN TRANSACTION
 
 		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
 			VALUES	((select IDENT_CURRENT('medewerker_op_project'))-1, 10, CONVERT(date, @date));
-		EXEC sp_ProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = -10, @maand_datum = @date
+		EXEC sp_insertProjecturenMedewerker @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = -10, @maand_datum = @date
 		PRINT 'test mislukt'
 END TRY
 BEGIN CATCH
@@ -320,7 +308,7 @@ BEGIN TRANSACTION
 		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
 			VALUES	((select IDENT_CURRENT('medewerker_op_project'))-1, 10, CONVERT(date, @date));
 		
-		EXEC sp_ProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 1000, @maand_datum = @date
+		EXEC sp_insertProjecturenMedewerker @medewerker_code = 'aa', @project_code = 'PROJC0101C1', @medewerker_uren = 1000, @maand_datum = @date
 		PRINT 'test mislukt'
 END TRY
 BEGIN CATCH
@@ -363,7 +351,7 @@ BEGIN TRANSACTION
 		
 		INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
 			VALUES	((select IDENT_CURRENT('medewerker_op_project')), 10, CONVERT(date, @date));
-		EXEC sp_ProjecturenInplannen @medewerker_code = 'aa', @project_code = 'PROJC0101C11', @medewerker_uren = 10, @maand_datum = @date
+		EXEC sp_insertProjecturenMedewerker @medewerker_code = 'aa', @project_code = 'PROJC0101C11', @medewerker_uren = 10, @maand_datum = @date
 		PRINT 'test succesvol'
 END TRY
 BEGIN CATCH
@@ -1196,7 +1184,7 @@ GO
 BEGIN TRANSACTION
 	BEGIN TRY
 		INSERT INTO medewerker VALUES ('JD', 'Jan', 'Dieter')
-		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'JD', @maand = '1900-01-01', @beschikbare_dagen = 20
+		EXEC sp_InsertBeschikbareDagen @medewerker_code = 'JD', @maand = '1900-01-01', @beschikbare_dagen = 20
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -1214,7 +1202,7 @@ BEGIN TRY
 	DECLARE @date DATETIME = GETDATE();
 	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 		VALUES ('BR', 'Boris', 'Brilmans')
-	EXEC sp_invullenBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
+	EXEC sp_InsertBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -1232,8 +1220,8 @@ BEGIN TRANSACTION
 		DECLARE @date DATETIME = GETDATE();
 		INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
 			VALUES ('BRN', 'Borido', 'Borisen')
-		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
-		EXEC sp_invullenBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
+		EXEC sp_InsertBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
+		EXEC sp_InsertBeschikbareDagen @medewerker_code = 'BR', @maand = @date, @beschikbare_dagen = 20
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -1385,6 +1373,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 -- BR17 Een medewerker heeft een mandatory child in medewerker_rol
 -- succes test
@@ -1411,6 +1400,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 -- BR17 Een medewerker heeft een mandatory child in medewerker_rol
 -- faal test
@@ -1433,13 +1423,14 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --BR18
 --Success omdat hij projectleider is
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker_rol_type VALUES ('Medewerker')
-EXECUTE sp_MedewerkerToevoegen @achternaam = 'Peterson', @voornaam = 'Johnson', @medewerker_code = 'jope', @wachtwoord = 'VeiligWachtw00rd', @rol = 'Medewerker';
+EXECUTE sp_InsertMedewerker @achternaam = 'Peterson', @voornaam = 'Johnson', @medewerker_code = 'jope', @wachtwoord = 'VeiligWachtw00rd', @rol = 'Medewerker';
 INSERT INTO project_rol_type VALUES ('Projectleider')
 INSERT INTO project_categorie VALUES ('cat', NULL)
 INSERT INTO project VALUES ('test', 'cat', 'jan 2019', 'feb 2020', 'testproject', 12)
@@ -1456,12 +1447,13 @@ BEGIN CATCH
 END CATCH
 REVERT
 ROLLBACK TRANSACTION
+GO
 
 --Succes omdat hij superuser is.
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker_rol_type VALUES ('Superuser')
-EXECUTE sp_MedewerkerToevoegen @achternaam = 'Peterson', @voornaam = 'Johnson', @medewerker_code = 'jope', @wachtwoord = 'VeiligWachtw00rd', @rol = 'Superuser';
+EXECUTE sp_InsertMedewerker @achternaam = 'Peterson', @voornaam = 'Johnson', @medewerker_code = 'jope', @wachtwoord = 'VeiligWachtw00rd', @rol = 'Superuser';
 INSERT INTO project_rol_type VALUES ('Programmeuse')
 INSERT INTO project_categorie VALUES ('cat', NULL)
 INSERT INTO project VALUES ('test', 'cat', 'jan 2019', 'feb 2020', 'testproject', 12)
@@ -1478,13 +1470,14 @@ BEGIN CATCH
 END CATCH
 REVERT
 ROLLBACK TRANSACTION
+GO
 
 --Faal omdat hij geen projectleider of superuser is.
 --[S00016][50033] De huidige gebruiker heeft de rechten niet om dit project aan te passen
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker_rol_type VALUES ('Medewerker')
-EXECUTE sp_MedewerkerToevoegen @achternaam = 'Peterson', @voornaam = 'Johnson', @medewerker_code = 'jope', @wachtwoord = 'VeiligWachtw00rd', @rol = 'Medewerker';
+EXECUTE sp_InsertMedewerker @achternaam = 'Peterson', @voornaam = 'Johnson', @medewerker_code = 'jope', @wachtwoord = 'VeiligWachtw00rd', @rol = 'Medewerker';
 INSERT INTO project_rol_type VALUES ('Programmeuse')
 INSERT INTO project_categorie VALUES ('cat', NULL)
 INSERT INTO project VALUES ('test', 'cat', 'jan 2019', 'feb 2020', 'testproject', 12)
@@ -1499,4 +1492,68 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 REVERT
+ROLLBACK TRANSACTION
+GO
+
+--BR18 unique-test
+--succestest
+BEGIN TRANSACTION
+BEGIN TRY
+	DECLARE @date DATETIME = GETDATE()
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('aber', 'Amon', 'Adelaar');
+
+	INSERT INTO project_categorie (naam, hoofdcategorie)
+		VALUES	('onderwijs', null);
+
+	INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+		VALUES	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
+
+	INSERT INTO project_rol_type (project_rol)
+		VALUES	('lector');
+	
+	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
+		VALUES	('PROJC0101C1', 'aber', 'lector');
+
+	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
+		VALUES	('PROJC0101C1', 'aber', 'lector');
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+
+--BR18 unique-test
+--faaltest
+--Violation of UNIQUE KEY constraint 'UC_Medewerker_Project_Code'
+BEGIN TRANSACTION
+BEGIN TRY
+	DECLARE @date DATETIME = GETDATE()
+	INSERT INTO medewerker (medewerker_code, voornaam, achternaam)
+		VALUES ('aber', 'Amon', 'Adelaar');
+
+	INSERT INTO project_categorie (naam, hoofdcategorie)
+		VALUES	('onderwijs', null);
+
+	INSERT INTO project (project_code, categorie_naam, begin_datum, eind_datum, project_naam)
+		VALUES	('PROJC0101C1', 'onderwijs', CONVERT(date, @date - 60), CONVERT(date, @date + 300), 'generieke proj naam');
+
+	INSERT INTO project_rol_type (project_rol)
+		VALUES	('lector');
+	
+	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
+		VALUES	('PROJC0101C1', 'aber', 'lector');
+
+	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
+		VALUES	('PROJC0101C1', 'aber', 'lector');
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
 ROLLBACK TRANSACTION
