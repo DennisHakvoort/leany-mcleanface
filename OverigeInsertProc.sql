@@ -22,8 +22,8 @@ Met deze stored procedure voeg je een medewerkerrol toe aan de medewerker_rol ta
 Hierbij worden de medewerker_code en medewerker_rol als parameters meegegeven.
 */
 CREATE PROCEDURE sp_InsertMedewerkerRol
-@medewerker_code CHAR(5),
-@medewerker_rol  CHAR(40)
+@medewerker_code VARCHAR(5),
+@medewerker_rol  VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -55,11 +55,11 @@ GO
 
 --Insert procedure medewerkerroltype
 /*
-Met deze stored procedure voeg je een nieuwe medewerker_rol_type in de database
+Met deze stored procedure voeg je een nieuw medewerker_rol_type in de database
 Bijvoorbeeld de rol superuser of medewerker kan je hiermee in de tabel medewerker_rol_type toevoegen.
 */
 CREATE PROCEDURE sp_InsertMedewerkerRolType
-@medewerker_rol  CHAR(40)
+@medewerker_rol  VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -91,11 +91,11 @@ GO
 
 --Insert procedure projectroltype
 /*
-Met deze stored procedure voeg je een nieuwe projectroltype toe.
+Met deze stored procedure voeg je een nieuw projectroltype toe.
 Bijvoorbeeld de projectrol tester of projectleider.
 */
 CREATE PROCEDURE sp_InsertProjectRolType
-@project_rol  CHAR(40)
+@project_rol  VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -130,11 +130,11 @@ GO
 Met deze stored procedure kan een project aangemaakt worden en in de database opgeslagen worden.
 */
 CREATE PROCEDURE sp_InsertProject
-@project_code   CHAR(20),
-@categorie_naam CHAR(40),
+@project_code   VARCHAR(20),
+@categorie_naam VARCHAR(40),
 @begin_datum	DATETIME,
-@eind_datum		DATETIME,
-@project_naam   CHAR(40),
+@eind_datum	DATETIME,
+@project_naam   VARCHAR(40),
 @verwachte_uren INT
 AS
 	SET NOCOUNT ON
@@ -170,8 +170,8 @@ GO
 Met deze stored procedure kan een projectcategorie toegevoegd worden.
 */
 CREATE PROCEDURE sp_InsertProjectCategorie
-@naam   CHAR(40),
-@hoofdcategorie CHAR(40)
+@naam   VARCHAR(40),
+@hoofdcategorie VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
@@ -207,9 +207,9 @@ GO
 Met deze stored procedure kan je een medewerker indelen op een bestaande project
 */
 CREATE PROCEDURE sp_InsertMedewerkerOpProject
-@project_code    CHAR(20),
-@medewerker_code CHAR(5),
-@project_rol	 CHAR(40)
+@project_code    VARCHAR(20),
+@medewerker_code VARCHAR(5),
+@project_rol	 VARCHAR(40)
 AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
