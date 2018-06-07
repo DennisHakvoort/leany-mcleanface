@@ -393,3 +393,48 @@ AS BEGIN
 	END CATCH
 END
 GO
+
+--Stored Procedure verwijderen categorietag
+/*
+Deze procedure verwijdert de tag die eraan wordt meegegeven als variabele.
+Als deze niet wordt gevonden, wordt er een error geworpen.
+*/
+CREATE PROCEDURE sp_VerwijderCategorieTag
+@tag_naam NVARCHAR(40)
+AS BEGIN
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+
+		IF NOT EXISTS  (SELECT	'!'
+						FROM	categorie_tag
+						WHERE	tag_naam = @tag_naam)
+			--Hier wordt nagekeken of de te verwijderen tag bestaat.
+			THROW 50051, 'De te verwijderen tag is niet gevonden.', 16;
+
+		DELETE
+		FROM	categorie_tag
+		WHERE	tag_naam = @tag_naam --Hier wordt de tag verwijderd.
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
+GO
