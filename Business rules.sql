@@ -702,5 +702,5 @@ END
 GO
 
 --BR18 In de tabel medewerker_op_project moet de combinatie van medewerker_code en project_code uniek zijn.
-ALTER TABLE medewerker_op_project
+ALTER TABLE medewerker_op_project WITH CHECK
 ADD CONSTRAINT UC_Medewerker_Project_Code UNIQUE (medewerker_code, project_code)
