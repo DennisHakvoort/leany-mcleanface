@@ -17,6 +17,9 @@ DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerOpProject
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerIngeplandProject
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerker
 DROP PROCEDURE IF EXISTS sp_WijzigProject
+DROP PROCEDURE IF EXISTS sp_AanpassenProjectlidOpSubproject
+DROP PROCEDURE IF EXISTS sp_WijzigSubproject
+DROP PROCEDURE IF EXISTS sp_WijzigCategorieTag
 GO
 
 --SP 5 aanpassen projectcategorieën
@@ -317,6 +320,9 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+
+		EXECUTE sp_checkProjectRechten @projectcode = @project_code
+
 		DECLARE @id INT = (SELECT id --KoppelID wordt opgevraagd voor data-opvraag medewerker_ingepland_project.
 						FROM medewerker_op_project
 						WHERE medewerker_code =  @medewerker_code AND project_code = @project_code)
@@ -446,9 +452,99 @@ AS
 	END CATCH
 GO
 
+CREATE PROCEDURE sp_AanpassenProjectlidOpSubproject
+	@medewerker_code VARCHAR(6),
+	@project_code VARCHAR(40),
+	@subproject_naam VARCHAR(40),
+	@nieuwe_uren INT
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		EXECUTE sp_checkProjectRechten @projectcode = @project_code
+
+		DECLARE @id INT = (	SELECT id
+												FROM medewerker_op_project
+												WHERE medewerker_code = @medewerker_code AND project_code = @project_code)
+
+		IF(NOT EXISTS(SELECT '!'
+									FROM projectlid_op_subproject
+									WHERE id = @id AND project_code = @project_code AND subproject_naam = @subproject_naam
+		))
+			THROW 50039, 'Deze combinatie van gebruiker en subproject bestaat niet.', 16
+
+		UPDATE projectlid_op_subproject
+		SET subproject_uren = @nieuwe_uren
+		WHERE id = @id AND project_code = @project_code AND subproject_naam = @subproject_naam
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+GO
+
+CREATE PROCEDURE sp_AanpassenSubprojectCategorie
+@categorieNaam VARCHAR(40),
+@nieuweCategorieNaam VARCHAR(40)
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF(NOT EXISTS(SELECT '!' --Check of de meegegeven categorie überhaupt bestaat
+									FROM subproject_categorie
+									WHERE subproject_categorie_naam = @categorieNaam))
+			THROW 50042, 'Deze categorie bestaat niet.', 16
+
+		IF(EXISTS(SELECT '!'
+							FROM subproject --Check of de categorie wel verwijderd mag worden. Dit mag niet wanneer het nog gebonden is aan een subproject
+							WHERE subproject_categorie_naam = @categorieNaam))
+			THROW 50043, 'Deze categorie wordt nog gebruikt door een subproject.', 16
+
+		UPDATE subproject_categorie
+		SET subproject_categorie_naam = @nieuweCategorieNaam
+		WHERE subproject_categorie_naam = @categorieNaam
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+GO
+
 --SP aanpassen subproject
 /*
-Met deze procedure kunnen subprojectgegevens worden aangepast, zoals de naam, categorie 
+Met deze procedure kunnen subprojectgegevens worden aangepast, zoals de naam, categorie
 en de verwachte uren.
 */
 CREATE PROCEDURE sp_WijzigSubproject
@@ -457,7 +553,7 @@ CREATE PROCEDURE sp_WijzigSubproject
 @subproject_naam_nieuw VARCHAR(40),
 @subproject_categorie_naam VARCHAR(40),
 @subproject_verwachte_uren INT
-AS 
+AS
 SET NOCOUNT ON
 SET XACT_ABORT OFF
 DECLARE @TranCounter INT;
@@ -467,12 +563,12 @@ IF @TranCounter > 0
 ELSE
 	BEGIN TRANSACTION;
 BEGIN TRY
-        IF NOT EXISTS  (SELECT	'!'
-						FROM	subproject
-						WHERE	project_code = @project_code AND
-								subproject_naam = @subproject_naam_oud)
-	--Hier wordt nagekeken of er gegevens bekend zijn bij de opgegeven combinatie projectcode-subprojectnaam.
-	THROW 50044, 'Dit subproject is niet gevonden.', 16;
+    IF NOT EXISTS  (SELECT	'!'
+					FROM	subproject
+					WHERE	project_code = @project_code AND
+							subproject_naam = @subproject_naam_oud)
+		--Hier wordt nagekeken of er gegevens bekend zijn bij de opgegeven combinatie projectcode-subprojectnaam.
+		THROW 50044, 'Dit subproject is niet gevonden.', 16;
 
 	UPDATE	subproject --Wijzigingen worden doorgevoerd.
 	SET		project_code = @project_code,
@@ -481,6 +577,51 @@ BEGIN TRY
 			subproject_verwachte_uren = @subproject_verwachte_uren
 	WHERE	project_code = @project_code AND
 			subproject_naam = @subproject_naam_oud
+
+	IF @TranCounter = 0 AND XACT_STATE() = 1
+		COMMIT TRANSACTION;
+END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+		BEGIN
+			IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+		END;
+	ELSE
+		BEGIN
+			IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+		END;
+	THROW
+END CATCH
+GO
+
+--SP aanpassen categorietag
+/*
+Met deze procedure kunnen de namen van categorietags worden aangepast. 
+De stored procedure verwacht de huidige naam en de naam waarin het veranderd moet worden.
+*/
+CREATE PROCEDURE sp_WijzigCategorieTag
+@tag_naam_oud NVARCHAR(40),
+@tag_naam_nieuw NVARCHAR(40)
+AS
+SET NOCOUNT ON
+SET XACT_ABORT OFF
+DECLARE @TranCounter INT;
+SET @TranCounter = @@TRANCOUNT;
+IF @TranCounter > 0
+	SAVE TRANSACTION ProcedureSave;
+ELSE
+	BEGIN TRANSACTION;
+BEGIN TRY
+
+    IF (NOT EXISTS (SELECT	'!'
+					FROM	categorie_tag
+					WHERE	tag_naam = @tag_naam_oud))
+		--Hier wordt nagekeken of de te wijzigen tagnaam bestaat.
+		THROW 50052, 'De te wijzigen tag is niet gevonden.', 16;
+
+	UPDATE	categorie_tag --Wijzigingen worden doorgevoerd.
+	SET		tag_naam = @tag_naam_nieuw
+	WHERE	tag_naam = @tag_naam_oud
 
 	IF @TranCounter = 0 AND XACT_STATE() = 1
 		COMMIT TRANSACTION;

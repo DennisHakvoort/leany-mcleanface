@@ -14,6 +14,9 @@ DROP PROCEDURE IF EXISTS sp_verwijderenProjectrol
 DROP PROCEDURE IF EXISTS sp_VerwijderenMedewerkerIngeplandProject
 DROP PROCEDURE IF EXISTS sp_VerwijderenMedewerkerRolType
 DROP PROCEDURE IF EXISTS sp_VerwijderenMedewerkerRol
+DROP PROCEDURE IF EXISTS sp_VerwijderenProjectlidOpSubproject
+DROP PROCEDURE IF EXISTS sp_VerwijderenSubprojectCategorie
+DROP PROCEDURE IF EXISTS sp_VerwijderSubproject
 GO
 
 --SP verwijderen medewerker_rol
@@ -243,4 +246,150 @@ AS
 			END;
 		THROW
 	END CATCH
+GO
+
+
+--SP Verwijderen van een projectlid op een subproject
+/*
+Dit is de procedure voor het verwijderen van een projectlid op een subproject.
+De medewerkercode, projectcode en subprojectnaam worden in deze procedure meegegeven.
+*/
+CREATE PROCEDURE sp_VerwijderenProjectlidOpSubproject
+	@medewerker_code VARCHAR(6),
+	@project_code VARCHAR(40),
+	@subproject_naam VARCHAR(40)
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		EXECUTE sp_checkProjectRechten @projectcode = @project_code
+
+		DECLARE @id INT = (	SELECT id --zoekt de id van de opgegeven medewerker op de opgegeven project.
+												FROM medewerker_op_project
+												WHERE medewerker_code = @medewerker_code AND project_code = @project_code)
+
+		IF(NOT EXISTS(SELECT '!' --kijkt of de medewerker is ingedeeld in de subproject.
+									FROM projectlid_op_subproject
+									WHERE id = @id AND project_code = @project_code AND subproject_naam = @subproject_naam
+		))
+			THROW 50038, 'Deze combinatie van gebruiker en subproject bestaat niet.', 16 --werp een error als de medewerker in is ingedeeld in de subproject.
+
+		DELETE FROM projectlid_op_subproject --verwijder de projectlid van de opgegeven subproject.
+		WHERE id = @id AND project_code = @project_code AND subproject_naam = @subproject_naam
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+GO
+
+--SP Verwijderen subprojectcategorie
+/*
+Dit is de procedure voor het verwijderen van een subprojectcategorie
+De subprojectcategorienaam wordt in deze procedure meegeven.
+*/
+CREATE PROCEDURE sp_VerwijderenSubprojectCategorie
+@categorieNaam VARCHAR(40)
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF(NOT EXISTS(SELECT '!' --kijkt of de opgegeven categorie bestaat
+									FROM subproject_categorie
+									WHERE subproject_categorie_naam = @categorieNaam))
+			THROW 50040, 'Deze categorie bestaat niet.', 16 --werp een error als het niet bestaat.
+
+		IF(EXISTS(SELECT '!' --kijkt of de opgegeven categorie niet nog in gebruik is.
+							FROM subproject
+							WHERE subproject_categorie_naam = @categorieNaam))
+			THROW 50041, 'Deze categorie wordt nog gebruikt door een subproject.', 16 --werp een error als het nog in gebruik is.
+
+		DELETE FROM subproject_categorie --verwijder de subprojectcategorienaam.
+		WHERE subproject_categorie_naam = @categorieNaam
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+GO
+GO
+
+--SP verwijderen subprojecten
+/*
+Dit is de procedure voor het verwijderen van subprojecten. Hieraan worden de
+project_code en de subproject_naam meegegeven.
+*/
+CREATE PROCEDURE sp_VerwijderSubproject
+@project_code VARCHAR(20),
+@subproject_naam VARCHAR(20)
+AS BEGIN
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		EXECUTE sp_checkProjectRechten @projectcode = @project_code;
+		IF NOT EXISTS  (SELECT	'@'
+						FROM	subproject
+						WHERE	project_code = @project_code AND
+								subproject_naam = @subproject_naam)
+			--Hier wordt nagekeken of er gegevens bekend zijn bij de opgegeven combinatie projectcode-subprojectnaam.
+			THROW 50044, 'Dit subproject is niet gevonden.', 16;
+
+		DELETE
+		FROM	subproject
+		WHERE	project_code = @project_code AND--Hier wordt het subproject verwijderd.
+				subproject_naam = @subproject_naam
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
 GO

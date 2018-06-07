@@ -153,7 +153,7 @@ BEGIN TRY
 	INSERT INTO project_rol_type VALUES ('CEO');
 	INSERT INTO medewerker_op_project VALUES ('DEA12', 'cod95', 'CEO');
 	INSERT INTO medewerker_ingepland_project VALUES (IDENT_CURRENT('medewerker_op_project'), 300, @maand_beschikbaar);
-
+               
 	EXEC sp_VerwijderenMedewerkerIngeplandProject @maand_beschikbaar, 'cod95', 'DEA12';
 END TRY
 BEGIN CATCH
@@ -283,6 +283,188 @@ BEGIN TRY
 	INSERT INTO medewerker_rol_type VALUES ('Administrator');
 	INSERT INTO medewerker_rol VALUES ('cod17', 'Administrator');
 	EXEC sp_VerwijderenMedewerkerRol 'cod17', 'Leider'
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+               
+--Test voor sp_VerwijderSubproject
+--Succestest, subproject wordt verwijderd inclusief projectlid_op_subprojectdata.
+BEGIN TRANSACTION
+BEGIN TRY
+	DECLARE @date DATETIME = (getdate() + 10);
+	DECLARE @einddatum DATETIME = (getdate() + 300);
+
+	INSERT INTO project_categorie (naam, hoofdcategorie)
+		VALUES ('Biochemie', NULL);
+
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum)
+		VALUES ('PROJAH01', 'project LODL', 'Biochemie', GETDATE() + 30, GETDATE() +200);
+
+	INSERT INTO subproject_categorie (subproject_categorie_naam)
+		VALUES('Biologie');
+
+	INSERT INTO subproject (project_code, subproject_naam, subproject_categorie_naam, subproject_verwachte_uren)
+		VALUES('PROJAH01', 'Testsub', 'Biologie', 12);
+
+	INSERT INTO medewerker
+		VALUES ('cod95', 'Gebruiker7', 'Achternaam7');
+
+	INSERT INTO project_rol_type
+		VALUES('Bioloog')
+	INSERT INTO medewerker_op_project
+		VALUES ('PROJAH01', 'cod95', 'Bioloog');
+
+	DECLARE @id int = IDENT_CURRENT('medewerker_op_project');
+
+	INSERT INTO projectlid_op_subproject(id, project_code, subproject_naam)
+		VALUES(@id, 'PROJAH01', 'Testsub')
+
+	EXEC sp_VerwijderSubproject @project_code='PROJAH01', @subproject_naam='Testsub';
+
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Test voor sp_VerwijderSubproject
+--Faaltest, subproject wordt niet verwijderd wegens onjuiste invoer projectcode.
+/*
+ERROR NUMMER:	50044
+ERROR SEVERITY:	16
+ERROR MESSAGE:	Dit subproject is niet gevonden.
+*/
+BEGIN TRANSACTION
+BEGIN TRY
+	DECLARE @date DATETIME = (getdate() + 10);
+	DECLARE @einddatum DATETIME = (getdate() + 300);
+
+	INSERT INTO project_categorie (naam, hoofdcategorie)
+		VALUES ('Biochemie', NULL);
+
+	INSERT INTO project (project_code, project_naam, categorie_naam, begin_datum, eind_datum)
+		VALUES ('PROJAH01', 'project LODL', 'Biochemie', GETDATE() + 30, GETDATE() +200);
+
+	INSERT INTO subproject_categorie (subproject_categorie_naam)
+		VALUES('Biologie');
+
+	INSERT INTO subproject (project_code, subproject_naam, subproject_categorie_naam, subproject_verwachte_uren)
+		VALUES('PROJAH01', 'Testsub', 'Biologie', 12);
+
+	INSERT INTO medewerker
+		VALUES ('cod95', 'Gebruiker7', 'Achternaam7');
+
+	INSERT INTO project_rol_type
+		VALUES('Bioloog')
+	INSERT INTO medewerker_op_project
+		VALUES ('PROJAH01', 'cod95', 'Bioloog');
+
+	DECLARE @id int = IDENT_CURRENT('medewerker_op_project');
+
+	INSERT INTO projectlid_op_subproject(id, project_code, subproject_naam)
+		VALUES(@id, 'PROJAH01', 'Testsub')
+
+	EXEC sp_VerwijderSubproject @project_code= 'PROJAH00', @subproject_naam='Testsub'; --moet PROJAH01 zijn
+
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--test sp_verwijderprojectlidopproject
+--success
+BEGIN TRANSACTION
+BEGIN TRY
+	IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
+		DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
+	INSERT INTO medewerker VALUES ('JP', 'Julie', 'Provost')
+	INSERT INTO project_categorie VALUES ('cat', NULL)
+	INSERT INTO project VALUES ('proj', 'cat', 'jan 2018', 'jan 2020', 'Groene thee', '12002')
+	INSERT INTO project_rol_type VALUES ('projectleider')
+	INSERT INTO medewerker_op_project VALUES ('proj', 'JP', 'projectleider')
+	INSERT INTO subproject_categorie VALUES ('cat')
+	INSERT INTO subproject VALUES ('proj', 'sub', 'cat', 12)
+	INSERT INTO projectlid_op_subproject VALUES (1, 'proj', 'sub', 10)
+
+	EXECUTE sp_VerwijderenProjectlidOpSubproject @medewerker_code = 'JP', @project_code = 'proj', @subproject_naam = 'sub'
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Deze combinatie van gebruiker en subproject bestaat niet.
+BEGIN TRANSACTION
+BEGIN TRY
+	EXECUTE sp_VerwijderenProjectlidOpSubproject @medewerker_code = 'JP', @project_code = 'proj', @subproject_naam = 'sub'
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--test sp_VerwijderenSubprojectCategorie
+--success
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO subproject_categorie VALUES ('cat')
+
+	EXECUTE sp_VerwijderenSubprojectCategorie @categorieNaam = 'cat'
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Deze categorie bestaat niet.
+BEGIN TRANSACTION
+BEGIN TRY
+	EXECUTE sp_VerwijderenSubprojectCategorie @categorieNaam = 'cat'
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Deze categorie wordt nog gebruikt door een subproject.
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO project_categorie VALUES ('cat', NULL)
+	INSERT INTO project VALUES ('proj', 'cat', 'jan 2018', 'jan 2020', 'Groene thee', '12002')
+	INSERT INTO subproject_categorie VALUES ('cat')
+	INSERT INTO subproject VALUES ('proj', 'sub', 'cat', 12)
+	EXECUTE sp_VerwijderenSubprojectCategorie @categorieNaam = 'cat'
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
