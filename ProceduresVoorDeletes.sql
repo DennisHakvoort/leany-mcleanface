@@ -17,6 +17,7 @@ DROP PROCEDURE IF EXISTS sp_VerwijderenMedewerkerRol
 DROP PROCEDURE IF EXISTS sp_VerwijderenProjectlidOpSubproject
 DROP PROCEDURE IF EXISTS sp_VerwijderenSubprojectCategorie
 DROP PROCEDURE IF EXISTS sp_VerwijderSubproject
+DROP PROCEDURE IF EXISTS sp_VerwijderCategorieTag
 GO
 
 --SP verwijderen medewerker_rol
