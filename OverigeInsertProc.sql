@@ -7,6 +7,7 @@ DROP PROCEDURE IF EXISTS sp_InsertMedewerkerOpProject
 DROP PROCEDURE IF EXISTS sp_InsertSubproject
 DROP PROCEDURE IF EXISTS sp_InsertSubprojectCategorie
 DROP PROCEDURE IF EXISTS sp_InsertProjLidOpSubProj
+DROP PROCEDURE IF EXISTS sp_InsertCategorieTag
 
 --insert procedure medeweker_rol
 GO
@@ -345,3 +346,50 @@ AS BEGIN
 		THROW
 	END CATCH
 END
+
+
+
+--SP Toevoegen tags
+/*
+Met deze procedure kunnen tags worden toegevoegd aan de mogelijke lijst van tags voor categorieën.
+Deze tags zijn bedoeld om gebruikt te worden voor een eventuele zoekfunctie.
+
+De Stored Procedure verwacht alleen een tagnaam.
+*/
+GO
+CREATE PROCEDURE sp_InsertCategorieTag
+@tag_naam NVARCHAR(40)
+AS BEGIN
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF(	 EXISTS(SELECT	'!'
+					FROM	categorie_tag --Hier wordt gecheckt of de tagnaam al in gebruik is.
+					WHERE	tag_naam = @tag_naam))
+			THROW 50051, 'De ingevoerde tag bestaat al.', 16
+
+		INSERT INTO categrie_tag(tag_naam) --Is de naam nog niet in gebruik, wordt deze toegevoegd.
+			VALUES(@tag_naam)
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
+GO
