@@ -657,3 +657,54 @@ BEGIN CATCH
 END CATCH
 ROLLBACK TRANSACTION
 GO
+
+--Stored Procedure sp_WijzigCategorieTag
+--Faaltest, oude tagnaam foutief
+/*
+CATCH RESULTATEN:
+ERROR NUMMER:	50052
+ERROR SEVERITY:	16
+ERROR MESSAGE:	De te wijzigen tag is niet gevonden.
+*/
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO categorie_tag(tag_naam) --eerst wordt een tag toegevoegd
+		VALUES('Test')
+
+	EXECUTE sp_WijzigCategorieTag @tag_naam_oud = 'Toest'/*in plaats van Test*/, @tag_naam_nieuw = 'Testosti' --nu wordt de tag niet gewijzigd
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Stored Procedure sp_WijzigCategorieTag
+--Faaltest, nieuwe tag bestaat al
+/*
+CATCH RESULTATEN:
+ERROR NUMMER:	50051
+ERROR SEVERITY:	16
+ERROR MESSAGE:	De ingevoerde tag bestaat al.
+*/
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO categorie_tag(tag_naam) --eerst wordt een tag toegevoegd
+		VALUES('Test')
+
+	INSERT INTO categorie_tag(tag_naam) --nu nog één
+		VALUES('Test1')
+
+	EXECUTE sp_WijzigCategorieTag @tag_naam_oud = 'Test', @tag_naam_nieuw = 'Test1' --deze bestaat al, dus wordt niet veranderd
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
