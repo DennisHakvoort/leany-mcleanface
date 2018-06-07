@@ -31,6 +31,7 @@ EXEC sp_InsertMedewerkerOpProject 'AK', 'Sv', 'projectleider'
 EXEC sp_InsertSubprojectCategorie @categorie_naam = 'submurlock'
 EXEC sp_InsertSubproject @parent_code = 'AK', @naam = 'subways', @verwachte_uren = 10, @categorie = 'submurlock'
 EXEC sp_InsertProjLidOpSubProj @medewerker_code = 'Sv', @project_code = 'AK', @subproject_naam = 'subways', @subproject_uren = 2
+EXEC sp_InsertCategorieTag @tag_naam = 'Test'
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -126,41 +127,6 @@ ROLLBACK TRANSACTION
 BEGIN TRANSACTION
 BEGIN TRY
 EXEC sp_InsertProjLidOpSubProj @medewerker_code = 'Sv', @project_code = 'AK', @subproject_naam = 'subways', @subproject_uren = -2
-END TRY
-BEGIN CATCH
-	PRINT 'CATCH RESULTATEN:'
-	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
-	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
-	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
-END CATCH
-ROLLBACK TRANSACTION
-
---sp_InsertCategorieTag
---succestest
-BEGIN TRANSACTION
-BEGIN TRY
-EXEC sp_InsertCategorieTag @tag_naam = 'Test'
-END TRY
-BEGIN CATCH
-	PRINT 'CATCH RESULTATEN:'
-	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
-	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
-	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
-END CATCH
-ROLLBACK TRANSACTION
-
---sp_InsertCategorieTag
---Faaltest
-/*
-CATCH RESULTATEN:
-ERROR NUMMER:	50051
-ERROR SEVERITY:	16
-ERROR MESSAGE:	De ingevoerde tag bestaat al.
-*/
-BEGIN TRANSACTION
-BEGIN TRY
-EXEC sp_InsertCategorieTag @tag_naam = 'Test'
-EXEC sp_InsertCategorieTag @tag_naam = 'Test'
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
