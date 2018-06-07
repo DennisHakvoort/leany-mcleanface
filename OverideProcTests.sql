@@ -31,6 +31,7 @@ EXEC sp_InsertMedewerkerOpProject 'AK', 'Sv', 'projectleider'
 EXEC sp_InsertSubprojectCategorie @categorie_naam = 'submurlock'
 EXEC sp_InsertSubproject @parent_code = 'AK', @naam = 'subways', @verwachte_uren = 10, @categorie = 'submurlock'
 EXEC sp_InsertProjLidOpSubProj @medewerker_code = 'Sv', @project_code = 'AK', @subproject_naam = 'subways', @subproject_uren = 2
+EXEC sp_InsertCategorieTag @tag_naam = 'Test'
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -134,4 +135,3 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
-
