@@ -641,7 +641,7 @@ ROLLBACK TRANSACTION
 GO
 
 --Stored Procedure sp_WijzigCategorieTag
---Succestest
+--Succestest, een tag wordt toegevoegd zonder foutmelding
 BEGIN TRANSACTION
 BEGIN TRY
 	INSERT INTO categorie_tag(tag_naam) --eerst wordt een tag toegevoegd
