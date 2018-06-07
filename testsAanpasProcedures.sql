@@ -639,3 +639,21 @@ BEGIN CATCH
 END CATCH
 ROLLBACK TRANSACTION
 GO
+
+--Stored Procedure sp_WijzigCategorieTag
+--Succestest
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO categorie_tag(tag_naam) --eerst wordt een tag toegevoegd
+		VALUES('Test')
+
+	EXECUTE sp_WijzigCategorieTag @tag_naam_oud = 'Test', @tag_naam_nieuw = 'Testosti' --hier wordt de tag gewijzigd
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
