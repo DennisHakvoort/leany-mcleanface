@@ -346,7 +346,7 @@ AS BEGIN
 		THROW
 	END CATCH
 END
-
+GO
 
 
 --SP Toevoegen tags
@@ -356,7 +356,6 @@ Deze tags zijn bedoeld om gebruikt te worden voor een eventuele zoekfunctie.
 
 De Stored Procedure verwacht alleen een tagnaam.
 */
-GO
 CREATE PROCEDURE sp_InsertCategorieTag
 @tag_naam NVARCHAR(40)
 AS BEGIN
