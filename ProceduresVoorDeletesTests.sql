@@ -474,3 +474,45 @@ BEGIN CATCH
 END CATCH
 ROLLBACK TRANSACTION
 GO
+
+--Test voor sp_VerwijderCategorieTag
+--Succestest, tag wordt succesvol verwijderd
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO categorie_tag(tag_naam)
+		VALUES('Test') --testtag wordt toegevoegd
+
+	EXEC sp_VerwijderCategorieTag @tag_naam = 'Test' --Tag wordt verwijderd
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Test voor sp_VerwijderCategorieTag
+--Faaltest, tagnaam komt niet overeen met een tag in de tabel. Er wordt dus niets verwijderd.
+/*
+CATCH RESULTATEN:
+ERROR NUMMER:	50051
+ERROR SEVERITY:	16
+ERROR MESSAGE:	De te verwijderen tag is niet gevonden.
+*/
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO categorie_tag(tag_naam)
+		VALUES('Test') --testtag wordt toegevoegd
+
+	EXEC sp_VerwijderCategorieTag @tag_naam = 'Testies' --Tag wordt niet verwijderd, geen overeenkomende naam
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
