@@ -264,10 +264,10 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		IF NOT EXISTS(SELECT '@' --Checkt of de subprojectcategorie naam niet al bestaat.
+		IF NOT EXISTS(SELECT '@' --Checkt of de subprojectcategorie wel bestaat.
 					FROM subproject_categorie
 					WHERE subproject_categorie_naam = @categorie)
-			THROW 50045, 'Opgegeven subprojectcategorienaam bestaand niet.', 16
+			THROW 50045, 'Opgegeven subprojectcategorienaam bestaat niet.', 16
 
 		IF NOT EXISTS(SELECT '@' --Checkt of de opgegeven hoofdproject wel bestaat.
 						FROM project
@@ -279,6 +279,7 @@ AS
 		
 		INSERT INTO subproject (project_code, subproject_naam, subproject_categorie_naam, subproject_verwachte_uren)
 			VALUES (@parent_code, @naam, @categorie, @verwachte_uren);
+
 		IF @TranCounter = 0 AND XACT_STATE() = 1
 			COMMIT TRANSACTION;
 	END TRY
@@ -440,6 +441,12 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+		IF NOT EXISTS (SELECT '@' --Check of de ingevoerde tag_naam wel bestaat.
+					FROM categorie_tag
+					WHERE tag_naam = @tag_naam)
+			THROW 50048, 'De ingevoerde tagnaam bestaat niet.', 16
+			--Deze foutmelding wordt getoond wanneer een niet bestaande tag_naam aan een tag_van_categorie gekoppeld wordt.
+
 		INSERT INTO tag_van_categorie(naam, tag_naam)
 			VALUES (@naam, @tag_naam)
 
