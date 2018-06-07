@@ -1,3 +1,11 @@
+/*==================================================================*/
+/* DBMS name:      Microsoft SQL Server 2008                        */
+/* Created on:     06-06-2018 10:51:54                              */
+/*==================================================================*/
+
+/* Stored procedures tests voor deleteprocedures.sql bestand        */
+
+
 /*
 Alle tests volgen hetzelfde template:
 
@@ -19,11 +27,10 @@ Alle tests worden uitgevoerd op een lege database.
 
 USE LeanDb
 GO
---verwijder procedures tests.
 
---sp_VerwijderenProjectCategorie tests
+--Test sp_VerwijderenProjectCategorie
 --Een categorie verwijderen
---succesvol
+--Succesvol
 BEGIN TRANSACTION
 BEGIN TRY
 	INSERT INTO project_categorie (naam, hoofdcategorie)
@@ -37,10 +44,12 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --Een categorie die een subcategorie heeft proberen te verwijderen.
 --Msg 50021, Level 16, State 16, Procedure sp_VerwijderenProjectCategorie, Line 20 [Batch Start Line 12]
 --Een categorie met subcategoriën kan niet verwijderd worden.
+--Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
 	INSERT INTO project_categorie (naam, hoofdcategorie)
@@ -55,10 +64,12 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --Probeer een categorie te verwijderen die nog toegekend is aan een project.
 --Msg 50022, Level 16, State 16, Procedure sp_VerwijderenProjectCategorie, Line 26 [Batch Start Line 22]
 --Een categorie die gebruikt wordt door een project kan niet verwijderd worden.
+--Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
 	INSERT INTO project_categorie (naam, hoofdcategorie)
@@ -74,9 +85,10 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
--- test sp_verwijderenProjectrol
--- succes test
+--Test sp_verwijderenProjectrol
+--Succestest
 BEGIN TRANSACTION
 	BEGIN TRY
 INSERT INTO project_rol_type (project_rol)
@@ -94,9 +106,8 @@ ROLLBACK TRANSACTION
 GO
 
 -- test sp_verwijderenProjectrol
--- faal test
 -- Msg 50026, Level 16, State 16, Procedure sp_verwijderenProjectrol
--- Projectrol kan niet worden verwijdert, omdat het nog in gebruik is.
+-- Projectrol kan niet worden verwijderd, omdat het nog in gebruik is.
 BEGIN TRANSACTION
 BEGIN TRY
 	INSERT INTO project_categorie (naam, hoofdcategorie)
@@ -125,7 +136,7 @@ GO
 
 --Test sp_VerwijderenMedewerkerIngeplandProject
 --Verwijder een medewerker_ingepland_project record
---Succes test
+--Succestest
 BEGIN TRANSACTION
 BEGIN TRY
 	DECLARE @maand_beschikbaar DATETIME = (getdate() + 40);
@@ -143,8 +154,7 @@ BEGIN TRY
 	INSERT INTO medewerker_op_project VALUES ('DEA12', 'cod95', 'CEO');
 	INSERT INTO medewerker_ingepland_project VALUES (IDENT_CURRENT('medewerker_op_project'), 300, @maand_beschikbaar);
 
-	DECLARE @id int = IDENT_CURRENT('medewerker_op_project') + 1;
-	EXEC sp_VerwijderenMedewerkerIngeplandProject @id, @maand_beschikbaar;
+	EXEC sp_VerwijderenMedewerkerIngeplandProject @maand_beschikbaar, 'cod95', 'DEA12';
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -156,13 +166,45 @@ ROLLBACK TRANSACTION
 GO
 
 --Een medewerker_ingepland_project verwijderen die niet bestaat
---Faal test
 --Msg 50031, Level 16, State 16, Procedure sp_VerwijderenMedewerkerIngeplandProject, Line 21 [Batch Start Line 137]
 --Er bestaat geen medewerker_ingepland_project record met de opgegeven id
+--Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
-	DECLARE @id int = IDENT_CURRENT('medewerker_op_project') + 1;
-	EXEC sp_VerwijderenMedewerkerIngeplandProject @id, 'feb 2018';
+	DECLARE @maand_beschikbaar DATETIME = (getdate() + 40);
+
+	INSERT INTO medewerker VALUES ('cod95', 'Gebruiker7', 'Achternaam7');
+	INSERT INTO medewerker_beschikbaarheid VALUES ('cod95', 'jan 2019', 12);
+	INSERT INTO medewerker_rol_type VALUES ('DeaTeacher');
+	INSERT INTO medewerker_rol VALUES ('cod95', 'DeaTeacher');
+	INSERT INTO project_categorie VALUES ('HAN Arnhem', null);
+	INSERT INTO project_categorie VALUES ('DEA_project', 'HAN Arnhem');
+	INSERT INTO categorie_tag VALUES ('school');
+	INSERT INTO tag_van_categorie VALUES ('DEA_project', 'school');
+	INSERT INTO project VALUES ('DEA12', 'DEA_project', GETDATE() + 30 , GETDATE() + 200, 'DEA_project_2018', 320);
+	INSERT INTO project_rol_type VALUES ('CEO');
+	INSERT INTO medewerker_op_project VALUES ('DEA12', 'cod95', 'CEO');
+
+	EXEC sp_VerwijderenMedewerkerIngeplandProject @maand_beschikbaar, 'cod95', 'DEA12';
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Een medewerker_ingepland_project record proberen te verwijderen waarvan de medewerker nog niet in de opgegeven maand_datum voor ingepland staat
+--Msg 50035, Level 16, State 16, Procedure sp_VerwijderenMedewerkerIngeplandProject, Line 21 [Batch Start Line 137]
+--De medewerker met de opgegeven medewerker_code is niet aan dit project gekoppeld.
+--Faaltest
+BEGIN TRANSACTION
+BEGIN TRY
+	DECLARE @maand_beschikbaar DATETIME = (getdate() + 40);
+
+	EXEC sp_VerwijderenMedewerkerIngeplandProject @maand_beschikbaar, 'cod97', 'DEA12';
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -175,7 +217,7 @@ GO
 
 --Test sp_VerwijderenMedewerkerRolType
 --Verwijder een medewerker_rol_type die niet in gebruik is
---Succes test
+--Succestest
 BEGIN TRANSACTION
 BEGIN TRY
 	INSERT INTO medewerker_rol_type VALUES ('CEO');
@@ -193,6 +235,7 @@ GO
 --Een medewerker_rol_type die al aan een medewerker gekoppeld is kan niet verwijderd worden
 --Msg 50029, Level 16, State 16, Procedure sp_VerwijderenMedewerkerRolType, Line 20 [Batch Start Line 118]
 --een medewerker_rol_type in gebruik kan niet verwijderd worden.
+--Faaltest
 BEGIN TRANSACTION
 	BEGIN TRY
 		INSERT INTO medewerker VALUES ('aa123', 'Samir', 'Amed');
@@ -211,7 +254,7 @@ GO
 
 --Test sp_VerwijderenMedewerkerRol
 --Verwijder een medewerker_rol die gekoppeld is aan een medewerker
---Succes test
+--Succestest
 BEGIN TRANSACTION
 BEGIN TRY
 	INSERT INTO medewerker VALUES ('cod98', 'Gebruiker1', 'Achternaam1');
@@ -231,9 +274,9 @@ ROLLBACK TRANSACTION
 GO
 
 --Een medewerker_rol die niet gekoppeld is aan de opgegeven medewerker_code kan niet verwijderd worden
---Faal test
---Msg 50096, Level 16, State 16, Procedure sp_VerwijderenMedewerkerRol, Line 20 [Batch Start Line 147]
+--Msg 50030, Level 16, State 16, Procedure sp_VerwijderenMedewerkerRol, Line 20 [Batch Start Line 147]
 --deze medewerker heeft niet de ingevoerde medewerker_rol.
+--Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
 	INSERT INTO medewerker VALUES ('cod17', 'Gebruiker2', 'Achternaam2');
