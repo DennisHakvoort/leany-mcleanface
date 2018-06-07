@@ -274,7 +274,7 @@ AS BEGIN
 			THROW 50047, 'Verwachte uren van subprojecten mogen niet negatief zijn.', 16
 		
 		INSERT INTO subproject (project_code, subproject_naam, subproject_categorie_naam, subproject_verwachte_uren)
-			VALUES (@parent_code, @naam, @verwachte_uren, @categorie);
+			VALUES (@parent_code, @naam, @categorie, @@verwachte_uren);
 		IF @TranCounter = 0 AND XACT_STATE() = 1
 			COMMIT TRANSACTION;
 	END TRY
