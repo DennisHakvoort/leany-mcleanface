@@ -18,6 +18,7 @@ DROP PROCEDURE IF EXISTS sp_InsertSubproject
 DROP PROCEDURE IF EXISTS sp_InsertSubprojectCategorie
 DROP PROCEDURE IF EXISTS sp_InsertProjLidOpSubProj
 DROP PROCEDURE IF EXISTS sp_InsertCategorieTag
+DROP PROCEDURE IF EXISTS sp_InsertTagVanCategorie
 GO
 
 --Insert procedure medewerkerrol
@@ -420,4 +421,40 @@ AS BEGIN
 		THROW
 	END CATCH
 END
+GO
+
+--SP Toevoegen tag van categorie
+/*
+Met deze procedure kunnen bestaande tags aan een projectcategorie toegevoegd worden.
+*/
+CREATE PROCEDURE sp_InsertTagVanCategorie
+@naam VARCHAR (40),
+@tag_naam NVARCHAR (40)
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		INSERT INTO tag_van_categorie(naam, tag_naam)
+			VALUES (@naam, @tag_naam)
+
+			IF @TranCounter = 0 AND XACT_STATE() = 1
+				COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
 GO
