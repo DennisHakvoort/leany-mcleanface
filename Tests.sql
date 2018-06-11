@@ -141,98 +141,6 @@ END CATCH
 ROLLBACK TRANSACTION
 GO
 
---Test BR4
---Insert een een tijd schatting van een persoon die uren beschikbaar heeft in de desbetreffende maand
---succesvol
-BEGIN TRANSACTION
-BEGIN TRY
-DECLARE @currentId INT = (SELECT IDENT_CURRENT('medewerker_op_project'))
-IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
-DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
-INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
-VALUES ('GB', 'Gertruude', 'van Barneveld')
-INSERT INTO PROJECT_CATEGORIE (naam, hoofdcategorie)
-VALUES ('subsidie', NULL)
-INSERT INTO PROJECT (PROJECT_CODE, categorie_naam, BEGIN_DATUM, EIND_DATUM, PROJECT_NAAM)
-VALUES ('PR', 'subsidie', '01-01-1990', '01-01-2100', 'test project')
-INSERT INTO PROJECT_ROL_TYPE (project_rol)
-VALUES ('baas')
-INSERT INTO MEDEWERKER_OP_PROJECT (PROJECT_CODE, MEDEWERKER_CODE, PROJECT_ROL)
-VALUES ('PR', 'GB', 'baas')
-INSERT INTO MEDEWERKER_BESCHIKBAARHEID (MEDEWERKER_CODE, maand, beschikbare_dagen)
-VALUES ('GB', '01-03-2022', 20)
-EXEC sp_InsertMedewerkerIngepland @currentId, 50, '01-03-2022'
-END TRY
-BEGIN CATCH
-throw;
-	PRINT 'CATCH RESULTATEN:'
-	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
-	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
-	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
-END CATCH
-ROLLBACK TRANSACTION
-GO
-
---insert geplande uren voor iemand die geen uren beschikbaar heeft in een maand.
--- error: Msg 50006, Level 16, State 16, Procedure medewerkerNietInplannenAlsNietBeschikbaar, Line 21 [Batch Start Line 60]
---Medewerker heeft geen beschikbare uren en kan dus niet ingepland worden
-BEGIN TRANSACTION
-BEGIN TRY
-IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
-DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
-INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
-VALUES ('GB', 'Gertruude', 'van Barneveld')
-INSERT INTO PROJECT_CATEGORIE (naam, hoofdcategorie)
-VALUES ('subsidie', NULL)
-INSERT INTO PROJECT (PROJECT_CODE, categorie_naam, BEGIN_DATUM, EIND_DATUM, PROJECT_NAAM)
-VALUES ('PR', 'subsidie', '01-01-1990', '01-01-2100', 'test project')
-INSERT INTO PROJECT_ROL_TYPE (project_rol)
-VALUES ('baas')
-INSERT INTO MEDEWERKER_OP_PROJECT (PROJECT_CODE, MEDEWERKER_CODE, PROJECT_ROL)
-VALUES ('PR', 'GB', 'baas')
-INSERT INTO MEDEWERKER_BESCHIKBAARHEID (MEDEWERKER_CODE, maand, beschikbare_dagen)
-VALUES ('GB', '01-03-2022', 0)
-EXEC sp_InsertMedewerkerIngepland 1, 1, '01-03-2021'
-END TRY
-BEGIN CATCH
-throw;
-	PRINT 'CATCH RESULTATEN:'
-	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
-	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
-	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
-END CATCH
-ROLLBACK TRANSACTION
-GO
-
---Insert geplande uren voor iemand die beschikbaarheid nog niet doorgegeven heeft.
---error: Msg 50006, Level 16, State 16, Procedure medewerkerNietInplannenAlsNietBeschikbaar, Line 21 [Batch Start Line 60]
---Medewerker heeft geen beschikbare uren en kan dus niet ingepland worden
-BEGIN TRANSACTION
-BEGIN TRY
-IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
-DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
-INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
-VALUES ('GB', 'Gertruude', 'van Barneveld')
-INSERT INTO PROJECT_CATEGORIE (naam, hoofdcategorie)
-VALUES ('subsidie', NULL)
-INSERT INTO PROJECT (PROJECT_CODE, categorie_naam, BEGIN_DATUM, EIND_DATUM, PROJECT_NAAM)
-VALUES ('PR', 'subsidie', '01-01-1990', '01-01-2100', 'test project')
-INSERT INTO PROJECT_ROL_TYPE (project_rol)
-VALUES ('baas')
-INSERT INTO MEDEWERKER_OP_PROJECT (PROJECT_CODE, MEDEWERKER_CODE, PROJECT_ROL)
-VALUES ('PR', 'GB', 'baas')
-EXEC sp_InsertMedewerkerIngepland 1, 10, '01-03-2021'
-END TRY
-BEGIN CATCH
-throw;
-	PRINT 'CATCH RESULTATEN:'
-	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
-	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
-	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
-END CATCH
-ROLLBACK TRANSACTION
-GO
-
 -- BR5 Faal Test - negatieve waarden
 BEGIN TRANSACTION
 	BEGIN TRY	
@@ -362,6 +270,81 @@ BEGIN CATCH
 END CATCH
 ROLLBACK TRANSACTION
 GO
+
+--BR5 FAAL TEST
+--Totaal geplande uren van de medewerker is meer dan 184 uur
+BEGIN TRANSACTION
+BEGIN TRY
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
+INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
+VALUES ('GB', 'Gertruude', 'van Barneveld')
+INSERT INTO PROJECT_CATEGORIE (naam, hoofdcategorie)
+VALUES ('subsidie', NULL)
+INSERT INTO PROJECT (PROJECT_CODE, categorie_naam, BEGIN_DATUM, EIND_DATUM, PROJECT_NAAM)
+VALUES ('PR', 'subsidie', '01-01-1990', '01-01-2100', 'test project')
+INSERT INTO PROJECT_ROL_TYPE (project_rol)
+VALUES ('baas')
+INSERT INTO MEDEWERKER_OP_PROJECT (PROJECT_CODE, MEDEWERKER_CODE, PROJECT_ROL)
+VALUES ('PR', 'GB', 'baas')
+INSERT INTO MEDEWERKER_BESCHIKBAARHEID (MEDEWERKER_CODE, maand, beschikbare_dagen)
+VALUES ('GB', '01-03-2022', 1)
+EXEC sp_InsertProjecturenMedewerker 'GB', 'PR', 1, '01-03-2022'
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--insert geplande uren voor iemand die geen uren beschikbaar heeft in een maand.
+-- error: Msg 50006, Level 16, State 16, Procedure medewerkerNietInplannenAlsNietBeschikbaar, Line 21 [Batch Start Line 60]
+--Medewerker heeft geen beschikbare uren en kan dus niet ingepland worden
+BEGIN TRANSACTION
+BEGIN TRY
+IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
+DBCC CHECKIDENT ('medewerker_op_project', RESEED, 0);
+INSERT INTO MEDEWERKER (MEDEWERKER_CODE, VOORNAAM, ACHTERNAAM)
+VALUES ('GB', 'Gertruude', 'van Barneveld')
+INSERT INTO PROJECT_CATEGORIE (naam, hoofdcategorie)
+VALUES ('subsidie', NULL)
+INSERT INTO PROJECT (PROJECT_CODE, categorie_naam, BEGIN_DATUM, EIND_DATUM, PROJECT_NAAM)
+VALUES ('PR', 'subsidie', '01-01-1990', '01-01-2100', 'test project')
+INSERT INTO PROJECT_ROL_TYPE (project_rol)
+VALUES ('baas')
+INSERT INTO MEDEWERKER_OP_PROJECT (PROJECT_CODE, MEDEWERKER_CODE, PROJECT_ROL)
+VALUES ('PR', 'GB', 'baas')
+INSERT INTO MEDEWERKER_BESCHIKBAARHEID (MEDEWERKER_CODE, maand, beschikbare_dagen)
+VALUES ('GB', '01-03-2022', 0)
+EXEC sp_InsertProjecturenMedewerker 'G', 'PR', 1, '01-03-2021'
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Faal test
+--Invalide invoerwaarde - negatieve uren
+BEGIN TRANSACTION
+BEGIN TRY
+EXEC sp_InsertProjecturenMedewerker 'G', 'PR', -1, '01-03-2021'
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
 
 -- BR7 Faal Test - single insert
 -- The INSERT statement conflicted with the CHECK constraint "CK_EINDDATUM_NA_BEGINDATUM". The conflict occurred in database "LeanDb", table "dbo.project".

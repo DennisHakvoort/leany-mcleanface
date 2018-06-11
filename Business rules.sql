@@ -176,55 +176,6 @@ AS BEGIN
 END
 GO
 
---BR4 Als een medewerker in een maand geen beschikbare uren ter beschikking heeft kan hij/zij niet diezelfde maand in een project ingedeeld worden
-CREATE PROCEDURE sp_InsertMedewerkerIngepland
-@ID INT,
-@medewerker_uren INT,
-@maand_datum DATETIME
-AS BEGIN
-	SET NOCOUNT ON 
-	SET XACT_ABORT OFF
-	DECLARE @TranCounter INT;
-	SET @TranCounter = @@TRANCOUNT;
-	IF @TranCounter > 0
-		SAVE TRANSACTION ProcedureSave;
-	ELSE
-		BEGIN TRANSACTION;
-	BEGIN TRY
-			--Onderstaande query gaat na of er sprake is van een gebrek aan beschikbaarheid in de betreffende maand.
-		 IF EXISTS (SELECT	'!'
-					FROM	medewerker_op_project m
-							LEFT OUTER JOIN medewerker_ingepland_project i ON m.ID = i.ID
-							LEFT OUTER JOIN medewerker_beschikbaarheid b ON m.medewerker_code = b.medewerker_code
-					WHERE	@id = m.id AND (b.beschikbare_dagen = 0 OR b.beschikbare_dagen IS NULL) AND b.maand = @maand_datum)
-			BEGIN
-				;THROW 50006, 'Medewerker heeft geen beschikbare dagen in deze maand en kan dus niet ingepland worden', 16
-			END
-		ELSE
-			BEGIN
-				--Voegt de geplande uren toe
-				INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
-					VALUES (@id, @medewerker_uren, @maand_datum)
-			END
-		IF @TranCounter = 0 AND XACT_STATE() = 10
-			COMMIT TRANSACTION;
-	END TRY
-
-	BEGIN CATCH
-		IF @TranCounter = 0
-			BEGIN
-				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
-			END;
-		ELSE
-			BEGIN
-				PRINT XACT_STATE()
-        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
-			END;
-		THROW
-	END CATCH
-END
-GO
-
 -- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0
 -- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184 (184 uur staat gelijk aan 23 dagen (23*8 = 184))
 CREATE PROCEDURE sp_InsertProjecturenMedewerker
@@ -237,7 +188,6 @@ AS BEGIN
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
 	SET @TranCounter = @@TRANCOUNT;
-
 	IF @TranCounter > 0
 		SAVE TRANSACTION ProcedureSave;
 	ELSE
@@ -253,6 +203,14 @@ AS BEGIN
 				   WHERE	medewerker_code = @medewerker_code AND
 							project_code = @project_code)
 
+
+		 IF NOT EXISTS (SELECT	'!'
+			    FROM	medewerker_op_project m
+					INNER JOIN medewerker_beschikbaarheid b ON m.medewerker_code = b.medewerker_code
+				WHERE	@id = m.id AND (b.beschikbare_dagen > 0) AND b.maand = @maand_datum)
+				THROW 50006, 'Medewerker heeft geen beschikbare dagen in deze maand en kan dus niet ingepland worden', 16
+
+
 		IF EXISTS (	SELECT		1 --Onderstaande query telt het maandelijkse aantal uren op en vergelijkt het met maximum.
 					FROM		medewerker_ingepland_project mip
 								INNER JOIN medewerker_op_project mop ON mip.id = mop.id
@@ -260,7 +218,7 @@ AS BEGIN
 					WHERE		mop.medewerker_code = @medewerker_code AND
 								FORMAT(mip.maand_datum, 'yyyy-MM') = FORMAT(GETDATE(), 'yyyy-MM') --format naar yyyy-MM zodat het vergeleken kan worden
 					GROUP BY	medewerker_code
-					HAVING		SUM(mip.medewerker_uren) + @medewerker_uren <= 184) -- 184 is het maximum aantal uren per maand voor een medewerker (184 uur = 23 dagen * 8 uur)
+					HAVING		SUM(mip.medewerker_uren) + @medewerker_uren <= 184) -- 184 is het maximum aantal uren per maand voor een medewerker (184 uur = 23 dagen * 8 uur).
 			BEGIN
 				--Medewerkeruren worden toegevoegd.
 				INSERT INTO medewerker_ingepland_project (id, medewerker_uren, maand_datum)
@@ -268,7 +226,6 @@ AS BEGIN
 			END
 		ELSE
 			THROW 50037, 'Totaal geplande uren van de medewerker is meer dan 184 uur', 16
-
 		IF @TranCounter = 0 AND XACT_STATE() = 1
 			COMMIT TRANSACTION;
 	END TRY
