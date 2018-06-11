@@ -18,6 +18,7 @@ DROP PROCEDURE IF EXISTS sp_InsertSubproject
 DROP PROCEDURE IF EXISTS sp_InsertSubprojectCategorie
 DROP PROCEDURE IF EXISTS sp_InsertProjLidOpSubProj
 DROP PROCEDURE IF EXISTS sp_InsertCategorieTag
+DROP PROCEDURE IF EXISTS sp_InsertTagVanCategorie
 GO
 
 --Insert procedure medewerkerrol
@@ -244,13 +245,16 @@ AS
 	END CATCH
 GO
 
---insert subproject
+--Insert subproject
+/*
+Met deze procedure kan je een subproject toevoegen binnen een project
+*/
 CREATE PROCEDURE sp_InsertSubproject
 @parent_code	VARCHAR(20),
 @naam			VARCHAR(40),
 @verwachte_uren	INT,
 @categorie		VARCHAR(40)
-AS BEGIN
+AS 
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
@@ -260,10 +264,10 @@ AS BEGIN
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		IF NOT EXISTS(SELECT '@' --Checkt of de subprojectcategorie naam niet al bestaat.
+		IF NOT EXISTS(SELECT '@' --Checkt of de subprojectcategorie wel bestaat.
 					FROM subproject_categorie
 					WHERE subproject_categorie_naam = @categorie)
-			THROW 50045, 'Opgegeven subprojectcategorienaam bestaand niet.', 16
+			THROW 50045, 'Opgegeven subprojectcategorienaam bestaat niet.', 16
 
 		IF NOT EXISTS(SELECT '@' --Checkt of de opgegeven hoofdproject wel bestaat.
 						FROM project
@@ -275,6 +279,7 @@ AS BEGIN
 		
 		INSERT INTO subproject (project_code, subproject_naam, subproject_categorie_naam, subproject_verwachte_uren)
 			VALUES (@parent_code, @naam, @categorie, @verwachte_uren);
+
 		IF @TranCounter = 0 AND XACT_STATE() = 1
 			COMMIT TRANSACTION;
 	END TRY
@@ -289,13 +294,16 @@ AS BEGIN
 			END;
 		THROW
 	END CATCH
-END
 GO
 
---insert sp_InsertSubprojectCategorie
+
+--Insert sp_InsertSubprojectCategorie
+/*
+Met deze procedure kan je een categorie toevoegen aan een subproject
+*/
 CREATE PROCEDURE sp_InsertSubprojectCategorie
 @categorie_naam			VARCHAR(40)
-AS BEGIN
+AS 
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
@@ -305,11 +313,6 @@ AS BEGIN
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
-		IF EXISTS(SELECT '@' --Checkt of de subprojectcategorie niet al bestaat.
-					FROM subproject_categorie
-					WHERE subproject_categorie_naam = @categorie_naam)
-			THROW 50048, 'Subprojectcategorie bestaat al.', 16
-
 		INSERT INTO subproject_categorie(subproject_categorie_naam)
 			VALUES (@categorie_naam);
 
@@ -327,16 +330,18 @@ AS BEGIN
 			END;
 		THROW
 	END CATCH
-END
 GO
 
---insert sp_InsertProjLidOpSubProj
+--Insert sp_InsertProjLidOpSubProj
+/*
+Met deze procedure kan je een projectlid toevoegen aan een subproject.
+*/
 CREATE PROCEDURE sp_InsertProjLidOpSubProj
 @medewerker_code	VARCHAR(5),
 @project_code		VARCHAR(20),
 @subproject_naam	VARCHAR(40),
 @subproject_uren	INT
-AS BEGIN
+AS 
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
@@ -379,11 +384,9 @@ AS BEGIN
 			END;
 		THROW
 	END CATCH
-END
 GO
 
-
---SP Toevoegen tags
+--SP Toevoegen categorietags
 /*
 Met deze procedure kunnen tags worden toegevoegd aan de mogelijke lijst van tags voor categorieën.
 Deze tags zijn bedoeld om gebruikt te worden voor een eventuele zoekfunctie.
@@ -392,7 +395,7 @@ De Stored Procedure verwacht alleen een tagnaam.
 */
 CREATE PROCEDURE sp_InsertCategorieTag
 @tag_naam NVARCHAR(40)
-AS BEGIN
+AS 
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
@@ -419,5 +422,46 @@ AS BEGIN
 			END;
 		THROW
 	END CATCH
-END
+GO
+
+--SP Toevoegen tag van categorie
+/*
+Met deze procedure kunnen bestaande tags aan een projectcategorie toegevoegd worden.
+*/
+CREATE PROCEDURE sp_InsertTagVanCategorie
+@naam VARCHAR (40),
+@tag_naam NVARCHAR (40)
+AS
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF NOT EXISTS (SELECT '@' --Check of de ingevoerde tag_naam wel bestaat.
+					FROM categorie_tag
+					WHERE tag_naam = @tag_naam)
+			THROW 50048, 'De ingevoerde tagnaam bestaat niet.', 16
+			--Deze foutmelding wordt getoond wanneer een niet bestaande tag_naam aan een tag_van_categorie gekoppeld wordt.
+
+		INSERT INTO tag_van_categorie(naam, tag_naam)
+			VALUES (@naam, @tag_naam)
+
+			IF @TranCounter = 0 AND XACT_STATE() = 1
+				COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
 GO
