@@ -665,7 +665,7 @@ BEGIN TRY
 
 	UPDATE	tag_van_categorie --Wijzigingen worden doorgevoerd.
 	SET		tag_naam = @tag_naam_nieuw
-	WHERE	tag_naam = @tag_naam_oud and naam = @naam
+	WHERE	tag_naam = @tag_naam_oud AND naam = @naam
 
 	IF @TranCounter = 0 AND XACT_STATE() = 1
 		COMMIT TRANSACTION;
