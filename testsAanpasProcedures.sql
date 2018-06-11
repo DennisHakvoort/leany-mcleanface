@@ -640,7 +640,7 @@ END CATCH
 ROLLBACK TRANSACTION
 GO
 
---Stored Procedure sp_WijzigCategorieTag
+--Test sp_WijzigCategorieTag
 --Succestest, een tag wordt toegevoegd zonder foutmelding
 BEGIN TRANSACTION
 BEGIN TRY
@@ -672,6 +672,66 @@ BEGIN TRY
 		VALUES('Test')
 
 	EXECUTE sp_WijzigCategorieTag @tag_naam_oud = 'Toest'/*in plaats van Test*/, @tag_naam_nieuw = 'Testosti' --nu wordt de tag niet gewijzigd
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Test sp_WijzigTagVanCategorie
+--Succestest
+--Een tag van een categorie wordt succesvol gewijzigd
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO categorie_tag(tag_naam) --eerst wordt een tag toegevoegd
+	VALUES('TestTag');
+	INSERT INTO categorie_tag(tag_naam)
+	VALUES ('Test');
+	INSERT INTO project_categorie(naam, hoofdcategorie)
+	VALUES('Subsidie', NULL);
+	INSERT INTO project_categorie(naam, hoofdcategorie)
+	VALUES('Training', 'Subsidie');
+	INSERT INTO tag_van_categorie(naam, tag_naam)
+	VALUES('Training', 'TestTag');
+
+	EXECUTE sp_WijzigTagVanCategorie @tag_naam_oud = 'TestTag', @tag_naam_nieuw = 'Test', @naam = 'Training';
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Test sp_WijzigTagVanCategorie
+--Faaltest
+--Een tag van een categorie proberen te wijzigen waar de opgegeven combinatie naam en tagnaam geen record van bestaan.
+/*
+CATCH RESULTATEN:
+ERROR NUMMER:		50053
+ERROR SEVERITY:	16
+ERROR MESSAGE:	De te wijzigen tag van het opgegeven categorie bestaat niet.
+*/
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO categorie_tag(tag_naam) --eerst wordt een tag toegevoegd
+	VALUES('TestTag');
+	INSERT INTO categorie_tag(tag_naam)
+	VALUES ('Test');
+	INSERT INTO project_categorie(naam, hoofdcategorie)
+	VALUES('Subsidie', NULL);
+	INSERT INTO project_categorie(naam, hoofdcategorie)
+	VALUES('Training', 'Subsidie');
+	INSERT INTO tag_van_categorie(naam, tag_naam)
+	VALUES('Training', 'TestTag');
+
+	EXECUTE sp_WijzigTagVanCategorie @tag_naam_oud = 'Tag17' /* niet bestaande tagnaam opgeven */ , @tag_naam_nieuw = 'Test', @naam = 'Training';
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
