@@ -20,6 +20,7 @@ DROP PROCEDURE IF EXISTS sp_WijzigProject
 DROP PROCEDURE IF EXISTS sp_AanpassenProjectlidOpSubproject
 DROP PROCEDURE IF EXISTS sp_WijzigSubproject
 DROP PROCEDURE IF EXISTS sp_WijzigCategorieTag
+DROP PROCEDURE IF EXISTS sp_WijzigTagVanCategorie
 GO
 
 --SP 5 aanpassen projectcategorieën
@@ -612,7 +613,6 @@ IF @TranCounter > 0
 ELSE
 	BEGIN TRANSACTION;
 BEGIN TRY
-
     IF (NOT EXISTS (SELECT	'!'
 					FROM	categorie_tag
 					WHERE	tag_naam = @tag_naam_oud))
@@ -638,3 +638,48 @@ END TRY
 	THROW
 END CATCH
 GO
+
+--SP aanpassen tag van categorie
+/*
+Met deze procedure kan een bestaande tag van een categorie gewijzigd worden.
+*/
+CREATE PROCEDURE sp_WijzigTagVanCategorie
+@tag_naam_oud NVARCHAR(40),
+@tag_naam_nieuw NVARCHAR(40),
+@naam VARCHAR(40)
+AS
+SET NOCOUNT ON
+SET XACT_ABORT OFF
+DECLARE @TranCounter INT;
+SET @TranCounter = @@TRANCOUNT;
+IF @TranCounter > 0
+	SAVE TRANSACTION ProcedureSave;
+ELSE
+	BEGIN TRANSACTION;
+BEGIN TRY
+	IF NOT EXISTS (SELECT '!'
+					FROM tag_van_categorie
+					WHERE tag_naam = @tag_naam_oud AND naam = @naam)
+		--Hier wordt gecontroleerd of de combinatie van het opgegeven naam en tag_naam bestaat voordat die aangepast kan worden. Zoniet, dan wordt het onderstaande foutmelding getoond.
+		THROW 50053, 'De te wijzigen tag van het opgegeven categorie bestaat niet.', 16;
+
+	UPDATE	tag_van_categorie --Wijzigingen worden doorgevoerd.
+	SET		tag_naam = @tag_naam_nieuw
+	WHERE	tag_naam = @tag_naam_oud and naam = @naam
+
+	IF @TranCounter = 0 AND XACT_STATE() = 1
+		COMMIT TRANSACTION;
+END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+		BEGIN
+			IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+		END;
+	ELSE
+		BEGIN
+			IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+		END;
+	THROW
+END CATCH
+GO				
+
