@@ -88,6 +88,7 @@ ROLLBACK TRANSACTION
 GO
 
 --Test sp_verwijderenProjectrol
+--Verwijder een bestaande projectrol die niet in gebruik is
 --Succestest
 BEGIN TRANSACTION
 	BEGIN TRY
@@ -108,6 +109,7 @@ GO
 -- test sp_verwijderenProjectrol
 -- Msg 50026, Level 16, State 16, Procedure sp_verwijderenProjectrol
 -- Projectrol kan niet worden verwijderd, omdat het nog in gebruik is.
+--Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
 	INSERT INTO project_categorie (naam, hoofdcategorie)
@@ -294,7 +296,8 @@ ROLLBACK TRANSACTION
 GO
                
 --Test voor sp_VerwijderSubproject
---Succestest, subproject wordt verwijderd inclusief projectlid_op_subprojectdata.
+--Subproject wordt verwijderd inclusief projectlid_op_subprojectdata.
+--Succestest
 BEGIN TRANSACTION
 BEGIN TRY
 	DECLARE @date DATETIME = (getdate() + 10);
@@ -338,7 +341,8 @@ ROLLBACK TRANSACTION
 GO
 
 --Test voor sp_VerwijderSubproject
---Faaltest, subproject wordt niet verwijderd wegens onjuiste invoer projectcode.
+--Subproject wordt niet verwijderd wegens onjuiste invoer projectcode.
+--Faaltest
 /*
 ERROR NUMMER:	50044
 ERROR SEVERITY:	16
@@ -386,8 +390,9 @@ END CATCH
 ROLLBACK TRANSACTION
 GO
 
---test sp_verwijderprojectlidopproject
---success
+--Test sp_VerwijderenProjectlidOpSubproject
+--Verwijder een projectlid op een subproject
+--Succestest
 BEGIN TRANSACTION
 BEGIN TRY
 	IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
@@ -412,7 +417,9 @@ END CATCH
 ROLLBACK TRANSACTION
 GO
 
+--Test sp_VerwijderenProjectlidOpSubproject
 --Deze combinatie van gebruiker en subproject bestaat niet.
+--Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
 	EXECUTE sp_VerwijderenProjectlidOpSubproject @medewerker_code = 'JP', @project_code = 'proj', @subproject_naam = 'sub'
@@ -426,8 +433,9 @@ END CATCH
 ROLLBACK TRANSACTION
 GO
 
---test sp_VerwijderenSubprojectCategorie
---success
+--Test sp_VerwijderenSubprojectCategorie
+--Verwijder een subprojectcategorie die niet in gebruik is
+--Succestest
 BEGIN TRANSACTION
 BEGIN TRY
 	INSERT INTO subproject_categorie VALUES ('cat')
@@ -443,7 +451,9 @@ END CATCH
 ROLLBACK TRANSACTION
 GO
 
+--Test sp_VerwijderenSubprojectCategorie
 --Deze categorie bestaat niet.
+--Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
 	EXECUTE sp_VerwijderenSubprojectCategorie @categorieNaam = 'cat'
@@ -457,7 +467,9 @@ END CATCH
 ROLLBACK TRANSACTION
 GO
 
+--Test sp_VerwijderenSubprojectCategorie
 --Deze categorie wordt nog gebruikt door een subproject.
+--Faaltest
 BEGIN TRANSACTION
 BEGIN TRY
 	INSERT INTO project_categorie VALUES ('cat', NULL)
@@ -476,7 +488,8 @@ ROLLBACK TRANSACTION
 GO
 
 --Test voor sp_VerwijderCategorieTag
---Succestest, tag wordt succesvol verwijderd
+--Tag wordt succesvol verwijderd
+--Succestest
 BEGIN TRANSACTION
 BEGIN TRY
 	INSERT INTO categorie_tag(tag_naam)
@@ -494,7 +507,8 @@ ROLLBACK TRANSACTION
 GO
 
 --Test voor sp_VerwijderCategorieTag
---Faaltest, tagnaam komt niet overeen met een tag in de tabel. Er wordt dus niets verwijderd.
+--Tagnaam komt niet overeen met een tag in de tabel. Er wordt dus niets verwijderd.
+--Faaltest
 /*
 CATCH RESULTATEN:
 ERROR NUMMER:	50051
@@ -504,6 +518,62 @@ ERROR MESSAGE:	De te verwijderen tag is niet gevonden.
 BEGIN TRANSACTION
 BEGIN TRY
 	EXEC sp_VerwijderCategorieTag @tag_naam = 'Testies' --Tag wordt niet verwijderd, geen overeenkomende naam
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Test voor sp_VerwijderTagVanCategorie
+--Verwijder een tag van een categorie
+--Succestest
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO categorie_tag(tag_naam)
+	VALUES('TestTag')
+	INSERT INTO project_categorie(naam, hoofdcategorie)
+	VALUES('Subsidie', NULL)
+	INSERT INTO project_categorie(naam, hoofdcategorie)
+	VALUES('TestCategorie', 'Subsidie')
+	INSERT INTO tag_van_categorie(naam, tag_naam)
+	VALUES('TestCategorie', 'TestTag')
+
+	EXECUTE sp_VerwijderTagVanCategorie @tag_naam = 'TestTag', @naam = 'TestCategorie'
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
+
+--Test voor sp_VerwijderTagVanCategorie
+--Verwijder een tag die niet overeen komt met de opgegeven tagnaam en categorienaam combinatie.
+--Faaltest
+/*
+CATCH RESULTATEN:
+ERROR NUMMER:		50054
+ERROR SEVERITY:	16
+ERROR MESSAGE:	De te verwijderen tagnaam met combinatie van categorienaam bestaat niet.
+*/
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO categorie_tag(tag_naam)
+	VALUES('TestTag')
+	INSERT INTO project_categorie(naam, hoofdcategorie)
+	VALUES('Subsidie', NULL)
+	INSERT INTO project_categorie(naam, hoofdcategorie)
+	VALUES('TestCategorie', 'Subsidie')
+	INSERT INTO tag_van_categorie(naam, tag_naam)
+	VALUES('TestCategorie', 'TestTag')
+
+	EXECUTE sp_VerwijderTagVanCategorie @tag_naam = 'Tag17', @naam = 'TestCategorie'
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
