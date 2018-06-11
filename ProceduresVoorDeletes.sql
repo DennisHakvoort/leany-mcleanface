@@ -18,6 +18,7 @@ DROP PROCEDURE IF EXISTS sp_VerwijderenProjectlidOpSubproject
 DROP PROCEDURE IF EXISTS sp_VerwijderenSubprojectCategorie
 DROP PROCEDURE IF EXISTS sp_VerwijderSubproject
 DROP PROCEDURE IF EXISTS sp_VerwijderCategorieTag
+DROP PROCEDURE IF EXISTS sp_VerwijderTagVanCategorie
 GO
 
 --SP verwijderen medewerker_rol
@@ -345,7 +346,6 @@ AS
 		THROW
 	END CATCH
 GO
-GO
 
 --SP verwijderen subprojecten
 /*
@@ -355,7 +355,7 @@ project_code en de subproject_naam meegegeven.
 CREATE PROCEDURE sp_VerwijderSubproject
 @project_code VARCHAR(20),
 @subproject_naam VARCHAR(20)
-AS BEGIN
+AS
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
@@ -392,17 +392,16 @@ AS BEGIN
 			END;
 		THROW
 	END CATCH
-END
 GO
 
---Stored Procedure verwijderen categorietag
+--SP verwijderen categorietag
 /*
 Deze procedure verwijdert de tag die eraan wordt meegegeven als variabele.
 Als deze niet wordt gevonden, wordt er een error geworpen.
 */
 CREATE PROCEDURE sp_VerwijderCategorieTag
 @tag_naam NVARCHAR(40)
-AS BEGIN
+AS 
 	SET NOCOUNT ON
 	SET XACT_ABORT OFF
 	DECLARE @TranCounter INT;
@@ -437,5 +436,47 @@ AS BEGIN
 			END;
 		THROW
 	END CATCH
-END
+GO
+
+--SP verwijderen tag van categorie
+/*
+Met deze procedure kan een bestaande tag van een categorie verwijderd worden.
+*/
+CREATE PROCEDURE sp_VerwijderTagVanCategorie
+@tag_naam NVARCHAR(40),
+@naam VARCHAR(40)
+AS 
+	SET NOCOUNT ON
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF NOT EXISTS (SELECT '!'
+						FROM tag_van_categorie
+						WHERE naam = @naam AND tag_naam = @tag_naam)
+				--Hier wordt gecontroleerd of opgegeven tagnaam wel gekoppeld is aan de opgegeven categorienaam (@naam). Zoniet, wordt onderstaande foutmelding getoond.
+				THROW 50054, 'De te verwijderen tagnaam met combinatie van categorienaam bestaat niet.', 16
+		
+		DELETE --Hier wordt de record verwijderd.
+		FROM tag_van_categorie
+		WHERE tag_naam = @tag_naam AND naam = @naam
+		 
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
 GO
