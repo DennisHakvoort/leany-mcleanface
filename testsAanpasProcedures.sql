@@ -371,7 +371,7 @@ END CATCH
 ROLLBACK TRANSACTION
 GO
 
---Tests sp_aanpassenProject
+--Tests sp_WijzigProject
 --Wijzig een bestaande project
 --Succestest
 BEGIN TRANSACTION
@@ -482,7 +482,7 @@ END CATCH
 ROLLBACK TRANSACTION
 GO
 
---sp_AanpassenProjectlidOpSubproject
+--sp_WijzigProjectlidOpSubproject
 --success
 BEGIN TRANSACTION
 BEGIN TRY
@@ -497,7 +497,7 @@ BEGIN TRY
 	INSERT INTO subproject VALUES ('proj', 'sub', 'cat', 12)
 	INSERT INTO projectlid_op_subproject VALUES (1, 'proj', 'sub', 10)
 
-	EXECUTE sp_AanpassenProjectlidOpSubproject @medewerker_code = 'JP', @project_code = 'proj', @subproject_naam = 'sub', @nieuwe_uren = 9
+	EXECUTE sp_WijzigProjectlidOpSubproject @medewerker_code = 'JP', @project_code = 'proj', @subproject_naam = 'sub', @nieuwe_uren = 9
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -511,7 +511,7 @@ GO
 --Deze combinatie van gebruiker en subproject bestaat niet.
 BEGIN TRANSACTION
 BEGIN TRY
-	EXECUTE sp_AanpassenProjectlidOpSubproject @medewerker_code = 'JP', @project_code = 'proj', @subproject_naam = 'sub', @nieuwe_uren = 9
+	EXECUTE sp_WijzigProjectlidOpSubproject @medewerker_code = 'JP', @project_code = 'proj', @subproject_naam = 'sub', @nieuwe_uren = 9
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -522,13 +522,13 @@ END CATCH
 ROLLBACK TRANSACTION
 GO
 
---test sp_AanpassenSubprojectCategorie
+--test sp_WijzigSubprojectCategorie
 --success
 BEGIN TRANSACTION
 BEGIN TRY
 	INSERT INTO subproject_categorie VALUES ('cat')
 
-	EXECUTE sp_AanpassenSubprojectCategorie @categorieNaam = 'cat', @nieuweCategorieNaam = 'bat'
+	EXECUTE sp_WijzigSubprojectCategorie @categorieNaam = 'cat', @nieuweCategorieNaam = 'bat'
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -542,7 +542,7 @@ GO
 --Deze categorie bestaat niet.
 BEGIN TRANSACTION
 BEGIN TRY
-	EXECUTE sp_AanpassenSubprojectCategorie @categorieNaam = 'cat', @nieuweCategorieNaam = 'bat'
+	EXECUTE sp_WijzigSubprojectCategorie @categorieNaam = 'cat', @nieuweCategorieNaam = 'bat'
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -560,7 +560,7 @@ BEGIN TRY
 	INSERT INTO project VALUES ('proj', 'cat', 'jan 2018', 'jan 2020', 'Groene thee', '12002')
 	INSERT INTO subproject_categorie VALUES ('cat')
 	INSERT INTO subproject VALUES ('proj', 'sub', 'cat', 12)
-	EXECUTE sp_AanpassenSubprojectCategorie @categorieNaam = 'cat', @nieuweCategorieNaam = 'bat'
+	EXECUTE sp_WijzigSubprojectCategorie @categorieNaam = 'cat', @nieuweCategorieNaam = 'bat'
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'

@@ -17,7 +17,8 @@ DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerOpProject
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerkerIngeplandProject
 DROP PROCEDURE IF EXISTS sp_WijzigMedewerker
 DROP PROCEDURE IF EXISTS sp_WijzigProject
-DROP PROCEDURE IF EXISTS sp_AanpassenProjectlidOpSubproject
+DROP PROCEDURE IF EXISTS sp_WijzigProjectlidOpSubproject
+DROP PROCEDURE IF EXISTS sp_WijzigSubprojectCategorie
 DROP PROCEDURE IF EXISTS sp_WijzigSubproject
 DROP PROCEDURE IF EXISTS sp_WijzigCategorieTag
 DROP PROCEDURE IF EXISTS sp_WijzigTagVanCategorie
@@ -453,7 +454,7 @@ AS
 	END CATCH
 GO
 
-CREATE PROCEDURE sp_AanpassenProjectlidOpSubproject
+CREATE PROCEDURE sp_WijzigProjectlidOpSubproject
 	@medewerker_code VARCHAR(6),
 	@project_code VARCHAR(40),
 	@subproject_naam VARCHAR(40),
@@ -500,7 +501,7 @@ AS
 	END CATCH
 GO
 
-CREATE PROCEDURE sp_AanpassenSubprojectCategorie
+CREATE PROCEDURE sp_WijzigSubprojectCategorie
 @categorieNaam VARCHAR(40),
 @nieuweCategorieNaam VARCHAR(40)
 AS
