@@ -152,3 +152,30 @@ BEGIN CATCH
 END CATCH
 ROLLBACK TRANSACTION
 GO
+
+
+--sp_InsertTagVanCategorie
+--faaltest
+--een tag die niet bestaat kan niet aan een categorie gekoppeld worden.
+/*
+CATCH RESULTATEN:
+ERROR NUMMER:		50048
+ERROR SEVERITY:	16
+ERROR MESSAGE:	De ingevoerde tagnaam bestaat niet.
+*/
+BEGIN TRANSACTION
+BEGIN TRY
+	INSERT INTO categorie_tag (tag_naam)
+	VALUES('GemaakteTag')
+	INSERT INTO project_categorie(naam, hoofdcategorie)
+	VALUES('Subsidie', NULL)
+EXEC sp_InsertTagVanCategorie @naam = 'Subsidie', @tag_naam = 'Tag123'
+END TRY
+BEGIN CATCH
+	PRINT 'CATCH RESULTATEN:'
+	PRINT CONCAT('ERROR NUMMER:		', ERROR_NUMBER())
+	PRINT CONCAT('ERROR SEVERITY:	', ERROR_SEVERITY())
+	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
+END CATCH
+ROLLBACK TRANSACTION
+GO
