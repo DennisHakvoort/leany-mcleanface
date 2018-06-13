@@ -650,7 +650,12 @@ ROLLBACK TRANSACTION
 GO
 
 --Mislukking
---[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+/*
+CATCH RESULTATEN:
+ERROR NUMMER:		50001
+ERROR SEVERITY:	16
+ERROR MESSAGE:	Een project kan niet meer aangepast worden nadat deze is afgelopen.
+*/
 BEGIN TRANSACTION
 BEGIN TRY
 IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
@@ -675,7 +680,12 @@ ROLLBACK TRANSACTION
 GO
 
 --Mislukking
---[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+/*
+CATCH RESULTATEN:
+ERROR NUMMER:		50004
+ERROR SEVERITY:	16
+ERROR MESSAGE:	Een project kan niet meer aangepast worden nadat deze is afgelopen.
+*/
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO project_categorie VALUES ('d', NULL)
@@ -717,7 +727,12 @@ ROLLBACK TRANSACTION
 GO
 
 --Mislukking
---[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+/*
+CATCH RESULTATEN:
+ERROR NUMMER:		50005
+ERROR SEVERITY:	16
+ERROR MESSAGE:	Een medewerker op een project kan niet meer aangepast worden nadat deze is afgelopen.
+*/
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO project_categorie VALUES ('d', NULL)
