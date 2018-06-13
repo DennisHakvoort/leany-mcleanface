@@ -1,3 +1,8 @@
+/*==============================================================*/
+/* DBMS name:      Microsoft SQL Server 2008                    */
+/* Created on:     5-6-2018 10:12:47                            */
+/*==============================================================*/
+
 /*
 Alle tests volgen hetzelfde template:
 
@@ -17,10 +22,11 @@ ROLLBACK TRANSACTION --De transaction terugrollen zodat de testdata niet in de e
 Alle tests worden uitgevoerd op een lege database.
  */
 
-
-
 USE LeanDb
---Business rules
+GO
+
+
+--Business rules tests
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 184
 --Success
@@ -107,7 +113,6 @@ BEGIN CATCH
 END CATCH
 ROLLBACK TRANSACTION
 GO
-
 
 --BR3
 --[S00016][500014] Medewerker code is al in gebruik
@@ -774,6 +779,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 -- BR10 medewerker_beschikbaarheid kan niet worden aangepast als medewerker_beschikbaarheid(maand) is verstreken.
 -- Succesvol insert nieuwe medewerker_beschikbaarheid datum (moet nieuwer dan huidige datum zijn).
@@ -792,6 +798,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --Succesvol medewerker_beschikbaarheid maand updaten toegestaan als die groter is dan huidige datum.
 BEGIN TRANSACTION
@@ -810,6 +817,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --Mislukte poging
 --[500016][50001] maand data kan niet aangepast worden naar een verstreken maand.
@@ -829,6 +837,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --Mislukte poging
 --[500016][50001] je mag niet een maand als beschikbaarheid instellen als de ingevulde maand verstreken is.
@@ -847,6 +856,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --BR11 medewerker_ingepland_project kan niet meer worden aangepast als medewerker_ingepland_project(maand_datum) is verstreken
 --BR 11 Success
@@ -872,6 +882,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --BR 11 Success
 --Medewerker kan ingedeeld worden in een project als de maand groter is dan huidige datum.
@@ -894,6 +905,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --BR 11 succesvol uren van een maand aanpassen dat nog niet verstreken is
 BEGIN TRANSACTION
@@ -917,6 +929,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --BR 11 Mislukte poging
 --[500016][50001] medewerker verstreken maand(en) kunnen niet meer aangepast worden.
@@ -941,6 +954,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --BR 11 Mislukte poging
 --[500016][50001] medewerker kan niet een verstreken maand ingepland krijgen voor een project.
@@ -963,6 +977,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 -- BR10 medewerker_beschikbaarheid kan niet worden aangepast als medewerker_beschikbaarheid(maand) is verstreken.
 -- Succesvol insert nieuwe medewerker_beschikbaarheid datum (moet nieuwer dan huidige datum zijn).
@@ -1497,9 +1512,6 @@ BEGIN TRY
 	
 	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
 		VALUES	('PROJC0101C1', 'aber', 'lector');
-
-	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
-		VALUES	('PROJC0101C1', 'aber', 'lector');
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -1529,9 +1541,6 @@ BEGIN TRY
 	
 	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
 		VALUES	('PROJC0101C1', 'aber', 'lector');
-
-	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
-		VALUES	('PROJC0101C1', 'aber', 'lector');
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -1540,3 +1549,4 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
