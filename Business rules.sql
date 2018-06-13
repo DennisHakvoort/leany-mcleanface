@@ -95,87 +95,17 @@ DROP TRIGGER IF EXISTS trg_UpdateBegindatumValtNaIngeplandMedewerker
 DROP TRIGGER IF EXISTS trg_UpdateEinddatumAlleenVerlengen
 DROP PROCEDURE IF EXISTS sp_InsertMedewerker
 DROP PROCEDURE IF EXISTS sp_InsertProjecturenMedewerker
-DROP PROCEDURE IF EXISTS sp_InsertMedewerkerIngepland
 DROP PROCEDURE IF EXISTS sp_InsertBeschikbareDagen
 DROP PROCEDURE IF EXISTS sp_checkProjectRechten
 
---BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 23 dagen. 23 dagen staan gelijk aan (23*8) 184 uren 
---BR2 Medewerker_beshikbaar(beschikbaar_uren) kan niet minder zijn dan 0
+--BR1 Medewerker_beschikbaar(beschikbare_dagen) kan niet meer zijn dan 23 dagen. 23 dagen staat gelijk aan (23*8) 184 uren.
+--BR2 Medewerker_beschikbaar(beschikbare_dagen) kan niet minder zijn dan 0
 ALTER TABLE medewerker_beschikbaarheid
 	ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbare_dagen <= 23 AND beschikbare_dagen >= 0);
 GO
 
---BR3
---medewerker(medewerker_code) bestaat uit de eerste letter van de voornaam,
---de eerste letter van de achternaam en
---een volgnummer dat met één verhoogd wanneer de medewerker code al bestaat.
-CREATE PROCEDURE sp_InsertMedewerker
-@achternaam NVARCHAR(20),
-@voornaam NVARCHAR(20),
-@medewerker_code VARCHAR(5),
-@wachtwoord VARCHAR(40),
-@rol VARCHAR(40)
-AS BEGIN
-	SET NOCOUNT ON 
-	SET XACT_ABORT OFF
-	DECLARE @TranCounter INT;
-	SET @TranCounter = @@TRANCOUNT;
-	IF @TranCounter > 0
-		SAVE TRANSACTION ProcedureSave;
-	ELSE
-		BEGIN TRANSACTION;
-	BEGIN TRY
-		IF EXISTS (SELECT '@'
-				   FROM medewerker
-				   WHERE medewerker_code = @medewerker_code)--Gaat na of medewerkercode voorkomt
-			THROW 50014, 'Medewerkercode is al in gebruik', 16
-		IF EXISTS (SELECT '!'
-                   FROM medewerker_rol_type
-                   WHERE medewerker_rol = @rol)
-			BEGIN
-				INSERT INTO medewerker(medewerker_code, achternaam, voornaam)--Voegt de medewerker toe
-					VALUES(@medewerker_code, @achternaam, @voornaam);
-				INSERT INTO medewerker_rol 
-					VALUES (@medewerker_code, @rol)--Geeft meteen rol aan medewerker (mandatory child)
-
-				DECLARE @sql NVARCHAR(255)
-				IF EXISTS (SELECT '!'
-							FROM [sys].[server_principals]
-							WHERE [name] = @medewerker_code) --Gaat na of de naam uniek is
-					THROW 50036, 'De naam moet uniek zijn.', 16
-				ELSE
-					BEGIN
-						/*
-						Hier wordt een login gemaakt voor de nieuwe medewerker. Deze krijgt automatisch de rol 'medewerker', wat voorkomt
-						dat medewerkers gegevens kunnen aanpassen. Ze kunnen alleen views inzien.
-						*/
-						SELECT @sql = 'CREATE LOGIN ' + @medewerker_code + ' WITH PASSWORD ' + '= ''' + @wachtwoord + ''', DEFAULT_DATABASE = LeanDb; '
-									  + 'CREATE USER ' + @medewerker_code + ' FROM LOGIN ' + @medewerker_code + '; '
-									  + 'ALTER ROLE MEDEWERKER ADD MEMBER ' + @medewerker_code
-						EXEC sys.sp_executesql @stmt = @sql
-					END
-			END
-		ELSE
-          THROW 50020, 'Dit is geen bestaande rol', 16
-
-		IF @TranCounter = 0 AND XACT_STATE() = 1
-			COMMIT TRANSACTION;
-	END TRY
-
-	BEGIN CATCH
-			IF @TranCounter = 0
-			BEGIN
-				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
-			END;
-		ELSE
-			BEGIN
-				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
-			END;
-		THROW
-	END CATCH
-END
-GO
-
+-- BR4: Er kan geen record worden opgenomen in medewerker_ingepland_project voor een gebruiker die in de betreffende maand niet beschikbaar is 
+--		voor werk (waar medewerker_beschikbaarheid niet bestaat voor die user).
 -- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0
 -- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184 (184 uur staat gelijk aan 23 dagen (23*8 = 184))
 CREATE PROCEDURE sp_InsertProjecturenMedewerker
@@ -464,6 +394,77 @@ AS BEGIN
 END
 GO
 
+/*
+BR13: Er moet voor elke gebruiker een account binnen MSSQL aangemaakt worden zodat rechten toegewezen kunnen worden.
+BR17: Elke medewerker heeft minstens één record in medewerker_rol.
+*/
+CREATE PROCEDURE sp_InsertMedewerker
+@achternaam NVARCHAR(20),
+@voornaam NVARCHAR(20),
+@medewerker_code VARCHAR(5),
+@wachtwoord VARCHAR(40),
+@rol VARCHAR(40)
+AS BEGIN
+	SET NOCOUNT ON 
+	SET XACT_ABORT OFF
+	DECLARE @TranCounter INT;
+	SET @TranCounter = @@TRANCOUNT;
+	IF @TranCounter > 0
+		SAVE TRANSACTION ProcedureSave;
+	ELSE
+		BEGIN TRANSACTION;
+	BEGIN TRY
+		IF EXISTS (SELECT '@'
+				   FROM medewerker
+				   WHERE medewerker_code = @medewerker_code)--Gaat na of medewerkercode voorkomt
+			THROW 50014, 'Medewerkercode is al in gebruik', 16
+		IF EXISTS (SELECT '!'
+                   FROM medewerker_rol_type
+                   WHERE medewerker_rol = @rol)
+			BEGIN
+				INSERT INTO medewerker(medewerker_code, achternaam, voornaam)--Voegt de medewerker toe
+					VALUES(@medewerker_code, @achternaam, @voornaam);
+				INSERT INTO medewerker_rol 
+					VALUES (@medewerker_code, @rol)--Geeft meteen rol aan medewerker (mandatory child)
+
+				DECLARE @sql NVARCHAR(255)
+				IF EXISTS (SELECT '!'
+							FROM [sys].[server_principals]
+							WHERE [name] = @medewerker_code) --Gaat na of de naam uniek is
+					THROW 50036, 'De naam moet uniek zijn.', 16
+				ELSE
+					BEGIN
+						/*
+						Hier wordt een login gemaakt voor de nieuwe medewerker. Deze krijgt automatisch de rol 'medewerker', wat voorkomt
+						dat medewerkers gegevens kunnen aanpassen. Ze kunnen alleen views inzien.
+						*/
+						SELECT @sql = 'CREATE LOGIN ' + @medewerker_code + ' WITH PASSWORD ' + '= ''' + @wachtwoord + ''', DEFAULT_DATABASE = LeanDb; '
+									  + 'CREATE USER ' + @medewerker_code + ' FROM LOGIN ' + @medewerker_code + '; '
+									  + 'ALTER ROLE MEDEWERKER ADD MEMBER ' + @medewerker_code
+						EXEC sys.sp_executesql @stmt = @sql
+					END
+			END
+		ELSE
+          THROW 50020, 'Dit is geen bestaande rol', 16
+
+		IF @TranCounter = 0 AND XACT_STATE() = 1
+			COMMIT TRANSACTION;
+	END TRY
+
+	BEGIN CATCH
+			IF @TranCounter = 0
+			BEGIN
+				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
+			END;
+		ELSE
+			BEGIN
+				IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
+			END;
+		THROW
+	END CATCH
+END
+GO
+
 -- BR14 De beschikbaarheid van een medewerker kan maar 1x per maand worden opgegeven.
 CREATE PROCEDURE sp_InsertBeschikbareDagen
 @medewerker_code VARCHAR(5),
@@ -582,6 +583,32 @@ AS BEGIN
 END
 GO
 
+--BR17 Elke medewerker heeft minstens één record in medewerker_rol.
+CREATE TRIGGER trg_MandatoryChMedewerkerrol
+ON medewerker_rol
+AFTER DELETE
+AS BEGIN
+	IF(@@ROWCOUNT = 0)
+		BEGIN
+			RETURN;
+		END
+	BEGIN TRY
+		/*
+		Als een medewerkers rol wordt verwijderd terwijl het zijn laatste rol is,
+		wordt dit teruggedraaid en error 50032 geworpen.
+		*/
+		IF EXISTS  (SELECT	'@'
+					FROM	deleted d 
+							RIGHT JOIN medewerker_rol mr ON d.medewerker_code = mr.medewerker_code
+					HAVING	COUNT(*) < 1)
+			THROW 50032, 'Medewerkerrol kan niet worden verwijderd. Een medewerker moet een rol hebben.', 16
+	END TRY
+	BEGIN CATCH
+		THROW;
+	END CATCH
+END
+GO
+
 --BR18 Een project kan alleen worden aangepast door zijn projectleider of de superuser.
 CREATE PROCEDURE sp_checkProjectRechten
 @projectcode VARCHAR(20)
@@ -632,32 +659,6 @@ AS BEGIN
 END
 GO
 
---BR17 Een medewerker heeft een mandatory child in medewerker_rol
-CREATE TRIGGER trg_MandatoryChMedewerkerrol
-ON medewerker_rol
-AFTER DELETE
-AS BEGIN
-	IF(@@ROWCOUNT = 0)
-		BEGIN
-			RETURN;
-		END
-	BEGIN TRY
-		/*
-		Als een medewerkers rol wordt verwijderd terwijl het zijn laatste rol is,
-		wordt dit teruggedraaid en error 50032 geworpen.
-		*/
-		IF EXISTS  (SELECT	'@'
-					FROM	deleted d 
-							RIGHT JOIN medewerker_rol mr ON d.medewerker_code = mr.medewerker_code
-					HAVING	COUNT(*) < 1)
-			THROW 50032, 'Medewerkerrol kan niet worden verwijderd. Een medewerker moet een rol hebben.', 16
-	END TRY
-	BEGIN CATCH
-		THROW;
-	END CATCH
-END
-GO
-
---BR18 In de tabel medewerker_op_project moet de combinatie van medewerker_code en project_code uniek zijn.
+--BR19 In de tabel medewerker_op_project moet de combinatie van medewerker_code en project_code uniek zijn.
 ALTER TABLE medewerker_op_project WITH CHECK
 ADD CONSTRAINT UC_Medewerker_Project_Code UNIQUE (medewerker_code, project_code)
