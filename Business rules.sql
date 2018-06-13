@@ -99,15 +99,15 @@ DROP PROCEDURE IF EXISTS sp_InsertBeschikbareDagen
 DROP PROCEDURE IF EXISTS sp_checkProjectRechten
 
 --BR1 Medewerker_beschikbaar(beschikbare_dagen) kan niet meer zijn dan 23 dagen. 23 dagen staat gelijk aan (23*8) 184 uren.
---BR2 Medewerker_beschikbaar(beschikbare_dagen) kan niet minder zijn dan 0
+--BR2 Medewerker_beschikbaar(beschikbare_dagen) kan niet minder zijn dan 0.
 ALTER TABLE medewerker_beschikbaarheid
 	ADD CONSTRAINT CK_UREN_MIN_MAX CHECK (beschikbare_dagen <= 23 AND beschikbare_dagen >= 0);
 GO
 
 -- BR4: Er kan geen record worden opgenomen in medewerker_ingepland_project voor een gebruiker die in de betreffende maand niet beschikbaar is 
 --		voor werk (waar medewerker_beschikbaarheid niet bestaat voor die user).
--- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0
--- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184 (184 uur staat gelijk aan 23 dagen (23*8 = 184))
+-- BR5 Medewerker_ingepland_project(medewerker_uren) kan niet minder zijn dan 0.
+-- BR6 Medewerker_ingepland_project(medewerker_uren) kan niet meer zijn dan 184 (184 uur staat gelijk aan 23 dagen (23*8 = 184)).
 CREATE PROCEDURE sp_InsertProjecturenMedewerker
 @medewerker_code VARCHAR(5),
 @project_code VARCHAR(20),
@@ -230,7 +230,7 @@ AS BEGIN
 END
 GO
 
--- BR9 De waarden van project(1), medewerker_op_project(2) en medewerker_ingepland_project(3) kunnen niet meer worden aangepast als project(eind_datum) is verstreken
+-- BR9 De waarden van project(1), medewerker_op_project(2) en medewerker_ingepland_project(3) kunnen niet meer worden aangepast als project(eind_datum) is verstreken.
 --1
 CREATE TRIGGER trg_ProjectVerstrekenProject
 ON project
@@ -317,7 +317,7 @@ AS BEGIN
 END
 GO
 
--- BR10 medewerker_beschikbaarheid kan niet worden aangepast als medewerker_beschikbaarheid(maand) is verstreken
+-- BR10 medewerker_beschikbaarheid kan niet worden aangepast als medewerker_beschikbaarheid(maand) is verstreken.
 CREATE TRIGGER trg_MedewerkerBeschikbaarheidInplannenNaVerlopenMaand
 ON medewerker_beschikbaarheid
 AFTER UPDATE, DELETE
@@ -345,7 +345,7 @@ AS BEGIN
 END
 GO
 
---BR11 medewerker_ingepland_project kan niet meer worden aangepast als medewerker_ingepland_project(maand_datum) is verstreken
+--BR11 medewerker_ingepland_project kan niet meer worden aangepast als medewerker_ingepland_project(maand_datum) is verstreken.
 CREATE TRIGGER trg_MedewerkerIngeplandProjectInplannenNaVerlopenMaand
 ON medewerker_ingepland_project
 AFTER INSERT, UPDATE, DELETE
@@ -517,7 +517,7 @@ AS BEGIN
 END
 GO
 
--- BR15 Begin_datum van een project mag niet worden aangepast als een medewerker is
+-- BR15 Begin_datum van een project mag niet worden aangepast als een medewerker is.
 -- ingepland in dezelfde maand of een medewerker is ingepland voor de nieuwe begin_datum.
 CREATE TRIGGER trg_UpdateBegindatumValtNaIngeplandMedewerker
 ON project
