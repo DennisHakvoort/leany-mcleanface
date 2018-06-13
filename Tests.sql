@@ -51,9 +51,11 @@ GO
 --[23000][547] The INSERT statement conflicted with the CHECK constraint "CK_UREN_MIN_MAX". The conflict occurred in database "LeanDb", table "dbo.medewerker_beschikbaarheid", column 'beschikbaar_uren'.
 BEGIN TRANSACTION
 BEGIN TRY
+DECLARE @date DATE = GETDATE()+30;
+DECLARE @date2 DATE = GETDATE()+60;
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'jan 2018', 1000);
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2018', 820);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', @date, 1000);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', @date2, 820);
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -68,9 +70,11 @@ GO
 --Success
 BEGIN TRANSACTION
 BEGIN TRY
+DECLARE @date DATE = GETDATE()+30;
+DECLARE @date2 DATE = GETDATE()+60;
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'jan 2019', 10);
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2019', 15);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', @date, 10);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', @date2, 15);
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -85,9 +89,11 @@ GO
 --[23000][547] The INSERT statement conflicted with the CHECK constraint "CK_UREN_MIN_MAX". The conflict occurred in database "LeanDb", table "dbo.medewerker_beschikbaarheid", column 'beschikbaar_uren'.
 BEGIN TRANSACTION
 BEGIN TRY
+DECLARE @date DATE = GETDATE()+30;
+DECLARE @date2 DATE = GETDATE()+60;
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'jan 2018', -1);
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2018', -80);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', @date, -1);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', @date2, -80);
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
