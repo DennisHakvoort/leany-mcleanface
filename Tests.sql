@@ -573,7 +573,7 @@ BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2017', CURRENT_TIMESTAMP, 'testerdetest', 0)
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 UPDATE project SET eind_datum = '27 feb 2020' WHERE project_code = 1
 END TRY
 BEGIN CATCH
@@ -592,7 +592,7 @@ BEGIN TRY
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2016', '22 feb 2019', 'testerdetest', 0)
 UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 DELETE FROM project WHERE project_code = 1
 INSERT INTO project VALUES (1, 'd', '15 jan 2016', '22 feb 2019', 'testerdetest', 0)
 UPDATE project SET eind_datum = '23 sep 2017' WHERE project_code = 1
@@ -633,11 +633,11 @@ GO
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest', 0)
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', CURRENT_TIMESTAMP, 'testerdetest', 0)
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 INSERT INTO medewerker_ingepland_project VALUES ((select IDENT_CURRENT('medewerker_op_project')), 10, 'feb 2019')
 END TRY
 BEGIN CATCH
@@ -667,7 +667,7 @@ INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 INSERT INTO medewerker_ingepland_project VALUES ((select IDENT_CURRENT('medewerker_op_project')), 10, 'feb 2019')
 UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 UPDATE medewerker_ingepland_project SET medewerker_uren = 10 WHERE id = (select IDENT_CURRENT('medewerker_op_project'))
 END TRY
 BEGIN CATCH
@@ -695,7 +695,7 @@ INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 INSERT INTO medewerker_ingepland_project VALUES ((select IDENT_CURRENT('medewerker_op_project')), 10, 'feb 2019')
 UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 DELETE FROM medewerker_ingepland_project WHERE id = (select IDENT_CURRENT('medewerker_op_project'))
 END TRY
 BEGIN CATCH
@@ -736,10 +736,10 @@ ERROR MESSAGE:	Een medewerker op een project kan niet meer aangepast worden nada
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest', 0)
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', CURRENT_TIMESTAMP, 'testerdetest', 0)
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO project_rol_type VALUES ('tester')
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 END TRY
 BEGIN CATCH
@@ -762,7 +762,7 @@ INSERT INTO medewerker VALUES ('JD', 'Jan', 'Dieter')
 INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 UPDATE medewerker_op_project SET medewerker_code = 'JD' WHERE project_code = 1
 END TRY
 BEGIN CATCH
@@ -784,7 +784,7 @@ INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 DELETE FROM medewerker_op_project WHERE project_code = 1
 END TRY
 BEGIN CATCH
@@ -802,7 +802,6 @@ BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
 INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '10 sep 2018', '10')
-WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
 DELETE FROM medewerker WHERE medewerker_code = 'HF'
 END TRY
@@ -821,7 +820,6 @@ BEGIN TRY
 INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
 INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '10 sep 2018', '10')
 UPDATE medewerker_beschikbaarheid SET maand = '10 jan 2019' WHERE medewerker_code = 'HF'
-WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
 DELETE FROM medewerker WHERE medewerker_code = 'HF'
 END TRY
@@ -841,7 +839,6 @@ BEGIN TRY
 INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
 INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '25 may 2018', '10')
 UPDATE medewerker_beschikbaarheid SET maand = '10 jan 2018' WHERE medewerker_code = 'HF'
-WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
 DELETE FROM medewerker WHERE medewerker_code = 'HF'
 END TRY
@@ -860,7 +857,6 @@ BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
 INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '25 may 2017', '10')
-WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
 DELETE FROM medewerker WHERE medewerker_code = 'HF'
 END TRY
@@ -1000,7 +996,6 @@ BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
 INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '10 sep 2018', '10')
-WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
 DELETE FROM medewerker WHERE medewerker_code = 'HF'
 END TRY
@@ -1058,7 +1053,6 @@ BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
 INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '25 may 2017', '10')
-WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
 DELETE FROM medewerker WHERE medewerker_code = 'HF'
 END TRY
