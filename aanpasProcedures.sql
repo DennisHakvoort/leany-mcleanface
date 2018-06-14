@@ -565,6 +565,8 @@ IF @TranCounter > 0
 ELSE
 	BEGIN TRANSACTION;
 BEGIN TRY
+	EXECUTE sp_checkProjectRechten @projectcode = @project_code
+
     IF NOT EXISTS  (SELECT	'!'
 					FROM	subproject
 					WHERE	project_code = @project_code AND
