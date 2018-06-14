@@ -172,6 +172,7 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+		EXECUTE sp_checkProjectRechten @projectcode = @project_code;
 	DECLARE @id INT;
 		IF NOT EXISTS (SELECT '!'
 				FROM medewerker_op_project

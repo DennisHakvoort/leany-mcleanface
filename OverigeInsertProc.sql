@@ -264,6 +264,7 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+		EXECUTE sp_checkProjectRechten @projectcode = @parent_code;
 		IF NOT EXISTS(SELECT '@' --Checkt of de subprojectcategorie wel bestaat.
 					FROM subproject_categorie
 					WHERE subproject_categorie_naam = @categorie)
@@ -351,6 +352,7 @@ AS
 	ELSE
 		BEGIN TRANSACTION;
 	BEGIN TRY
+		EXECUTE sp_checkProjectRechten @projectcode = @project_code
 		DECLARE @id INT = -1
 
 		IF (@subproject_uren < 0) --mag niet negatief zijn
