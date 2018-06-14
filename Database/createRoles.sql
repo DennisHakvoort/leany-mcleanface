@@ -1,13 +1,3 @@
---TODO: De rechten updaten met eventuele nieuwe tables en procedures.
-Codegeneratie, handig voor het updaten van de statements.
--- SELECT 'GRANT SELECT ON ' + TABLE_NAME + ' TO SUPERUSER'
--- FROM --INFORMATION_SCHEMA.VIEWS
---      INFORMATION_SCHEMA.TABLES
---
--- SELECT 'GRANT EXECUTE ON ' + SPECIFIC_NAME + ' TO SUPERUSER'
--- FROM   INFORMATION_SCHEMA.ROUTINES
--- WHERE ROUTINE_TYPE = 'PROCEDURE' AND (SPECIFIC_NAME != 'sp_DropConstraint'
---                                       OR  SPECIFIC_NAME != 'sp_DatabaseUserToevoegen')
 /*
 Gebruiker toevoegen als superuser:
 Run de volgende commmando's en verander de 'USERNAME' in de user naam en de 'LOGINNAME' in de login naam.
@@ -68,8 +58,6 @@ GRANT SELECT ON projectlid_op_subproject TO SUPERUSER
 GRANT SELECT ON subproject TO SUPERUSER
 GRANT SELECT ON subproject_categorie TO SUPERUSER
 GRANT SELECT ON tag_van_categorie TO SUPERUSER
-
-
 --EXECUTE PROCEDURES
 GRANT EXECUTE ON sp_InsertProject TO SUPERUSER
 GRANT EXECUTE ON sp_InsertProjectCategorie TO SUPERUSER
