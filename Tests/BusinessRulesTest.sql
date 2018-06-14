@@ -1,3 +1,8 @@
+/*==============================================================*/
+/* DBMS name:      Microsoft SQL Server 2008                    */
+/* Created on:     5-6-2018 10:12:47                            */
+/*==============================================================*/
+
 /*
 Alle tests volgen hetzelfde template:
 
@@ -17,10 +22,11 @@ ROLLBACK TRANSACTION --De transaction terugrollen zodat de testdata niet in de e
 Alle tests worden uitgevoerd op een lege database.
  */
 
-
-
 USE LeanDb
---Business rules
+GO
+
+
+--Business rules tests
 
 --BR1 Medewerker_beshikbaar(beschikbaar_uren) kan niet meer zijn dan 184
 --Success
@@ -45,9 +51,11 @@ GO
 --[23000][547] The INSERT statement conflicted with the CHECK constraint "CK_UREN_MIN_MAX". The conflict occurred in database "LeanDb", table "dbo.medewerker_beschikbaarheid", column 'beschikbaar_uren'.
 BEGIN TRANSACTION
 BEGIN TRY
+DECLARE @date DATE = GETDATE()+30;
+DECLARE @date2 DATE = GETDATE()+60;
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'jan 2018', 1000);
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2018', 820);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', @date, 1000);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', @date2, 820);
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -62,9 +70,11 @@ GO
 --Success
 BEGIN TRANSACTION
 BEGIN TRY
+DECLARE @date DATE = GETDATE()+30;
+DECLARE @date2 DATE = GETDATE()+60;
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'jan 2019', 10);
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2019', 15);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', @date, 10);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', @date2, 15);
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -79,9 +89,11 @@ GO
 --[23000][547] The INSERT statement conflicted with the CHECK constraint "CK_UREN_MIN_MAX". The conflict occurred in database "LeanDb", table "dbo.medewerker_beschikbaarheid", column 'beschikbaar_uren'.
 BEGIN TRANSACTION
 BEGIN TRY
+DECLARE @date DATE = GETDATE()+30;
+DECLARE @date2 DATE = GETDATE()+60;
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'jan 2018', -1);
-INSERT INTO medewerker_beschikbaarheid VALUES ('JP', 'feb 2018', -80);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', @date, -1);
+INSERT INTO medewerker_beschikbaarheid VALUES ('JP', @date2, -80);
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -107,7 +119,6 @@ BEGIN CATCH
 END CATCH
 ROLLBACK TRANSACTION
 GO
-
 
 --BR3
 --[S00016][500014] Medewerker code is al in gebruik
@@ -568,7 +579,7 @@ BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2017', CURRENT_TIMESTAMP, 'testerdetest', 0)
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 UPDATE project SET eind_datum = '27 feb 2020' WHERE project_code = 1
 END TRY
 BEGIN CATCH
@@ -587,7 +598,7 @@ BEGIN TRY
 INSERT INTO project_categorie VALUES ('d', NULL)
 INSERT INTO project VALUES (1, 'd', '15 jan 2016', '22 feb 2019', 'testerdetest', 0)
 UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 DELETE FROM project WHERE project_code = 1
 INSERT INTO project VALUES (1, 'd', '15 jan 2016', '22 feb 2019', 'testerdetest', 0)
 UPDATE project SET eind_datum = '23 sep 2017' WHERE project_code = 1
@@ -628,11 +639,11 @@ GO
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest', 0)
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', CURRENT_TIMESTAMP, 'testerdetest', 0)
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 INSERT INTO medewerker_ingepland_project VALUES ((select IDENT_CURRENT('medewerker_op_project')), 10, 'feb 2019')
 END TRY
 BEGIN CATCH
@@ -645,7 +656,12 @@ ROLLBACK TRANSACTION
 GO
 
 --Mislukking
---[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+/*
+CATCH RESULTATEN:
+ERROR NUMMER:		50001
+ERROR SEVERITY:	16
+ERROR MESSAGE:	Een project kan niet meer aangepast worden nadat deze is afgelopen.
+*/
 BEGIN TRANSACTION
 BEGIN TRY
 IF (select IDENT_CURRENT('medewerker_op_project')) IS NOT NULL
@@ -657,7 +673,7 @@ INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 INSERT INTO medewerker_ingepland_project VALUES ((select IDENT_CURRENT('medewerker_op_project')), 10, 'feb 2019')
 UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 UPDATE medewerker_ingepland_project SET medewerker_uren = 10 WHERE id = (select IDENT_CURRENT('medewerker_op_project'))
 END TRY
 BEGIN CATCH
@@ -670,7 +686,12 @@ ROLLBACK TRANSACTION
 GO
 
 --Mislukking
---[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+/*
+CATCH RESULTATEN:
+ERROR NUMMER:		50004
+ERROR SEVERITY:	16
+ERROR MESSAGE:	Een project kan niet meer aangepast worden nadat deze is afgelopen.
+*/
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO project_categorie VALUES ('d', NULL)
@@ -680,7 +701,7 @@ INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 INSERT INTO medewerker_ingepland_project VALUES ((select IDENT_CURRENT('medewerker_op_project')), 10, 'feb 2019')
 UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 DELETE FROM medewerker_ingepland_project WHERE id = (select IDENT_CURRENT('medewerker_op_project'))
 END TRY
 BEGIN CATCH
@@ -712,14 +733,19 @@ ROLLBACK TRANSACTION
 GO
 
 --Mislukking
---[S00016][50001] Een project kan niet meer aangepast worden nadat deze is afgelopen.
+/*
+CATCH RESULTATEN:
+ERROR NUMMER:		50005
+ERROR SEVERITY:	16
+ERROR MESSAGE:	Een medewerker op een project kan niet meer aangepast worden nadat deze is afgelopen.
+*/
 BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO project_categorie VALUES ('d', NULL)
-INSERT INTO project VALUES (1, 'd', '15 jan 2015', current_timestamp, 'testerdetest', 0)
+INSERT INTO project VALUES (1, 'd', '15 jan 2015', CURRENT_TIMESTAMP, 'testerdetest', 0)
 INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO project_rol_type VALUES ('tester')
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 END TRY
 BEGIN CATCH
@@ -742,7 +768,7 @@ INSERT INTO medewerker VALUES ('JD', 'Jan', 'Dieter')
 INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 UPDATE medewerker_op_project SET medewerker_code = 'JD' WHERE project_code = 1
 END TRY
 BEGIN CATCH
@@ -764,7 +790,7 @@ INSERT INTO medewerker VALUES ('JP', 'Jan', 'Pieter')
 INSERT INTO project_rol_type VALUES ('tester')
 INSERT INTO medewerker_op_project VALUES (1, 'JP', 'tester')
 UPDATE project SET eind_datum = CURRENT_TIMESTAMP WHERE project_code = 1
-WAITFOR DELAY '00:00:01'
+WAITFOR DELAY '00:00:01' --hier wordt een delay geplaatst zodat er geen conflict kan ontstaan door de CURRENT_TIMESTAMP
 DELETE FROM medewerker_op_project WHERE project_code = 1
 END TRY
 BEGIN CATCH
@@ -774,6 +800,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 -- BR10 medewerker_beschikbaarheid kan niet worden aangepast als medewerker_beschikbaarheid(maand) is verstreken.
 -- Succesvol insert nieuwe medewerker_beschikbaarheid datum (moet nieuwer dan huidige datum zijn).
@@ -781,7 +808,6 @@ BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
 INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '10 sep 2018', '10')
-WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
 DELETE FROM medewerker WHERE medewerker_code = 'HF'
 END TRY
@@ -792,6 +818,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --Succesvol medewerker_beschikbaarheid maand updaten toegestaan als die groter is dan huidige datum.
 BEGIN TRANSACTION
@@ -799,7 +826,6 @@ BEGIN TRY
 INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
 INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '10 sep 2018', '10')
 UPDATE medewerker_beschikbaarheid SET maand = '10 jan 2019' WHERE medewerker_code = 'HF'
-WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
 DELETE FROM medewerker WHERE medewerker_code = 'HF'
 END TRY
@@ -810,6 +836,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --Mislukte poging
 --[500016][50001] maand data kan niet aangepast worden naar een verstreken maand.
@@ -818,7 +845,6 @@ BEGIN TRY
 INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
 INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '25 may 2018', '10')
 UPDATE medewerker_beschikbaarheid SET maand = '10 jan 2018' WHERE medewerker_code = 'HF'
-WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
 DELETE FROM medewerker WHERE medewerker_code = 'HF'
 END TRY
@@ -829,6 +855,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --Mislukte poging
 --[500016][50001] je mag niet een maand als beschikbaarheid instellen als de ingevulde maand verstreken is.
@@ -836,7 +863,6 @@ BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
 INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '25 may 2017', '10')
-WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
 DELETE FROM medewerker WHERE medewerker_code = 'HF'
 END TRY
@@ -847,6 +873,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --BR11 medewerker_ingepland_project kan niet meer worden aangepast als medewerker_ingepland_project(maand_datum) is verstreken
 --BR 11 Success
@@ -872,6 +899,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --BR 11 Success
 --Medewerker kan ingedeeld worden in een project als de maand groter is dan huidige datum.
@@ -894,6 +922,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --BR 11 succesvol uren van een maand aanpassen dat nog niet verstreken is
 BEGIN TRANSACTION
@@ -917,6 +946,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --BR 11 Mislukte poging
 --[500016][50001] medewerker verstreken maand(en) kunnen niet meer aangepast worden.
@@ -941,6 +971,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 --BR 11 Mislukte poging
 --[500016][50001] medewerker kan niet een verstreken maand ingepland krijgen voor een project.
@@ -963,6 +994,7 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
 
 -- BR10 medewerker_beschikbaarheid kan niet worden aangepast als medewerker_beschikbaarheid(maand) is verstreken.
 -- Succesvol insert nieuwe medewerker_beschikbaarheid datum (moet nieuwer dan huidige datum zijn).
@@ -970,7 +1002,6 @@ BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
 INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '10 sep 2018', '10')
-WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
 DELETE FROM medewerker WHERE medewerker_code = 'HF'
 END TRY
@@ -1028,7 +1059,6 @@ BEGIN TRANSACTION
 BEGIN TRY
 INSERT INTO medewerker VALUES ('HF', 'SurnameTest', 'FirstnameTest')
 INSERT INTO medewerker_beschikbaarheid VALUES ('HF', '25 may 2017', '10')
-WAITFOR DELAY '00:00:01'
 DELETE FROM medewerker_beschikbaarheid WHERE medewerker_code = 'HF'
 DELETE FROM medewerker WHERE medewerker_code = 'HF'
 END TRY
@@ -1497,9 +1527,6 @@ BEGIN TRY
 	
 	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
 		VALUES	('PROJC0101C1', 'aber', 'lector');
-
-	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
-		VALUES	('PROJC0101C1', 'aber', 'lector');
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -1529,9 +1556,6 @@ BEGIN TRY
 	
 	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
 		VALUES	('PROJC0101C1', 'aber', 'lector');
-
-	INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
-		VALUES	('PROJC0101C1', 'aber', 'lector');
 END TRY
 BEGIN CATCH
 	PRINT 'CATCH RESULTATEN:'
@@ -1540,3 +1564,4 @@ BEGIN CATCH
 	PRINT 'ERROR MESSAGE:	' + ERROR_MESSAGE()
 END CATCH
 ROLLBACK TRANSACTION
+GO
