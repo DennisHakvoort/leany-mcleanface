@@ -206,45 +206,6 @@ AS
 	END CATCH
 GO
 
---Insert procedure medewerker op project
-/*
-Met deze stored procedure kan je een medewerker indelen op een bestaande project
-*/
-CREATE PROCEDURE sp_InsertMedewerkerOpProject
-@project_code    VARCHAR(20),
-@medewerker_code VARCHAR(5),
-@project_rol	 VARCHAR(40)
-AS
-	SET NOCOUNT ON
-	SET XACT_ABORT OFF
-	DECLARE @TranCounter INT;
-	SET @TranCounter = @@TRANCOUNT;
-	IF @TranCounter > 0
-		SAVE TRANSACTION ProcedureSave;
-	ELSE
-		BEGIN TRANSACTION;
-	BEGIN TRY
-			EXECUTE sp_checkProjectRechten @projectcode = @project_code
-
-		 INSERT INTO medewerker_op_project (project_code, medewerker_code, project_rol)
-		 VALUES (@project_code, @medewerker_code, @project_rol)
-
-			IF @TranCounter = 0 AND XACT_STATE() = 1
-			COMMIT TRANSACTION;
-	END TRY
-	BEGIN CATCH
-		IF @TranCounter = 0
-			BEGIN
-				IF XACT_STATE() = 1 ROLLBACK TRANSACTION;
-			END;
-		ELSE
-			BEGIN
-        IF XACT_STATE() <> -1 ROLLBACK TRANSACTION ProcedureSave;
-			END;
-		THROW
-	END CATCH
-GO
-
 --Insert subproject
 /*
 Met deze procedure kan je een subproject toevoegen binnen een project
